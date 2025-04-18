@@ -1,35 +1,29 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Dashboard from './pages/Dashboard';
+import Syllabus from './pages/Syllabus';
+import WatchVideo from './pages/WatchVideo';
+import CollabRoom from './pages/CollabRoom';
+import './App.css';
+
+// Placeholder components for routes that don't exist yet
+const Profile = () => <div className="p-10">Profile Page (Coming Soon)</div>;
+const Settings = () => <div className="p-10">Settings Page (Coming Soon)</div>;
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <Router>
+      <div className="app">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/syllabus" element={<Syllabus />} />
+          <Route path="/watch-video" element={<WatchVideo />} />
+          <Route path="/collab-room" element={<CollabRoom />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+        </Routes>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </Router>
+  );
 }
 
-export default App
+export default App;
