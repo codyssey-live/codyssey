@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard';
 import Syllabus from './pages/Syllabus';
 import WatchVideo from './pages/WatchVideo';
 import CollabRoom from './pages/CollabRoom';
+import UserProfile from './pages/UserProfile';
 import './App.css';
 
 // Placeholder components for routes that don't exist yet
@@ -18,7 +19,7 @@ function App() {
           <Route path="/syllabus" element={<Syllabus />} />
           <Route path="/watch-video" element={<WatchVideo />} />
           <Route path="/collab-room" element={<CollabRoom />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<UserProfile />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </div>
