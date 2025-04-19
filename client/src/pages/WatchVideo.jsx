@@ -25,10 +25,10 @@ const WatchVideo = () => {
     
     if (match && match[2].length === 11) {
       // Standard video ID
-      return `https://www.youtube.com/embed/${match[2]}`;
+      return `https://www.youtube.com/embed/${match[2]}?enablejsapi=1`;
     } else if (match && match[1].includes('list=')) {
       // Playlist
-      return `https://www.youtube.com/embed/videoseries?list=${match[2]}`;
+      return `https://www.youtube.com/embed/videoseries?list=${match[2]}&enablejsapi=1`;
     }
     
     return url;
@@ -36,15 +36,20 @@ const WatchVideo = () => {
 
   const handleSubmitUrl = (e) => {
     e.preventDefault();
-    // No need to update state again if URL hasn't changed
     if (!videoUrl) return;
+    
+    // Force reload the iframe with autoplay
+    const videoElement = document.querySelector('.video-iframe');
+    if (videoElement) {
+      const embedUrl = getYouTubeEmbedUrl(videoUrl);
+      videoElement.src = embedUrl + '&autoplay=1';
+    }
   };
 
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
     
-    // Mockup of chat functionality (to be replaced with Socket.io)
     const newChat = {
       id: Date.now(),
       user: 'You',
@@ -54,6 +59,12 @@ const WatchVideo = () => {
     
     setChatMessages([...chatMessages, newChat]);
     setNewMessage('');
+
+    // Auto scroll to bottom after new message
+    setTimeout(() => {
+      const chatContainer = document.querySelector('.chat-messages');
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }, 0);
   };
 
   return (
@@ -67,9 +78,9 @@ const WatchVideo = () => {
           {/* Video Player Section */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="p-4 border-b border-gray-200">
-                <form onSubmit={handleSubmitUrl} className="flex items-center gap-2">
-                  <div className="flex flex-grow border border-gray-300 rounded-full overflow-hidden">
+              <div className="px-0 pt-4 pb-4">
+                <form onSubmit={handleSubmitUrl} className="flex items-center gap-2 px-0 mx-0">
+                  <div className="flex flex-grow border border-gray-300 rounded-md overflow-hidden mx-0">
                     <input
                       type="text"
                       placeholder="YouTube URL..."
@@ -92,7 +103,7 @@ const WatchVideo = () => {
                   </div>
                   <button
                     type="submit"
-                    className="bg-[#7C3AED] text-white px-6 py-2.5 rounded-full hover:bg-purple-600 transition-colors shadow-md font-medium"
+                    className="bg-[#7C3AED] text-white px-6 py-2.5 rounded-md hover:bg-purple-600 transition-colors shadow-md font-medium"
                   >
                     Watch
                   </button>
@@ -102,10 +113,10 @@ const WatchVideo = () => {
               {videoUrl ? (
                 <div className="w-full">
                 <iframe
+                  className="video-iframe rounded-lg border"
                   width="100%"
                   height="500"
-                  src={getYouTubeEmbedUrl(videoUrl)}
-                  className="rounded-lg border"
+                  src={`${getYouTubeEmbedUrl(videoUrl)}`}
                   title="YouTube video player"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -129,47 +140,56 @@ const WatchVideo = () => {
           </div>
           
           {/* Chat Section */}
-          <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col h-[500px]">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="font-semibold text-gray-800">Live Chat</h2>
+          <div className="bg-[#1e293b] rounded-lg shadow overflow-hidden flex flex-col" style={{ height: videoUrl ? '573px' : '573px' }}>
+            <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+              <h2 className="font-semibold text-white">Live Chat</h2>
               <div className="flex items-center">
                 <span className={`h-3 w-3 rounded-full mr-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                <span className="text-sm text-gray-600">{isConnected ? 'Connected' : 'Disconnected'}</span>
+                <span className="text-sm text-gray-400">{isConnected ? 'Connected' : 'Disconnected'}</span>
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {chatMessages.length === 0 ? (
-                <div className="text-center text-gray-500 mt-8">
-                  <p>No messages yet</p>
-                  <p className="text-sm mt-1">Start the conversation!</p>
-                </div>
-              ) : (
-                chatMessages.map(message => (
-                  <div key={message.id} className="flex flex-col">
-                    <div className="flex items-center">
-                      <span className="font-medium text-blue-600">{message.user}</span>
-                      <span className="text-xs text-gray-500 ml-2">{message.timestamp}</span>
-                    </div>
-                    <p className="text-gray-800">{message.text}</p>
-                  </div>
-                ))
-              )}
-            </div>
+            <div 
+                            className="flex-1 p-4 space-y-4 bg-[#0f172a] overflow-y-auto chat-messages"
+                            style={{ 
+                              msOverflowStyle: 'none',
+                              scrollbarWidth: 'none',
+                              '::-webkit-scrollbar': {
+                                display: 'none'
+                              }
+                            }}
+                          >
+                            {chatMessages.length === 0 ? (
+                              <div className="text-center text-gray-400 mt-8">
+                                <p>No messages yet</p>
+                                <p className="text-sm mt-1">Start the conversation!</p>
+                              </div>
+                            ) : (
+                              chatMessages.map(message => (
+                                <div key={message.id} className="flex flex-col">
+                                  <div className="flex items-center">
+                                    <span className="font-medium text-blue-600">{message.user}</span>
+                                    <span className="text-xs text-gray-500 ml-2">{message.timestamp}</span>
+                                  </div>
+                                  <p className="text-gray-800">{message.text}</p>
+                                </div>
+                              ))
+                            )}
+                          </div>
             
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-4 border-t border-gray-200 bg-white">
               <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <div className="flex flex-grow border border-gray-300 rounded-full overflow-hidden">
+                <div className="flex flex-grow border border-gray-600 rounded-md overflow-hidden bg-[#0f172a]">
                   <input
                     type="text"
                     placeholder="Type message..."
-                    className="flex-1 px-4 py-2.5 bg-transparent text-gray-700 placeholder-gray-400 border-none outline-none"
+                    className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 border-none outline-none"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                   />
                   <button
                     type="button"
-                    className="px-4 py-2.5 text-blue-600 hover:bg-gray-100 transition-colors"
+                    className="px-4 py-2.5 text-purple-400 hover:bg-gray-100 hover:text-blue-600 transition-colors"
                     onClick={() => {
                       const clipboardText = navigator.clipboard.readText();
                       clipboardText.then(text => setNewMessage(text));
@@ -182,7 +202,7 @@ const WatchVideo = () => {
                 </div>
                 <button
                   type="submit"
-                  className="bg-[#7C3AED] text-white px-6 py-2.5 rounded-full hover:bg-purple-600 transition-colors shadow-md font-medium"
+                  className="bg-[#7C3AED] text-white px-6 py-2.5 rounded-md hover:bg-purple-600 transition-colors shadow-md font-medium"
                 >
                   Send
                 </button>
