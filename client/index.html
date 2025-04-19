@@ -13,6 +13,26 @@
         color: white !important;
       }
     </style>
+    <!-- Add this before the closing </head> tag -->
+    <script>
+      window.MonacoEnvironment = {
+        getWorkerUrl: function (moduleId, label) {
+          if (label === 'json') {
+            return './json.worker.js';
+          }
+          if (label === 'css' || label === 'scss' || label === 'less') {
+            return './css.worker.js';
+          }
+          if (label === 'html' || label === 'handlebars' || label === 'razor') {
+            return './html.worker.js';
+          }
+          if (label === 'typescript' || label === 'javascript') {
+            return './ts.worker.js';
+          }
+          return './editor.worker.js';
+        }
+      };
+    </script>
   </head>
   <body class="bg-[#0f172a] text-white">
     <div id="root" class="bg-[#0f172a]"></div>

@@ -54,12 +54,12 @@ const WatchVideo = () => {
       id: Date.now(),
       user: 'You',
       text: newMessage,
-      timestamp: new Date().toLocaleTimeString()
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) // Format without seconds
     };
     
     setChatMessages([...chatMessages, newChat]);
     setNewMessage('');
-
+  
     // Auto scroll to bottom after new message
     setTimeout(() => {
       const chatContainer = document.querySelector('.chat-messages');
@@ -149,33 +149,33 @@ const WatchVideo = () => {
               </div>
             </div>
             
-            <div 
-                            className="flex-1 p-4 space-y-4 bg-[#0f172a] overflow-y-auto chat-messages"
-                            style={{ 
-                              msOverflowStyle: 'none',
-                              scrollbarWidth: 'none',
-                              '::-webkit-scrollbar': {
-                                display: 'none'
-                              }
-                            }}
-                          >
-                            {chatMessages.length === 0 ? (
-                              <div className="text-center text-gray-400 mt-8">
-                                <p>No messages yet</p>
-                                <p className="text-sm mt-1">Start the conversation!</p>
-                              </div>
-                            ) : (
-                              chatMessages.map(message => (
-                                <div key={message.id} className="flex flex-col">
-                                  <div className="flex items-center">
-                                    <span className="font-medium text-blue-600">{message.user}</span>
-                                    <span className="text-xs text-gray-500 ml-2">{message.timestamp}</span>
-                                  </div>
-                                  <p className="text-gray-800">{message.text}</p>
-                                </div>
-                              ))
-                            )}
-                          </div>
+            <div className="flex-1 p-4 space-y-4 bg-[#0f172a] overflow-y-auto chat-messages">
+              {chatMessages.length === 0 ? (
+                <div className="text-center text-gray-400 mt-8">
+                  <p>No messages yet</p>
+                  <p className="text-sm mt-1">Start the conversation!</p>
+                </div>
+              ) : (
+                chatMessages.map(message => (
+                  <div key={message.id} className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <span className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">
+                        {message.user.charAt(0)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex items-center">
+                        <span className="font-medium text-purple-400">{message.user}</span>
+                        <span className="text-xs text-gray-400 ml-2">{message.timestamp}</span>
+                      </div>
+                      <p className={`p-2 rounded-lg text-base inline-block max-w-xs ${message.user === 'You' ? 'bg-purple-500 text-white' : 'bg-gray-300 text-black'}`}>
+                        {message.text}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
             
             <div className="p-4 border-t border-gray-200 bg-white">
               <form onSubmit={handleSendMessage} className="flex items-center gap-2">
