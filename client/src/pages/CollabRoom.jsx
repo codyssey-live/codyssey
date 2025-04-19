@@ -143,7 +143,7 @@ const CollabRoom = () => {
           <div className="flex space-x-3">
             <button 
               onClick={copyCode}
-              className="bg-blue-600 text-white px-5 py-2.5 rounded-full hover:bg-blue-700 flex items-center transition-colors shadow-md"
+              className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 flex items-center transition-colors shadow-md"
             >
               <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
@@ -152,7 +152,7 @@ const CollabRoom = () => {
             </button>
             <button 
               onClick={shareRoom}
-              className="bg-green-600 text-white px-5 py-2.5 rounded-full hover:bg-green-700 flex items-center transition-colors shadow-md"
+              className="bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 flex items-center transition-colors shadow-md"
             >
               <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -181,7 +181,7 @@ const CollabRoom = () => {
                 href={problemLink} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="bg-purple-600 text-white px-5 py-2.5 rounded-full hover:bg-purple-700 transition-colors shadow-md"
+                className="bg-purple-600 text-white px-5 py-2.5 rounded-lg hover:bg-purple-700 transition-colors shadow-md"
               >
                 Open Problem
               </a>
@@ -200,7 +200,7 @@ const CollabRoom = () => {
                   <select 
                     value={language} 
                     onChange={(e) => setLanguage(e.target.value)}
-                    className="px-3 py-2 bg-[#111827] border border-gray-600 rounded-full text-white"
+                    className="px-3 py-2 bg-[#111827] border border-gray-600 rounded-lg text-white"
                   >
                     {languages.map(lang => (
                       <option key={lang.id} value={lang.id}>{lang.name}</option>
@@ -225,7 +225,7 @@ const CollabRoom = () => {
                 <div className="flex space-x-2">
                   <button 
                     onClick={handlePasteNotes}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-full hover:bg-gray-700 flex items-center transition-colors shadow-md"
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center transition-colors shadow-md"
                     title="Paste from clipboard"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -235,18 +235,18 @@ const CollabRoom = () => {
                   </button>
                   <button 
                     onClick={() => setShowNotesModal(true)}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 flex items-center transition-colors shadow-md"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center transition-colors shadow-md"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
                     View Saved
-                    {savedNotes.length > 0 && <span className="ml-1 bg-white text-indigo-700 rounded-full w-5 h-5 text-xs flex items-center justify-center">{savedNotes.length}</span>}
+                    {savedNotes.length > 0 && <span className="ml-1 bg-white text-indigo-700 rounded-lg w-5 h-5 text-xs flex items-center justify-center">{savedNotes.length}</span>}
                   </button>
                   <button 
                     onClick={saveNote}
-                    className="px-4 py-2 bg-[#7C3AED] text-white rounded-full hover:bg-purple-600 flex items-center transition-colors shadow-md"
+                    className="px-4 py-2 bg-[#7C3AED] text-white rounded-lg hover:bg-purple-600 flex items-center transition-colors shadow-md"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
@@ -298,7 +298,7 @@ const CollabRoom = () => {
             
             <div className="p-4 border-t border-gray-700">
               <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <div className="flex flex-grow border border-gray-600 bg-[#111827] rounded-full overflow-hidden">
+                <div className="flex flex-grow border border-gray-600 bg-[#111827] rounded-lg overflow-hidden">
                   <input
                     type="text"
                     placeholder="Type message..."
@@ -319,7 +319,7 @@ const CollabRoom = () => {
                 </div>
                 <button
                   type="submit"
-                  className="bg-[#7C3AED] text-white px-6 py-2.5 rounded-full hover:bg-purple-600 transition-colors shadow-md font-medium"
+                  className="bg-[#7C3AED] text-white px-6 py-2.5 rounded-lg hover:bg-purple-600 transition-colors shadow-md font-medium"
                 >
                   Send
                 </button>
