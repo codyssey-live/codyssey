@@ -77,6 +77,16 @@ input, textarea, select {
   transition-property: none !important;
 }
 
+/* Hide scrollbars but maintain functionality */
+.overflow-y-auto {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
 /* Dark theme base styles */
 @layer base {
   body {
@@ -91,4 +101,14 @@ input, textarea, select {
 
 .dark-input {
   @apply bg-[#1e293b] border border-gray-700 text-white placeholder-gray-400 focus:ring-purple-500 focus:border-purple-500;
+}
+
+/* Hide scrollbar for chat container while keeping functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
 }
