@@ -100,15 +100,21 @@ const WatchVideo = () => {
               </div>
               
               {videoUrl ? (
-                <div className="aspect-w-16 aspect-h-9">
-                  <iframe 
-                    src={getYouTubeEmbedUrl(videoUrl)}
-                    className="w-full h-[500px]"
-                    title="YouTube video player"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  ></iframe>
-                </div>
+                <div className="w-full">
+                <iframe
+                  width="100%"
+                  height="500"
+                  src={getYouTubeEmbedUrl(videoUrl)}
+                  className="rounded-lg border"
+                  title="YouTube video player"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
+              
+              
+              
+              
               ) : (
                 <div className="flex items-center justify-center h-[500px] bg-gray-100 text-gray-500">
                   <div className="text-center">
