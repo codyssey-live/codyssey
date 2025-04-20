@@ -7,6 +7,7 @@ const WatchVideo = () => {
   const [videoUrl, setVideoUrl] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [isCodeMessage, setIsCodeMessage] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
   // Extract URL from location state if available (from DailyPlan page)
@@ -54,11 +55,13 @@ const WatchVideo = () => {
       id: Date.now(),
       user: 'You',
       text: newMessage,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) // Format without seconds
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isCode: isCodeMessage
     };
     
     setChatMessages([...chatMessages, newChat]);
     setNewMessage('');
+    setIsCodeMessage(false); // Reset after sending
   
     // Auto scroll to bottom after new message
     setTimeout(() => {
@@ -77,10 +80,10 @@ const WatchVideo = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Video Player Section */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-700">
               <div className="px-0 pt-4 pb-4">
-                <form onSubmit={handleSubmitUrl} className="flex items-center gap-2 px-0 mx-0">
-                  <div className="flex flex-grow border border-gray-300 rounded-md overflow-hidden mx-0">
+                <form onSubmit={handleSubmitUrl} className="flex items-center gap-2 px-4 mb-4">
+                  <div className="flex flex-grow border border-gray-700 rounded-md overflow-hidden mx-0">
                     <input
                       type="text"
                       placeholder="YouTube URL..."
@@ -111,9 +114,9 @@ const WatchVideo = () => {
               </div>
               
               {videoUrl ? (
-                <div className="w-full">
+                <div className="w-full border-t border-gray-700">
                 <iframe
-                  className="video-iframe rounded-lg border"
+                  className="video-iframe rounded-lg"
                   width="100%"
                   height="500"
                   src={`${getYouTubeEmbedUrl(videoUrl)}`}
@@ -121,13 +124,9 @@ const WatchVideo = () => {
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 ></iframe>
-              </div>
-              
-              
-              
-              
+                </div>
               ) : (
-                <div className="flex items-center justify-center h-[500px] bg-gray-100 text-gray-500">
+                <div className="flex items-center justify-center h-[500px] bg-gray-100 text-gray-500 border-t border-gray-700">
                   <div className="text-center">
                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -140,7 +139,7 @@ const WatchVideo = () => {
           </div>
           
           {/* Chat Section */}
-          <div className="bg-[#1e293b] rounded-lg shadow overflow-hidden flex flex-col" style={{ height: videoUrl ? '573px' : '573px' }}>
+          <div className="bg-[#1e293b] rounded-lg shadow overflow-hidden border border-gray-700 flex flex-col" style={{ height: videoUrl ? '573px' : '573px' }}>
             <div className="p-4 border-b border-gray-700 flex justify-between items-center">
               <h2 className="font-semibold text-white">Live Chat</h2>
               <div className="flex items-center">
@@ -157,52 +156,65 @@ const WatchVideo = () => {
                 </div>
               ) : (
                 chatMessages.map(message => (
-                  <div key={message.id} className="flex items-start space-x-3">
-                    <div className="flex-shrink-0">
-                      <span className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">
-                        {message.user.charAt(0)}
-                      </span>
-                    </div>
+                  <div key={message.id} className={`flex items-start space-x-3 ${message.user === 'You' ? 'justify-end ml-12' : 'mr-12'}`}>
+                    {message.user !== 'You' && (
+                      <div className="flex-shrink-0">
+                        <span className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                          {message.user.charAt(0)}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex flex-col">
-                      <div className="flex items-center">
-                        <span className="font-medium text-purple-400">{message.user}</span>
+                      <div className={`flex items-center ${message.user === 'You' ? 'justify-end' : ''}`}>
+                        <span className={`font-medium ${message.user === 'You' ? 'text-purple-400' : 'text-blue-400'}`}>{message.user}</span>
                         <span className="text-xs text-gray-400 ml-2">{message.timestamp}</span>
                       </div>
-                      <p className={`p-2 rounded-lg text-base inline-block max-w-xs ${message.user === 'You' ? 'bg-purple-500 text-white' : 'bg-gray-300 text-black'}`}>
-                        {message.text}
-                      </p>
+                      {message.isCode ? (
+                        <pre className={`p-3 rounded-lg text-sm bg-gray-900 text-gray-100 font-mono overflow-x-auto whitespace-pre-wrap ${message.user === 'You' ? 'rounded-tr-none' : 'rounded-tl-none'}`}>
+                          <code>{message.text}</code>
+                        </pre>
+                      ) : (
+                        <p className={`p-3 rounded-lg text-sm ${message.user === 'You' ? 'bg-purple-500 text-white rounded-tr-none' : 'bg-gray-700 text-white rounded-tl-none'}`}>
+                          {message.text}
+                        </p>
+                      )}
                     </div>
+                    {message.user === 'You' && (
+                      <div className="flex-shrink-0">
+                        <span className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">
+                          {message.user.charAt(0)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
             </div>
             
-            <div className="p-4 border-t border-gray-200 bg-white">
+            <div className="p-4 border-t border-gray-700 bg-[#1e293b]">
               <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <div className="flex flex-grow border border-gray-600 rounded-md overflow-hidden bg-[#0f172a]">
+                <div className="flex-1 flex items-center bg-[#0f172a] border border-gray-600 rounded-lg overflow-hidden">
                   <input
                     type="text"
-                    placeholder="Type message..."
-                    className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 border-none outline-none"
+                    placeholder={isCodeMessage ? "Type your code here..." : "Type message..."}
+                    className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                   />
                   <button
                     type="button"
-                    className="px-4 py-2.5 text-purple-400 hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                    onClick={() => {
-                      const clipboardText = navigator.clipboard.readText();
-                      clipboardText.then(text => setNewMessage(text));
-                    }}
+                    onClick={() => setIsCodeMessage(!isCodeMessage)}
+                    className={`px-2 mx-2 ${isCodeMessage ? 'text-blue-400' : 'text-gray-400'} hover:text-blue-500 transition-colors`}
+                    title={isCodeMessage ? "Switch to regular message" : "Switch to code message"}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                     </svg>
                   </button>
                 </div>
                 <button
                   type="submit"
-                  className="bg-[#7C3AED] text-white px-6 py-2.5 rounded-md hover:bg-purple-600 transition-colors shadow-md font-medium"
+                  className="bg-[#7C3AED] text-white px-6 py-2.5 rounded-lg hover:bg-purple-600 transition-colors shadow-md font-medium"
                 >
                   Send
                 </button>

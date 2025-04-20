@@ -19,6 +19,7 @@ const CollabRoom = () => {
   const [code, setCode] = useState(boilerplates.javascript);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [isCodeMessage, setIsCodeMessage] = useState(false);
   const [notes, setNotes] = useState('');
   const [savedNotes, setSavedNotes] = useState([]);
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -53,12 +54,22 @@ const CollabRoom = () => {
   const toggleSolved = () => {
     const newState = !isSolved;
     setIsSolved(newState);
+    if (newState) {
+      // If marking as solved, ensure it's not saved for later
+      setIsSavedForLater(false);
+      if (problemLink) localStorage.setItem(`savedLater_${problemLink}`, false);
+    }
     if (problemLink) localStorage.setItem(`solved_${problemLink}`, newState);
   };
 
   const toggleSaveForLater = () => {
     const newState = !isSavedForLater;
     setIsSavedForLater(newState);
+    if (newState) {
+      // If saving for later, ensure it's not marked as solved
+      setIsSolved(false);
+      if (problemLink) localStorage.setItem(`solved_${problemLink}`, false);
+    }
     if (problemLink) localStorage.setItem(`savedLater_${problemLink}`, newState);
   };
 
@@ -69,10 +80,12 @@ const CollabRoom = () => {
       id: Date.now(),
       user: 'You',
       text: newMessage,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) // Format without seconds
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isCode: isCodeMessage
     };
     setChatMessages([...chatMessages, newChat]);
     setNewMessage('');
+    setIsCodeMessage(false); // Reset after sending
     
     // Auto scroll to bottom after new message
     setTimeout(() => {
@@ -132,17 +145,33 @@ const CollabRoom = () => {
   };
 
   const saveNote = () => {
-    if (!notes.trim() || !problemLink) return;
+    if (!notes.trim()) {
+      alert('Please add some notes before saving.');
+      return;
+    }
+    
+    if (!problemLink) {
+      alert('No problem link found. Please select a problem from the Syllabus page first.');
+      return;
+    }
+    
     const newNote = {
       id: Date.now(),
       text: notes,
       date: new Date().toISOString()
     };
+    
     const updatedNotes = [...savedNotes, newNote];
     setSavedNotes(updatedNotes);
-    localStorage.setItem(`notes_${problemLink}`, JSON.stringify(updatedNotes));
-    alert('Note saved successfully!');
-    setNotes('');
+    
+    try {
+      localStorage.setItem(`notes_${problemLink}`, JSON.stringify(updatedNotes));
+      alert('Note saved successfully!');
+      setNotes('');
+    } catch (error) {
+      console.error("Error saving note:", error);
+      alert('Failed to save note. Please try again.');
+    }
   };
 
   const deleteNote = (noteId) => {
@@ -155,7 +184,7 @@ const CollabRoom = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
 
   const handlePasteMessage = async () => {
@@ -177,6 +206,7 @@ const CollabRoom = () => {
   };
 
   const handleLanguageChange = (newLang) => {
+    if (code.trim() && !window.confirm("Changing language will reset the code. Continue?")) return;
     setLanguage(newLang);
     setCode(boilerplates[newLang]);
   };
@@ -192,11 +222,11 @@ const CollabRoom = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white">
+    <div className="min-h-screen bg-gray-50 text-gray-800">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Code Collaboration Room</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Code Collaboration Room</h1>
         </div>
 
         {problemLink && (
@@ -207,10 +237,20 @@ const CollabRoom = () => {
                 <a href={problemLink} target="_blank" rel="noopener noreferrer" className="text-blue-400">{problemLink}</a>
               </div>
               <div className="flex space-x-3">
-                <button onClick={toggleSolved} className={`px-4 py-2 rounded-lg ${isSolved ? 'bg-green-600' : 'bg-gray-600'}`}>
+                <button 
+                  onClick={toggleSolved} 
+                  className={`px-4 py-2 rounded-lg ${isSolved ? 'bg-green-600' : isSavedForLater ? 'bg-gray-500 cursor-not-allowed opacity-60' : 'bg-gray-600 hover:bg-gray-500'}`}
+                  disabled={isSavedForLater}
+                  title={isSavedForLater ? "Cannot mark as solved when saved for later" : ""}
+                >
                   {isSolved ? '✓ Solved' : 'Mark as Solved'}
                 </button>
-                <button onClick={toggleSaveForLater} className={`px-4 py-2 rounded-lg ${isSavedForLater ? 'bg-purple-600' : 'bg-gray-600'}`}>
+                <button 
+                  onClick={toggleSaveForLater} 
+                  className={`px-4 py-2 rounded-lg ${isSavedForLater ? 'bg-purple-600' : isSolved ? 'bg-gray-500 cursor-not-allowed opacity-60' : 'bg-gray-600 hover:bg-gray-500'}`}
+                  disabled={isSolved}
+                  title={isSolved ? "Cannot save for later when marked as solved" : ""}
+                >
                   {isSavedForLater ? '★ Saved' : 'Save for Later'}
                 </button>
                 <a href={problemLink} target="_blank" rel="noopener noreferrer" className="bg-blue-600 px-5 py-2 rounded-lg">Open Problem</a>
@@ -304,14 +344,15 @@ const CollabRoom = () => {
                     onClick={saveNote}
                     className="px-4 py-2 bg-[#7C3AED] text-white rounded-lg flex items-center"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
                     Save Note
                   </button>
                 </div>
               </div>
-              <div className="p-0">
+              <div className="p-0" style={{ minHeight: '450px' }}>
                 <textarea
-                  className="w-full h-[400px] p-4 font-mono text-sm bg-[#111827] text-white focus:outline-none block resize-none"
+                  className="w-full h-full p-4 font-mono text-sm bg-[#111827] text-white focus:outline-none block resize-none"
+                  style={{ minHeight: '450px' }}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Take notes for this problem..."
@@ -321,7 +362,7 @@ const CollabRoom = () => {
           </div>
 
           {/* Chat Section - Fixed height to match code editor exactly */}
-          <div className="bg-[#0f172a] rounded-lg overflow-hidden border border-gray-700 flex flex-col" style={{ height: '624px' }}>
+          <div className="bg-[#0f172a] rounded-lg overflow-hidden border border-gray-700 flex flex-col" style={{ height: '643px' }}>
             <div className="bg-[#1e293b] p-4 border-b border-gray-700 flex justify-between items-center">
               <h2 className="font-semibold">Discussion</h2>
               <div className="flex items-center">
@@ -338,21 +379,36 @@ const CollabRoom = () => {
                   </div>
                 ) : (
                   chatMessages.map(message => (
-                    <div key={message.id} className="flex items-start space-x-3">
-                      <div className="flex-shrink-0">
-                        <span className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">
-                          {message.user.charAt(0)}
-                        </span>
-                      </div>
+                    <div key={message.id} className={`flex items-start space-x-3 ${message.user === 'You' ? 'justify-end ml-12' : 'mr-12'}`}>
+                      {message.user !== 'You' && (
+                        <div className="flex-shrink-0">
+                          <span className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                            {message.user.charAt(0)}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex flex-col">
-                        <div className="flex items-center">
-                          <span className="font-medium text-purple-400">{message.user}</span>
+                        <div className={`flex items-center ${message.user === 'You' ? 'justify-end' : ''}`}>
+                          <span className={`font-medium ${message.user === 'You' ? 'text-purple-400' : 'text-blue-400'}`}>{message.user}</span>
                           <span className="text-xs text-gray-400 ml-2">{message.timestamp}</span>
                         </div>
-                        <p className={`p-3 rounded-lg text-sm ${message.user === 'You' ? 'bg-purple-500 text-white' : 'bg-gray-300 text-black'}`}>
-                          {message.text}
-                        </p>
+                        {message.isCode ? (
+                          <pre className={`p-3 rounded-lg text-sm bg-gray-900 text-gray-100 font-mono overflow-x-auto whitespace-pre-wrap ${message.user === 'You' ? 'rounded-tr-none' : 'rounded-tl-none'}`}>
+                            <code>{message.text}</code>
+                          </pre>
+                        ) : (
+                          <p className={`p-3 rounded-lg text-sm ${message.user === 'You' ? 'bg-purple-500 text-white rounded-tr-none' : 'bg-gray-700 text-white rounded-tl-none'}`}>
+                            {message.text}
+                          </p>
+                        )}
                       </div>
+                      {message.user === 'You' && (
+                        <div className="flex-shrink-0">
+                          <span className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">
+                            {message.user.charAt(0)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
@@ -360,13 +416,25 @@ const CollabRoom = () => {
             </div>
             <div className="bg-[#1e293b] p-4 border-t border-gray-700">
               <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <input
-                  type="text"
-                  className="flex-1 px-4 py-2.5 bg-[#080D17] text-white border border-gray-700 rounded-lg outline-none"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type a message..."
-                />
+                <div className="flex-1 flex items-center bg-[#080D17] border border-gray-700 rounded-lg overflow-hidden">
+                  <input
+                    type="text"
+                    className="flex-1 px-4 py-2.5 bg-transparent text-white outline-none"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder={isCodeMessage ? "Type your code here..." : "Type a message..."}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsCodeMessage(!isCodeMessage)}
+                    className={`px-2 mx-2 ${isCodeMessage ? 'text-blue-400' : 'text-gray-400'} hover:text-blue-500 transition-colors`}
+                    title={isCodeMessage ? "Switch to regular message" : "Switch to code message"}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                  </button>
+                </div>
                 <button
                   type="submit"
                   className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
@@ -391,7 +459,15 @@ const CollabRoom = () => {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
-              <div className="p-4 overflow-y-auto flex-1 bg-[#0f172a]" style={{ maxHeight: '60vh' }}>
+              <div 
+                className="p-4 overflow-y-auto flex-1 bg-[#0f172a]" 
+                style={{ 
+                  maxHeight: '60vh', 
+                  overflowY: 'scroll',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#4B5563 #1F2937'
+                }}
+              >
                 {savedNotes.length > 0 ? (
                   <ul className="space-y-4">
                     {savedNotes.map(note => (
