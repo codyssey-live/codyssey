@@ -43,7 +43,7 @@ const Navbar = () => {
                   <div className="py-1">
                     <Link to="/profile" className="block px-4 py-2 text-sm text-white">Your Profile</Link>
                     <Link to="/settings" className="block px-4 py-2 text-sm text-white">Settings</Link>
-                    <button className="w-full text-left block px-4 py-2 text-sm text-white">Sign out</button>
+                    <Link to="/login" className="w-full text-left block px-4 py-2 text-sm text-white">Sign out</Link>
                   </div>
                 </div>
               )}
