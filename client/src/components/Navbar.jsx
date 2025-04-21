@@ -14,11 +14,11 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <Link to="/" className="text-xl font-bold">LeetRoom</Link>
+              <span className="text-xl font-bold cursor-default">LeetRoom</span>
             </div>
             <div className="hidden md:block ml-10">
               <div className="flex items-baseline space-x-3">
-                <Link to="/" className="px-4 py-2 rounded-lg text-sm font-medium bg-[#2a3c63]">Dashboard</Link>
+                <Link to="/dashboard" className="px-4 py-2 rounded-lg text-sm font-medium bg-[#2a3c63]">Dashboard</Link>
                 <Link to="/syllabus" className="px-4 py-2 rounded-lg text-sm font-medium bg-[#2a3c63]">Syllabus</Link>
                 <Link to="/watch-video" className="px-4 py-2 rounded-lg text-sm font-medium bg-[#2a3c63]">Video Watch</Link>
                 <Link to="/collab-room" className="px-4 py-2 rounded-lg text-sm font-medium bg-[#2a3c63]">Collab Room</Link>
@@ -43,7 +43,7 @@ const Navbar = () => {
                   <div className="py-1">
                     <Link to="/profile" className="block px-4 py-2 text-sm text-white">Your Profile</Link>
                     <Link to="/settings" className="block px-4 py-2 text-sm text-white">Settings</Link>
-                    <Link to="/login" className="w-full text-left block px-4 py-2 text-sm text-white">Sign out</Link>
+                    <Link to="/" className="w-full text-left block px-4 py-2 text-sm text-white">Sign out</Link>
                   </div>
                 </div>
               )}
