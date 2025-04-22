@@ -25,15 +25,15 @@ const Signup = () => {
       {/* Logo in the upper-left corner */}
       <div className="absolute top-6 left-6">
         <img
-          src="/images/codyssey-removebg-preview.png"
+          src="/logo.svg"
           alt="Codyssey Logo"
-          className="h-10"
+          className="h-20"
         />
       </div>
       <div className="bg-[#1e293b] p-8 rounded-lg shadow-lg border border-gray-700 w-full max-w-sm">
         <h2 className="text-2xl font-bold mb-4 text-center">Sign Up</h2>
         <p className="text-sm text-gray-400 mb-6 text-center">
-          Join LeetRoom and start your journey
+          Join Codyssey and start your journey
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

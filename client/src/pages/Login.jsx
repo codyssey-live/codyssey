@@ -24,7 +24,7 @@ const Login = () => {
       {/* Logo in the upper-left corner */}
       <div className="absolute top-6 left-6">
         <img
-          src="/images/codyssey-removebg-preview.png"
+          src="/logo.svg"
           alt="Codyssey Logo"
           className="h-20"
         />
@@ -104,7 +104,7 @@ const Login = () => {
           Sign in with Google
         </button>
         <p className="text-sm text-gray-400 mt-4 text-center">
-          New to LeetRoom?{" "}
+          New to Codyssey?{" "}
           <Link to="/signup" className="text-blue-400 hover:underline">
             Join now
           </Link>

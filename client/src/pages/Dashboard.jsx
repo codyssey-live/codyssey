@@ -83,7 +83,7 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Dashboard Title - No Add Problem Button */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white">Your Dashboard</h2>
+                    <h2 className="text-2xl font-bold text-white">Your Dashboard</h2>
         </div>
 
         {/* Stats Grid */}

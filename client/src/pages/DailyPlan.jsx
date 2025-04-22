@@ -48,7 +48,7 @@ const DailyPlan = () => {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Link to="/" className="text-xl font-bold">LeetRoom</Link>
+                <Link to="/" className="text-xl font-bold">Codyssey</Link>
               </div>
               <div className="hidden md:block ml-10">
                 <div className="flex items-baseline space-x-4">
