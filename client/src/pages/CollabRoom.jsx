@@ -222,7 +222,7 @@ const CollabRoom = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800">
+    <div className="min-h-screen bg-blue-50 text-gray-800">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
@@ -230,16 +230,16 @@ const CollabRoom = () => {
         </div>
 
         {problemLink && (
-          <div className="bg-[#1e293b] rounded-lg p-4 mb-6 border border-gray-700">
+          <div className="bg-white rounded-lg p-4 mb-6 border border-gray-200">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-lg font-medium text-white">Problem Link</h2>
-                <a href={problemLink} target="_blank" rel="noopener noreferrer" className="text-blue-400">{problemLink}</a>
+                <h2 className="text-lg font-medium text-gray-800">Problem Link</h2>
+                <a href={problemLink} target="_blank" rel="noopener noreferrer" className="text-blue-600">{problemLink}</a>
               </div>
               <div className="flex space-x-3">
                 <button 
                   onClick={toggleSolved} 
-                  className={`px-4 py-2 rounded-lg ${isSolved ? 'bg-green-600' : isSavedForLater ? 'bg-gray-500 cursor-not-allowed opacity-60' : 'bg-gray-600 hover:bg-gray-500'}`}
+                  className={`px-4 py-2 rounded-lg text-white ${isSolved ? 'bg-green-600' : isSavedForLater ? 'bg-gray-400 cursor-not-allowed opacity-60' : 'bg-gray-500 hover:bg-gray-600'}`}
                   disabled={isSavedForLater}
                   title={isSavedForLater ? "Cannot mark as solved when saved for later" : ""}
                 >
@@ -247,13 +247,13 @@ const CollabRoom = () => {
                 </button>
                 <button 
                   onClick={toggleSaveForLater} 
-                  className={`px-4 py-2 rounded-lg ${isSavedForLater ? 'bg-purple-600' : isSolved ? 'bg-gray-500 cursor-not-allowed opacity-60' : 'bg-gray-600 hover:bg-gray-500'}`}
+                  className={`px-4 py-2 rounded-lg text-white ${isSavedForLater ? 'bg-purple-600' : isSolved ? 'bg-gray-400 cursor-not-allowed opacity-60' : 'bg-gray-500 hover:bg-gray-600'}`}
                   disabled={isSolved}
                   title={isSolved ? "Cannot save for later when marked as solved" : ""}
                 >
                   {isSavedForLater ? '★ Saved' : 'Save for Later'}
                 </button>
-                <a href={problemLink} target="_blank" rel="noopener noreferrer" className="bg-blue-600 px-5 py-2 rounded-lg">Open Problem</a>
+                <a href={problemLink} target="_blank" rel="noopener noreferrer" className="bg-blue-600 text-white px-5 py-2 rounded-lg">Open Problem</a>
               </div>
             </div>
           </div>
@@ -449,23 +449,23 @@ const CollabRoom = () => {
         {/* Modal for viewing saved notes */}
         {showNotesModal && (
           <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-            <div className="bg-[#0f172a] rounded-lg w-full max-w-3xl max-h-[80vh] overflow-hidden border border-gray-700 flex flex-col">
-              <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-[#111827]">
-                <h2 className="text-xl font-semibold text-white">Saved Notes</h2>
+            <div className="bg-white rounded-lg w-full max-w-3xl max-h-[80vh] overflow-hidden border border-gray-200 flex flex-col">
+              <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h2 className="text-xl font-semibold text-gray-800">Saved Notes</h2>
                 <button
                   onClick={() => setShowNotesModal(false)}
-                  className="text-gray-400 hover:text-white bg-red-600 rounded-full p-2"
+                  className="text-white bg-red-600 rounded-full p-2"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
               <div 
-                className="p-4 overflow-y-auto flex-1 bg-[#0f172a]" 
+                className="p-4 overflow-y-auto flex-1 bg-white" 
                 style={{ 
                   maxHeight: '60vh', 
                   overflowY: 'scroll',
                   scrollbarWidth: 'thin',
-                  scrollbarColor: '#4B5563 #1F2937'
+                  scrollbarColor: '#d1d5db #f3f4f6'
                 }}
               >
                 {savedNotes.length > 0 ? (

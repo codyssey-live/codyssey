@@ -1,19 +1,19 @@
 const Header = ({ userName }) => {
   return (
-    <header className="bg-[#1e293b] shadow border-b border-gray-700">
+    <header className="bg-[#94C3D2] shadow border-b border-gray-200">
       <div className="container mx-auto px-4 py-6 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-gray-800">
             Welcome, {userName}!
           </h1>
-          <p className="text-gray-300">Track your progress and manage your DSA journey</p>
+          <p className="text-gray-600">Track your progress and manage your DSA journey</p>
         </div>
         
-        <button className="bg-purple-600 text-white font-medium py-2 px-4 rounded-md flex items-center">
+        <button className="bg-[#dbeafe] text-gray-800 font-medium py-2 px-4 rounded-full flex items-center hover:shadow-lg transform transition-all duration-300 hover:-translate-y-1 border border-gray-200">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
           </svg>
-          Invite Friends
+          Add New Problem
         </button>
       </div>
     </header>

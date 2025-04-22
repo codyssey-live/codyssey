@@ -5,16 +5,15 @@ import { format } from "date-fns";
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 
-// Add these custom styles
 // Update the calendarStyles constant at the top of the file
 const calendarStyles = `
   .react-calendar {
-    background-color: #1e293b !important;
-    border-color: #374151 !important;
-    color: white !important;
+    background-color: #ffffff !important;
+    border-color: #d1d5db !important;
+    color: #1f2937 !important;
   }
   .react-calendar__tile {
-    color: white !important;
+    color: #1f2937 !important;
     background: none !important;
   }
   .react-calendar__tile:enabled:hover,
@@ -24,18 +23,18 @@ const calendarStyles = `
     color: white !important;
   }
   .react-calendar__tile--now {
-    background-color: #4b5563 !important;
+    background-color: #e5e7eb !important;
   }
   .react-calendar__navigation button {
-    color: white !important;
+    color: #1f2937 !important;
     background: none !important;
   }
   .react-calendar__navigation button:disabled {
-    background-color: #374151 !important;
+    background-color: #e5e7eb !important;
   }
   .react-calendar__navigation button:enabled:hover,
   .react-calendar__navigation button:enabled:focus {
-    background-color: #374151 !important;
+    background-color: #e5e7eb !important;
   }
   .react-calendar__month-view__days__day--weekend {
     color: #ef4444 !important;
@@ -44,7 +43,7 @@ const calendarStyles = `
     color: #6b7280 !important;
   }
   .react-calendar__month-view__weekdays__weekday {
-    color: white !important;
+    color: #1f2937 !important;
   }
   .react-calendar__month-view__weekdays__weekday abbr {
     text-decoration: none !important;
@@ -228,14 +227,14 @@ const Syllabus = () => {
   return (
     <>
       <style>{calendarStyles}</style>
-      <div className="min-h-screen bg-[#0f172a]">
+      <div className="min-h-screen bg-blue-50">
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-white">DSA Learning Syllabus</h1>
-            <p className="text-gray-400">Plan and organize your DSA learning journey</p>
+            <h1 className="text-3xl font-bold text-gray-800">DSA Learning Syllabus</h1>
+            <p className="text-gray-600">Plan and organize your DSA learning journey</p>
           </div>
           <div className="flex gap-4">
             <button 

@@ -71,7 +71,7 @@ const WatchVideo = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-blue-50">
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
@@ -80,14 +80,14 @@ const WatchVideo = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Video Player Section */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-700">
+            <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
               <div className="px-0 pt-4 pb-4">
                 <form onSubmit={handleSubmitUrl} className="flex items-center gap-2 px-4 mb-4">
-                  <div className="flex flex-grow border border-gray-700 rounded-md overflow-hidden mx-0">
+                  <div className="flex flex-grow border border-gray-300 rounded-md overflow-hidden mx-0">
                     <input
                       type="text"
                       placeholder="YouTube URL..."
-                      className="flex-1 px-4 py-2.5 bg-transparent text-gray-700 placeholder-gray-400 border-none outline-none"
+                      className="flex-1 px-4 py-2.5 bg-white text-gray-700 placeholder-gray-400 border-none outline-none"
                       value={videoUrl}
                       onChange={(e) => setVideoUrl(e.target.value)}
                     />
@@ -106,7 +106,7 @@ const WatchVideo = () => {
                   </div>
                   <button
                     type="submit"
-                    className="bg-[#7C3AED] text-white px-6 py-2.5 rounded-md hover:bg-purple-600 transition-colors shadow-md font-medium"
+                    className="bg-purple-600 text-white px-6 py-2.5 rounded-md hover:bg-purple-700 transition-colors shadow-md font-medium"
                   >
                     Watch
                   </button>
@@ -139,16 +139,16 @@ const WatchVideo = () => {
           </div>
           
           {/* Chat Section */}
-          <div className="bg-[#1e293b] rounded-lg shadow overflow-hidden border border-gray-700 flex flex-col" style={{ height: videoUrl ? '573px' : '573px' }}>
-            <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-              <h2 className="font-semibold text-white">Live Chat</h2>
+          <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200 flex flex-col" style={{ height: videoUrl ? '573px' : '573px' }}>
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <h2 className="font-semibold text-gray-800">Live Chat</h2>
               <div className="flex items-center">
                 <span className={`h-3 w-3 rounded-full mr-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                <span className="text-sm text-gray-400">{isConnected ? 'Connected' : 'Disconnected'}</span>
+                <span className="text-sm text-gray-600">{isConnected ? 'Connected' : 'Disconnected'}</span>
               </div>
             </div>
             
-            <div className="flex-1 p-4 space-y-4 bg-[#0f172a] overflow-y-auto chat-messages">
+            <div className="flex-1 p-4 space-y-4 bg-gray-50 overflow-y-auto chat-messages">
               {chatMessages.length === 0 ? (
                 <div className="text-center text-gray-400 mt-8">
                   <p>No messages yet</p>
@@ -191,13 +191,13 @@ const WatchVideo = () => {
               )}
             </div>
             
-            <div className="p-4 border-t border-gray-700 bg-[#1e293b]">
+            <div className="p-4 border-t border-gray-200 bg-white">
               <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <div className="flex-1 flex items-center bg-[#0f172a] border border-gray-600 rounded-lg overflow-hidden">
+                <div className="flex-1 flex items-center bg-gray-50 border border-gray-300 rounded-lg overflow-hidden">
                   <input
                     type="text"
                     placeholder={isCodeMessage ? "Type your code here..." : "Type message..."}
-                    className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none"
+                    className="flex-1 px-4 py-2.5 bg-transparent text-gray-700 placeholder-gray-400 outline-none"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                   />
@@ -214,7 +214,7 @@ const WatchVideo = () => {
                 </div>
                 <button
                   type="submit"
-                  className="bg-[#7C3AED] text-white px-6 py-2.5 rounded-lg hover:bg-purple-600 transition-colors shadow-md font-medium"
+                  className="bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 transition-colors shadow-md font-medium"
                 >
                   Send
                 </button>
