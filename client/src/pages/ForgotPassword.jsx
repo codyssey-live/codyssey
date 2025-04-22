@@ -15,9 +15,9 @@ const ForgotPassword = () => {
       {/* Logo in the upper-left corner */}
       <div className="absolute top-6 left-6">
         <img
-          src="/images/codyssey-removebg-preview.png"
+          src="/logo.svg"
           alt="Codyssey Logo"
-          className="h-10"
+          className="h-20"
         />
       </div>
       <div className="bg-[#1e293b] p-8 rounded-lg shadow-lg border border-gray-700 w-full max-w-sm">

@@ -14,14 +14,14 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <span className="text-2xl font-bold cursor-default">LeetRoom</span>
+              <Link to="/" className="text-xl font-bold">Codyssey</Link>
             </div>
             <div className="hidden md:block ml-10">
-              <div className="flex items-baseline space-x-4">
-                <Link to="/dashboard" className="px-5 py-3 rounded-lg text-base font-medium bg-[#2a3c63]">Dashboard</Link>
-                <Link to="/syllabus" className="px-5 py-3 rounded-lg text-base font-medium bg-[#2a3c63]">Syllabus</Link>
-                <Link to="/watch-video" className="px-5 py-3 rounded-lg text-base font-medium bg-[#2a3c63]">Video Watch</Link>
-                <Link to="/collab-room" className="px-5 py-3 rounded-lg text-base font-medium bg-[#2a3c63]">Collab Room</Link>
+              <div className="flex items-baseline space-x-3">
+                <Link to="/dashboard" className="px-4 py-2 rounded-lg text-sm font-medium bg-[#2a3c63]">Dashboard</Link>
+                <Link to="/syllabus" className="px-4 py-2 rounded-lg text-sm font-medium bg-[#2a3c63]">Syllabus</Link>
+                <Link to="/watch-video" className="px-4 py-2 rounded-lg text-sm font-medium bg-[#2a3c63]">Video Watch</Link>
+                <Link to="/collab-room" className="px-4 py-2 rounded-lg text-sm font-medium bg-[#2a3c63]">Collab Room</Link>
               </div>
             </div>
           </div>
