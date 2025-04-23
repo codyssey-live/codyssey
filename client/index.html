@@ -1,16 +1,44 @@
 <!doctype html>
-<html lang="en" class="bg-[#94C3D2]">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Codyssey - Collaborative Learning</title>
-    <!-- Add Tailwind CSS from CDN for more reliable loading -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Update to latest Tailwind CSS version -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css" rel="stylesheet">
     <style>
-      html, body, #root {
-        background-color: #94C3D2 !important; /* Updated to exact hex color */
-        color: black !important;
+      body {
+        background-color: #E8F1F7;
+        color: #1f2937;
+      }
+      
+      /* Dashboard specific styles with high priority */
+      .dashboard-bg { 
+        background-color: #E8F1F7 !important; 
+      }
+      
+      .dashboard-card, 
+      .stat-card, 
+      .distribution-card, 
+      .platform-card, 
+      .problem-list { 
+        background-color: #dbeafe !important;
+      }
+      
+      .problem-list tr {
+        background-color: #94C3D2 !important;
+        border-radius: 0.5rem;
+        margin: 8px 0;
+      }
+      
+      @keyframes fillProgress {
+        from { width: 0; }
+        to { width: 100%; }
+      }
+      
+      .progress-bar-fill {
+        animation: fillProgress 1s ease-out;
       }
     </style>
     <script>
@@ -19,22 +47,14 @@
           if (label === 'json') {
             return './json.worker.js';
           }
-          if (label === 'css' || label === 'scss' || label === 'less') {
-            return './css.worker.js';
-          }
-          if (label === 'html' || label === 'handlebars' || label === 'razor') {
-            return './html.worker.js';
-          }
-          if (label === 'typescript' || label === 'javascript') {
-            return './ts.worker.js';
-          }
+          // Add more workers as needed
           return './editor.worker.js';
         }
       };
     </script>
   </head>
-  <body class="bg-[#94C3D2] text-black">
-    <div id="root" class="bg-[#94C3D2]"></div>
+  <body>
+    <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
