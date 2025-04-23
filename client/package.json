@@ -11,8 +11,11 @@
   "dependencies": {
     "@monaco-editor/react": "^4.5.1",
     "@tailwindcss/vite": "^4.1.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "date-fns": "^2.30.0",
     "framer-motion": "^12.7.4",
+    "lucide-react": "^0.503.0",
     "react": "^18.2.0",
     "react-calendar": "^4.8.0",
     "react-dom": "^18.2.0",
@@ -21,6 +24,7 @@
     "tailwindcss": "^4.1.4"
   },
   "devDependencies": {
+    "@types/node": "^22.14.1",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.3",
