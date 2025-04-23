@@ -1,19 +1,14 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import path from "path"
+import tailwindcss from "@tailwindcss/vite"
+import react from "@vitejs/plugin-react"
+import { defineConfig } from "vite"
 
-// Custom inline plugin to handle tailwind without external package
-const tailwindInline = {
-  name: 'tailwind-inline',
-  transform(code, id) {
-    if (id.endsWith('.css') && code.includes('@tailwind')) {
-      return {
-        code: code,
-        map: null
-      };
-    }
-  }
-};
-
+// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindInline],
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
 })

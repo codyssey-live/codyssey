@@ -109,7 +109,7 @@
 }
 
 /* Make sure all card backgrounds are consistent */
-.bg-[#dbeafe] {
+.bg-dbeafe {
   background-color: #dbeafe !important;
 }
 
@@ -119,10 +119,10 @@
 }
 
 /* Fix tables in problem list */
-.bg-[#dbeafe] th,
-.bg-[#dbeafe] td,
-.bg-[#dbeafe] thead,
-.bg-[#dbeafe] tbody {
+.bg-dbeafe th,
+.bg-dbeafe td,
+.bg-dbeafe thead,
+.bg-dbeafe tbody {
   background-color: #dbeafe !important;
 }
 
