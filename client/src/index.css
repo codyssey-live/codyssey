@@ -1,135 +1,23 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+@import "tailwindcss";
 body {
-  background-color: #94C3D2 !important; /* Updated background color */
+  background-color: #E8F1F7 !important; /* Updated background color */
   color: #1f2937 !important; /* text-gray-800 */
 }
 
 html, body, #root {
-  background-color: #94C3D2 !important;
+  background-color: #E8F1F7 !important;
 }
 
 /* Force dark backgrounds to be light blue */
 .bg-\[\#0f172a\], .bg-\[\#1e293b\], .bg-\[\#111827\], .bg-\[\#141b2d\], .bg-\[\#2a3c63\], .bg-gray-800, .bg-gray-900, .dark-card, .bg-blue-50 {
-  background-color: #94C3D2 !important; /* Updated to use the exact hex color */
+  background-color: #E8F1F7 !important; /* Updated to use the exact hex color */
   color: #1f2937 !important; /* text-gray-800 */
 }
 
 /* Fix white backgrounds for light mode */
 .bg-white, .bg-gray-50, .bg-gray-100 {
-  background-color: #94C3D2 !important;
+  background-color: #E8F1F7 !important;
   color: #1f2937 !important; /* text-gray-800 */
-}
-
-/* Fix text colors for light backgrounds */
-.text-white, .text-gray-400, .text-gray-300, .text-gray-100, .text-gray-200 {
-  color: #1f2937 !important; /* text-gray-800 */
-}
-
-/* Fix borders for light mode */
-.border-gray-700 {
-  border-color: #d1d5db !important; /* border-gray-300 */
-}
-
-/* Fix input fields for light mode */
-input, textarea, select {
-  background-color: #ffffff !important;
-  color: #1f2937 !important;
-  border-color: #d1d5db !important; /* border-gray-300 */
-}
-
-/* Remove hover effects by using hover colors as default */
-.hover\:bg-purple-600 {
-  background-color: #9333ea !important;
-}
-
-.hover\:bg-blue-700 {
-  background-color: #1d4ed8 !important;
-}
-
-.hover\:bg-green-700 {
-  background-color: #15803d !important;
-}
-
-.hover\:bg-red-700 {
-  background-color: #b91c1c !important;
-}
-
-.hover\:bg-gray-700 {
-  background-color: #374151 !important;
-}
-
-.hover\:bg-indigo-700 {
-  background-color: #4338ca !important;
-}
-
-.hover\:text-blue-300 {
-  color: #93c5fd !important;
-}
-
-.hover\:text-gray-300 {
-  color: #d1d5db !important;
-}
-
-.hover\:text-red-300 {
-  color: #fca5a5 !important;
-}
-
-.transition-colors {
-  transition-property: none !important;
-}
-
-/* Hide scrollbars but maintain functionality */
-.overflow-y-auto {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-}
-
-.overflow-y-auto::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
-}
-
-/* Override table colors */
-th, td {
-  color: #1f2937 !important;
-}
-
-table, thead, tbody {
-  background-color: #ffffff !important;
-}
-
-/* Override dark mode base styles */
-@layer base {
-  body {
-    @apply bg-blue-50 text-gray-800;
-  }
-}
-
-/* Update custom dark mode styles to light mode */
-.dark-card {
-  @apply bg-[#eff6ff] border border-gray-300 rounded-lg shadow-lg;
-}
-
-.dark-input {
-  @apply bg-white border border-gray-300 text-gray-800 placeholder-gray-500 focus:ring-purple-500 focus:border-purple-500;
-}
-
-/* Hide scrollbar for chat container while keeping functionality */
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari and Opera */
-}
-
-/* Add to your existing CSS */
-
-.bg-blue-50 {
-  background-color: #94C3D2 !important;
 }
 
 /* Override specific dashboard card colors */
@@ -158,4 +46,9 @@ table, thead, tbody {
 .bg-\[\#dbeafe\] thead,
 .bg-\[\#dbeafe\] tbody {
   background-color: #dbeafe !important;
+}
+
+/* Force background color */
+html body .dashboard-bg {
+  background-color: #E8F1F7 !important;
 }
