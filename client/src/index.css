@@ -294,6 +294,51 @@ table, thead, tbody {
   color: #4b5563 !important;
 }
 
+/* Code snippet styling for consistency across all pages */
+.code-snippet {
+  background-color: black;
+  color: #f8f8f2;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.code-snippet code {
+  color: #f8f8f2;
+}
+
+/* Consistent form styling */
+.form-input {
+  background-color: #E8F1F7;
+  border-color: #e2e8f0;
+  color: #1f2937;
+}
+
+.form-input:focus {
+  border-color: #94C3D2;
+  box-shadow: 0 0 0 2px rgba(148, 195, 210, 0.3);
+}
+
+/* Button styles */
+.btn-primary {
+  background-color: #94C3D2;
+  color: white;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* Card styles */
+.app-card {
+  background-color: #dbeafe;
+  border-color: #e2e8f0;
+  border-radius: 0.5rem;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

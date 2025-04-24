@@ -71,7 +71,7 @@ const WatchVideo = () => {
   };
 
   return (
-    <div className="min-h-screen bg-blue-50">
+    <div className="min-h-screen bg-[#E8F1F7]">
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
@@ -80,20 +80,20 @@ const WatchVideo = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Video Player Section */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+            <div className="bg-[#dbeafe] rounded-lg shadow overflow-hidden border border-gray-200">
               <div className="px-0 pt-4 pb-4">
                 <form onSubmit={handleSubmitUrl} className="flex items-center gap-2 px-4 mb-4">
                   <div className="flex flex-grow border border-gray-300 rounded-md overflow-hidden mx-0">
                     <input
                       type="text"
                       placeholder="YouTube URL..."
-                      className="flex-1 px-4 py-2.5 bg-white text-gray-700 placeholder-gray-400 border-none outline-none"
+                      className="flex-1 px-4 py-2.5 bg-[#E8F1F7] text-gray-700 placeholder-gray-400 border-none outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2]"
                       value={videoUrl}
                       onChange={(e) => setVideoUrl(e.target.value)}
                     />
                     <button
                       type="button"
-                      className="px-4 py-2.5 text-blue-600 hover:bg-gray-100 transition-colors"
+                      className="px-4 py-2.5 text-gray-700 hover:bg-gray-100 transition-colors"
                       onClick={() => {
                         const clipboardText = navigator.clipboard.readText();
                         clipboardText.then(text => setVideoUrl(text));
@@ -106,7 +106,7 @@ const WatchVideo = () => {
                   </div>
                   <button
                     type="submit"
-                    className="bg-purple-600 text-white px-6 py-2.5 rounded-md hover:bg-purple-700 transition-colors shadow-md font-medium"
+                    className="bg-[#94C3D2] text-white px-6 py-2.5 rounded-md hover:bg-opacity-90 transition-colors shadow-md font-medium"
                   >
                     Watch
                   </button>
@@ -114,7 +114,7 @@ const WatchVideo = () => {
               </div>
               
               {videoUrl ? (
-                <div className="w-full border-t border-gray-700">
+                <div className="w-full border-t border-gray-200">
                 <iframe
                   className="video-iframe rounded-lg"
                   width="100%"
@@ -126,7 +126,7 @@ const WatchVideo = () => {
                 ></iframe>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-[500px] bg-gray-100 text-gray-500 border-t border-gray-700">
+                <div className="flex items-center justify-center h-[500px] bg-[#E8F1F7] text-gray-500 border-t border-gray-200">
                   <div className="text-center">
                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -139,7 +139,7 @@ const WatchVideo = () => {
           </div>
           
           {/* Chat Section */}
-          <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200 flex flex-col" style={{ height: videoUrl ? '573px' : '573px' }}>
+          <div className="bg-[#dbeafe] rounded-lg shadow overflow-hidden border border-gray-200 flex flex-col" style={{ height: videoUrl ? '573px' : '573px' }}>
             <div className="p-4 border-b border-gray-200 flex justify-between items-center">
               <h2 className="font-semibold text-gray-800">Live Chat</h2>
               <div className="flex items-center">
@@ -148,7 +148,7 @@ const WatchVideo = () => {
               </div>
             </div>
             
-            <div className="flex-1 p-4 space-y-4 bg-gray-50 overflow-y-auto chat-messages">
+            <div className="flex-1 p-4 space-y-4 bg-[#E8F1F7] overflow-y-auto chat-messages">
               {chatMessages.length === 0 ? (
                 <div className="text-center text-gray-400 mt-8">
                   <p>No messages yet</p>
@@ -159,29 +159,29 @@ const WatchVideo = () => {
                   <div key={message.id} className={`flex items-start space-x-3 ${message.user === 'You' ? 'justify-end ml-12' : 'mr-12'}`}>
                     {message.user !== 'You' && (
                       <div className="flex-shrink-0">
-                        <span className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                        <span className="h-8 w-8 rounded-full bg-[#94C3D2] flex items-center justify-center text-white font-bold">
                           {message.user.charAt(0)}
                         </span>
                       </div>
                     )}
                     <div className="flex flex-col">
                       <div className={`flex items-center ${message.user === 'You' ? 'justify-end' : ''}`}>
-                        <span className={`font-medium ${message.user === 'You' ? 'text-purple-400' : 'text-blue-400'}`}>{message.user}</span>
+                        <span className={`font-medium ${message.user === 'You' ? 'text-gray-700' : 'text-gray-700'}`}>{message.user}</span>
                         <span className="text-xs text-gray-400 ml-2">{message.timestamp}</span>
                       </div>
                       {message.isCode ? (
-                        <pre className={`p-3 rounded-lg text-sm bg-gray-900 text-gray-100 font-mono overflow-x-auto whitespace-pre-wrap ${message.user === 'You' ? 'rounded-tr-none' : 'rounded-tl-none'}`}>
-                          <code>{message.text}</code>
+                        <pre className={`p-3 rounded-lg text-sm bg-black font-mono overflow-x-auto whitespace-pre-wrap ${message.user === 'You' ? 'rounded-tr-none' : 'rounded-tl-none'}`} style={{color: '#f8f8f2'}}>
+                          <code style={{color: '#f8f8f2'}}>{message.text}</code>
                         </pre>
                       ) : (
-                        <p className={`p-3 rounded-lg text-sm ${message.user === 'You' ? 'bg-purple-500 text-white rounded-tr-none' : 'bg-gray-700 text-white rounded-tl-none'}`}>
+                        <p className={`p-3 rounded-lg text-sm ${message.user === 'You' ? 'bg-[#94C3D2] text-gray-800 rounded-tr-none' : 'bg-[#dbeafe] text-gray-800 rounded-tl-none'}`}>
                           {message.text}
                         </p>
                       )}
                     </div>
                     {message.user === 'You' && (
                       <div className="flex-shrink-0">
-                        <span className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">
+                        <span className="h-8 w-8 rounded-full bg-[#94C3D2] flex items-center justify-center text-white font-bold">
                           {message.user.charAt(0)}
                         </span>
                       </div>
@@ -191,20 +191,20 @@ const WatchVideo = () => {
               )}
             </div>
             
-            <div className="p-4 border-t border-gray-200 bg-white">
+            <div className="p-4 border-t border-gray-200 bg-[#dbeafe]">
               <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <div className="flex-1 flex items-center bg-gray-50 border border-gray-300 rounded-lg overflow-hidden">
+                <div className="flex-1 flex items-center bg-[#E8F1F7] border border-gray-300 rounded-lg overflow-hidden">
                   <input
                     type="text"
                     placeholder={isCodeMessage ? "Type your code here..." : "Type message..."}
-                    className="flex-1 px-4 py-2.5 bg-transparent text-gray-700 placeholder-gray-400 outline-none"
+                    className="flex-1 px-4 py-2.5 bg-transparent text-gray-700 placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2]"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                   />
                   <button
                     type="button"
                     onClick={() => setIsCodeMessage(!isCodeMessage)}
-                    className={`px-2 mx-2 ${isCodeMessage ? 'text-blue-400' : 'text-gray-400'} hover:text-blue-500 transition-colors`}
+                    className={`px-2 mx-2 ${isCodeMessage ? 'text-[#94C3D2]' : 'text-gray-400'} hover:text-[#94C3D2] transition-colors`}
                     title={isCodeMessage ? "Switch to regular message" : "Switch to code message"}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -214,7 +214,7 @@ const WatchVideo = () => {
                 </div>
                 <button
                   type="submit"
-                  className="bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 transition-colors shadow-md font-medium"
+                  className="bg-[#94C3D2] text-white px-6 py-2.5 rounded-lg hover:bg-opacity-90 transition-colors shadow-md font-medium"
                 >
                   Send
                 </button>
