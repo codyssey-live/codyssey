@@ -4,11 +4,29 @@ import { motion } from "framer-motion";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setIsLoading(true);
     // Add logic to handle password reset
     console.log("Password reset request submitted for:", email);
+    setTimeout(() => {
+      setIsLoading(false);
+      setSubmitted(true);
+    }, 2000);
+  };
+
+  const handleResend = () => {
+    setResendLoading(true);
+    // Add logic to handle resending email
+    console.log("Resend password reset request for:", email);
+    setTimeout(() => {
+      setResendLoading(false);
+    }, 2000);
   };
 
   return (

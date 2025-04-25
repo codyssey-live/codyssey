@@ -222,7 +222,7 @@ const CollabRoom = () => {
   };
 
   return (
-    <div className="min-h-screen bg-blue-50 text-gray-800">
+    <div className="min-h-screen bg-[#E8F1F7] text-gray-800">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
@@ -230,7 +230,7 @@ const CollabRoom = () => {
         </div>
 
         {problemLink && (
-          <div className="bg-white rounded-lg p-4 mb-6 border border-gray-200">
+          <div className="bg-[#dbeafe] rounded-lg p-4 mb-6 border border-gray-200">
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-lg font-medium text-gray-800">Problem Link</h2>
@@ -239,7 +239,7 @@ const CollabRoom = () => {
               <div className="flex space-x-3">
                 <button 
                   onClick={toggleSolved} 
-                  className={`px-4 py-2 rounded-lg text-white ${isSolved ? 'bg-green-600' : isSavedForLater ? 'bg-gray-400 cursor-not-allowed opacity-60' : 'bg-gray-500 hover:bg-gray-600'}`}
+                  className={`px-4 py-2 rounded-lg text-white ${isSolved ? 'bg-green-600' : isSavedForLater ? 'bg-gray-400 cursor-not-allowed opacity-60' : 'bg-[#94C3D2] hover:bg-opacity-90'}`}
                   disabled={isSavedForLater}
                   title={isSavedForLater ? "Cannot mark as solved when saved for later" : ""}
                 >
@@ -247,13 +247,13 @@ const CollabRoom = () => {
                 </button>
                 <button 
                   onClick={toggleSaveForLater} 
-                  className={`px-4 py-2 rounded-lg text-white ${isSavedForLater ? 'bg-purple-600' : isSolved ? 'bg-gray-400 cursor-not-allowed opacity-60' : 'bg-gray-500 hover:bg-gray-600'}`}
+                  className={`px-4 py-2 rounded-lg text-white ${isSavedForLater ? 'bg-yellow-600' : isSolved ? 'bg-gray-400 cursor-not-allowed opacity-60' : 'bg-[#94C3D2] hover:bg-opacity-90'}`}
                   disabled={isSolved}
                   title={isSolved ? "Cannot save for later when marked as solved" : ""}
                 >
                   {isSavedForLater ? '★ Saved' : 'Save for Later'}
                 </button>
-                <a href={problemLink} target="_blank" rel="noopener noreferrer" className="bg-blue-600 text-white px-5 py-2 rounded-lg">Open Problem</a>
+                <a href={problemLink} target="_blank" rel="noopener noreferrer" className="bg-[#94C3D2] text-white px-5 py-2 rounded-lg hover:bg-opacity-90">Open Problem</a>
               </div>
             </div>
           </div>
@@ -262,20 +262,20 @@ const CollabRoom = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Code Editor Section */}
           <div className="lg:col-span-2">
-            <div className="bg-[#1e293b] rounded-lg overflow-hidden border border-gray-700">
-              <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+            <div className="bg-[#dbeafe] rounded-lg overflow-hidden border border-gray-200">
+              <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                 <h2 className="font-semibold">Code Editor</h2>
                 <select
                   value={language}
                   onChange={(e) => handleLanguageChange(e.target.value)}
-                  className="px-3 py-2 bg-[#111827] border border-gray-600 rounded-lg text-white"
+                  className="px-3 py-2 bg-[#E8F1F7] border border-gray-200 rounded-lg text-gray-800"
                 >
                   {languages.map(lang => (
                     <option key={lang.id} value={lang.id}>{lang.name}</option>
                   ))}
                 </select>
               </div>
-              <div className="border-t border-gray-700" style={{ height: '500px' }}>
+              <div className="border-t border-gray-200" style={{ height: '500px' }}>
                 <Editor
                   height="100%"
                   defaultLanguage={getMonacoLanguage(language)}
@@ -297,10 +297,10 @@ const CollabRoom = () => {
                   }}
                 />
               </div>
-              <div className="p-4 border-t border-gray-700 flex justify-end space-x-2">
+              <div className="p-4 border-t border-gray-200 flex justify-end space-x-2">
                 <button 
                   onClick={copyCode}
-                  className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-3 py-2 bg-[#94C3D2] text-white rounded-lg hover:bg-opacity-90"
                   title="Copy code"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -309,24 +309,24 @@ const CollabRoom = () => {
                 </button>
                 <button 
                   onClick={handlePasteCode} // Ensure this button uses handlePasteCode
-                  className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                  className="px-3 py-2 bg-[#94C3D2] text-white rounded-lg hover:bg-opacity-90"
                   title="Paste code"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </button>
               </div>
             </div>
 
             {/* Notes Section */}
-            <div className="mt-6 bg-[#1e293b] rounded-lg overflow-hidden border border-gray-700">
-              <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+            <div className="mt-6 bg-[#dbeafe] rounded-lg overflow-hidden border border-gray-200">
+              <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                 <h2 className="font-semibold">Notes</h2>
                 <div className="flex space-x-2">
                   <button
                     onClick={handlePasteNotes}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-lg flex items-center"
+                    className="px-4 py-2 bg-[#94C3D2] text-white rounded-lg flex items-center hover:bg-opacity-90"
                     title="Paste from clipboard"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
@@ -334,15 +334,19 @@ const CollabRoom = () => {
                   </button>
                   <button
                     onClick={() => setShowNotesModal(true)}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg flex items-center"
+                    className="px-4 py-2 bg-[#94C3D2] text-white rounded-lg flex items-center hover:bg-opacity-90"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                     View Saved
-                    {savedNotes.length > 0 && <span className="ml-1 bg-white text-indigo-700 rounded-lg w-5 h-5 text-xs flex items-center justify-center">{savedNotes.length}</span>}
+                    {savedNotes.length > 0 && (
+                      <span className="ml-2 bg-[#dbeafe] border border-blue-300 shadow-sm rounded-full h-6 w-6 flex items-center justify-center text-blue-700 font-bold text-xs">
+                        {savedNotes.length}
+                      </span>
+                    )}
                   </button>
                   <button
                     onClick={saveNote}
-                    className="px-4 py-2 bg-[#7C3AED] text-white rounded-lg flex items-center"
+                    className="px-4 py-2 bg-[#94C3D2] text-white rounded-lg flex items-center hover:bg-opacity-90"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
                     Save Note
@@ -351,7 +355,7 @@ const CollabRoom = () => {
               </div>
               <div className="p-0" style={{ minHeight: '450px' }}>
                 <textarea
-                  className="w-full h-full p-4 font-mono text-sm bg-[#111827] text-white focus:outline-none block resize-none"
+                  className="w-full h-full p-4 font-mono text-sm bg-[#E8F1F7] text-gray-800 focus:outline-none block resize-none focus:ring-[#94C3D2] focus:border-[#94C3D2]"
                   style={{ minHeight: '450px' }}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -362,15 +366,15 @@ const CollabRoom = () => {
           </div>
 
           {/* Chat Section - Fixed height to match code editor exactly */}
-          <div className="bg-[#0f172a] rounded-lg overflow-hidden border border-gray-700 flex flex-col" style={{ height: '643px' }}>
-            <div className="bg-[#1e293b] p-4 border-b border-gray-700 flex justify-between items-center">
-              <h2 className="font-semibold">Discussion</h2>
+          <div className="bg-[#dbeafe] rounded-lg overflow-hidden border border-gray-200 flex flex-col" style={{ height: '643px' }}>
+            <div className="bg-[#dbeafe] p-4 border-b border-gray-200 flex justify-between items-center">
+              <h2 className="font-semibold text-gray-800">Discussion</h2>
               <div className="flex items-center">
                 <span className="h-3 w-3 rounded-full mr-2 bg-gray-500"></span>
-                <span className="text-sm text-gray-400">Offline</span>
+                <span className="text-sm text-gray-600">Offline</span>
               </div>
             </div>
-            <div className="flex-1 p-4 overflow-y-auto bg-[#0f172a]">
+            <div className="flex-1 p-4 overflow-y-auto bg-[#E8F1F7]">
               <div className="space-y-4">
                 {chatMessages.length === 0 ? (
                   <div className="text-center text-gray-400 mt-8">
@@ -382,29 +386,29 @@ const CollabRoom = () => {
                     <div key={message.id} className={`flex items-start space-x-3 ${message.user === 'You' ? 'justify-end ml-12' : 'mr-12'}`}>
                       {message.user !== 'You' && (
                         <div className="flex-shrink-0">
-                          <span className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                          <span className="h-8 w-8 rounded-full bg-[#94C3D2] flex items-center justify-center text-white font-bold">
                             {message.user.charAt(0)}
                           </span>
                         </div>
                       )}
                       <div className="flex flex-col">
                         <div className={`flex items-center ${message.user === 'You' ? 'justify-end' : ''}`}>
-                          <span className={`font-medium ${message.user === 'You' ? 'text-purple-400' : 'text-blue-400'}`}>{message.user}</span>
+                          <span className={`font-medium ${message.user === 'You' ? 'text-gray-700' : 'text-gray-700'}`}>{message.user}</span>
                           <span className="text-xs text-gray-400 ml-2">{message.timestamp}</span>
                         </div>
                         {message.isCode ? (
-                          <pre className={`p-3 rounded-lg text-sm bg-gray-900 text-gray-100 font-mono overflow-x-auto whitespace-pre-wrap ${message.user === 'You' ? 'rounded-tr-none' : 'rounded-tl-none'}`}>
-                            <code>{message.text}</code>
+                          <pre className={`p-3 rounded-lg text-sm bg-black font-mono overflow-x-auto whitespace-pre-wrap ${message.user === 'You' ? 'rounded-tr-none' : 'rounded-tl-none'}`} style={{color: '#f8f8f2'}}>
+                            <code style={{color: '#f8f8f2'}}>{message.text}</code>
                           </pre>
                         ) : (
-                          <p className={`p-3 rounded-lg text-sm ${message.user === 'You' ? 'bg-purple-500 text-white rounded-tr-none' : 'bg-gray-700 text-white rounded-tl-none'}`}>
+                          <p className={`p-3 rounded-lg text-sm ${message.user === 'You' ? 'bg-[#94C3D2] text-gray-800 rounded-tr-none' : 'bg-[#dbeafe] text-gray-800 rounded-tl-none'}`}>
                             {message.text}
                           </p>
                         )}
                       </div>
                       {message.user === 'You' && (
                         <div className="flex-shrink-0">
-                          <span className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">
+                          <span className="h-8 w-8 rounded-full bg-[#94C3D2] flex items-center justify-center text-white font-bold">
                             {message.user.charAt(0)}
                           </span>
                         </div>
@@ -414,12 +418,12 @@ const CollabRoom = () => {
                 )}
               </div>
             </div>
-            <div className="bg-[#1e293b] p-4 border-t border-gray-700">
+            <div className="bg-[#dbeafe] p-4 border-t border-gray-200">
               <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <div className="flex-1 flex items-center bg-[#080D17] border border-gray-700 rounded-lg overflow-hidden">
+                <div className="flex-1 flex items-center bg-[#E8F1F7] border border-gray-300 rounded-lg overflow-hidden">
                   <input
                     type="text"
-                    className="flex-1 px-4 py-2.5 bg-transparent text-white outline-none"
+                    className="flex-1 px-4 py-2.5 bg-transparent text-gray-700 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2]"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder={isCodeMessage ? "Type your code here..." : "Type a message..."}
@@ -427,7 +431,7 @@ const CollabRoom = () => {
                   <button
                     type="button"
                     onClick={() => setIsCodeMessage(!isCodeMessage)}
-                    className={`px-2 mx-2 ${isCodeMessage ? 'text-blue-400' : 'text-gray-400'} hover:text-blue-500 transition-colors`}
+                    className={`px-2 mx-2 ${isCodeMessage ? 'text-[#94C3D2]' : 'text-gray-400'} hover:text-[#94C3D2] transition-colors`}
                     title={isCodeMessage ? "Switch to regular message" : "Switch to code message"}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -437,7 +441,7 @@ const CollabRoom = () => {
                 </div>
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="bg-[#94C3D2] text-white px-6 py-2.5 rounded-lg hover:bg-opacity-90 transition-colors"
                 >
                   Send
                 </button>
@@ -448,22 +452,22 @@ const CollabRoom = () => {
 
         {/* Modal for viewing saved notes */}
         {showNotesModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg w-full max-w-3xl max-h-[80vh] overflow-hidden border border-gray-200 flex flex-col">
-              <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+          <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg w-full max-w-3xl max-h-[80vh] overflow-hidden flex flex-col shadow-xl">
+              <div className="p-4 flex justify-between items-center">
                 <h2 className="text-xl font-semibold text-gray-800">Saved Notes</h2>
                 <button
                   onClick={() => setShowNotesModal(false)}
-                  className="text-white bg-red-600 rounded-full p-2"
+                  className="text-white bg-red-600 rounded-full p-1.5 hover:bg-opacity-90"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="white"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
               <div 
-                className="p-4 overflow-y-auto flex-1 bg-white" 
+                className="p-4 overflow-y-auto flex-1" 
                 style={{ 
                   maxHeight: '60vh', 
-                  overflowY: 'scroll',
+                  overflowY: 'auto',
                   scrollbarWidth: 'thin',
                   scrollbarColor: '#d1d5db #f3f4f6'
                 }}
@@ -471,22 +475,28 @@ const CollabRoom = () => {
                 {savedNotes.length > 0 ? (
                   <ul className="space-y-4">
                     {savedNotes.map(note => (
-                      <li key={note.id} className="bg-[#111827] p-4 rounded-lg border border-gray-700">
+                      <li key={note.id} className="bg-[#E6F0FE] p-4 rounded-lg">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs text-gray-400">{formatDate(note.date)}</span>
+                          <span className="text-xs text-gray-600 font-medium">{formatDate(note.date)}</span>
                           <button
                             onClick={() => deleteNote(note.id)}
-                            className="text-white hover:text-gray-200 text-sm bg-red-600 rounded-lg px-3 py-1"
+                            style={{
+                              backgroundColor: '#ef4444',
+                              color: '#ffffff',
+                              fontWeight: '500',
+                              borderRadius: '0.375rem',
+                              padding: '0.375rem 0.75rem',
+                            }}
                           >
                             Delete
                           </button>
                         </div>
-                        <p className="text-gray-200 whitespace-pre-wrap">{note.text}</p>
+                        <p className="whitespace-pre-wrap text-gray-800 font-medium">{note.text}</p>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-gray-400 text-center">No notes saved for this problem yet.</p>
+                  <p className="text-gray-600 text-center">No notes saved for this problem yet.</p>
                 )}
               </div>
             </div>

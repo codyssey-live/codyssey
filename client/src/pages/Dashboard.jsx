@@ -5,8 +5,6 @@ import StatCard from '../components/dashboard/StatCard';
 import DistributionCard from '../components/dashboard/DistributionCard';
 import PlatformCard from '../components/dashboard/PlatformCard';
 import ProblemList from '../components/dashboard/ProblemList';
-// Import the dashboard-specific styles
-import '../components/dashboard/styles.css';
 
 const Dashboard = () => {
   // Mock data for the user
@@ -73,73 +71,92 @@ const Dashboard = () => {
     },
   ];
 
-  const [activeTab, setActiveTab] = useState('solved');
-  const [isLoaded, setIsLoaded] = useState(false);
+  // State for active tab
+  const [activeTab, setActiveTab] = useState('recent');
+  const [problems, setProblems] = useState(mockProblems);
 
-  // Add a loading effect
+  // Filter problems based on active tab
   useEffect(() => {
-    setIsLoaded(true);
-  }, []);
-
-  const filteredProblems = mockProblems.filter(problem => problem.status === activeTab);
+    if (activeTab === 'recent') {
+      setProblems(mockProblems.slice(0, 5));
+    } else if (activeTab === 'solved') {
+      setProblems(mockProblems.filter(p => p.status === 'solved'));
+    } else if (activeTab === 'unsolved') {
+      setProblems(mockProblems.filter(p => p.status === 'unsolved'));
+    } else if (activeTab === 'solveLater') {
+      setProblems(mockProblems.filter(p => p.status === 'solveLater'));
+    }
+  }, [activeTab]);
 
   return (
-    <div className="min-h-screen bg-[#94C3D2]">
+    <div className="min-h-screen bg-[#E8F1F7]">
       <Navbar />
       <Header userName={userData.name} />
       
-      <main className="container mx-auto px-4 py-8">
-        {/* Dashboard Title with animation */}
-        <div className={`mb-6 transform transition-all duration-700 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-          <h2 className="text-2xl font-bold text-gray-800">Your Dashboard</h2>
-        </div>
-
-        {/* Stats Grid with stagger animation */}
+      <div className="container mx-auto px-6 md:px-10">
+        <h2 className="text-2xl font-bold text-[#333333] mt-8 mb-6">Your Dashboard</h2>
+      </div>
+      
+      <main className="container mx-auto px-6 md:px-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className={`transform transition-all duration-700 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-            <StatCard stats={userData.stats} />
-          </div>
-          <div className={`transform transition-all duration-700 delay-200 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-            <DistributionCard distribution={userData.distribution} />
-          </div>
-          <div className={`transform transition-all duration-700 delay-300 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-            <PlatformCard platforms={userData.platforms} />
-          </div>
+          <StatCard 
+            title="Problem Status" 
+            stats={userData.stats} 
+          />
+          <DistributionCard 
+            title="Difficulty Distribution" 
+            distribution={userData.distribution} 
+          />
+          <PlatformCard 
+            title="Platform Breakdown" 
+            platforms={userData.platforms} 
+          />
         </div>
         
-        {/* Problem List Section with animation */}
-        <div 
-          className={`bg-[#dbeafe] rounded-2xl shadow-md p-6 border border-gray-200 transform transition-all duration-700 delay-400 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'} hover:shadow-lg`}
-        >
-          <div className="flex mb-6">
-            <button 
-              onClick={() => setActiveTab('solved')}
-              className={`px-4 py-2 font-medium rounded-full transition-all duration-300 ${activeTab === 'solved' 
-                ? 'bg-[#94C3D2] text-gray-800 shadow-md' 
-                : 'text-gray-600 hover:bg-gray-100'}`}
-            >
-              Solved
-            </button>
-            <button 
-              onClick={() => setActiveTab('unsolved')}
-              className={`px-4 py-2 font-medium rounded-full transition-all duration-300 ${activeTab === 'unsolved' 
-                ? 'bg-[#94C3D2] text-gray-800 shadow-md' 
-                : 'text-gray-600 hover:bg-gray-100'}`}
-            >
-              Unsolved
-            </button>
-            <button 
-              onClick={() => setActiveTab('solveLater')}
-              className={`px-4 py-2 font-medium rounded-full transition-all duration-300 ${activeTab === 'solveLater' 
-                ? 'bg-[#94C3D2] text-gray-800 shadow-md' 
-                : 'text-gray-600 hover:bg-gray-100'}`}
-            >
-              Solve Later
-            </button>
-          </div>
-          
-          <ProblemList problems={filteredProblems} />
+        <div className="mb-6 flex space-x-2">
+          <button 
+            onClick={() => setActiveTab('recent')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'recent' 
+                ? 'bg-[#94C3D2] text-gray-800 shadow' 
+                : 'bg-[#dbeafe] bg-opacity-70 text-gray-600 hover:bg-[#dbeafe]'
+            }`}
+          >
+            Recent
+          </button>
+          <button 
+            onClick={() => setActiveTab('solved')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'solved' 
+                ? 'bg-[#94C3D2] text-gray-800 shadow' 
+                : 'bg-[#dbeafe] bg-opacity-70 text-gray-600 hover:bg-[#dbeafe]'
+            }`}
+          >
+            Solved
+          </button>
+          <button 
+            onClick={() => setActiveTab('unsolved')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'unsolved' 
+                ? 'bg-[#94C3D2] text-gray-800 shadow' 
+                : 'bg-[#dbeafe] bg-opacity-70 text-gray-600 hover:bg-[#dbeafe]'
+            }`}
+          >
+            Unsolved
+          </button>
+          <button 
+            onClick={() => setActiveTab('solveLater')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'solveLater' 
+                ? 'bg-[#94C3D2] text-gray-800 shadow' 
+                : 'bg-[#dbeafe] bg-opacity-70 text-gray-600 hover:bg-[#dbeafe]'
+            }`}
+          >
+            Solve Later
+          </button>
         </div>
+        
+        <ProblemList problems={problems} />
       </main>
     </div>
   );

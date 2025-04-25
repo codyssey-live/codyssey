@@ -1,15 +1,16 @@
 @import "tailwindcss";
-@import "tw-animate-css";
+/* Remove the non-existent import */
+/* @import "tw-animate-css"; */
 
 @custom-variant dark (&:is(.dark *));
 
 body {
-  background-color: #94C3D2 !important; /* Updated background color */
+  background-color: #E8F1F7 !important; /* Updated background color */
   color: #1f2937 !important; /* text-gray-800 */
 }
 
 html, body, #root {
-  background-color: #94C3D2 !important;
+  background-color: #E8F1F7 !important;
 }
 
 /* Force dark backgrounds to be light blue */
@@ -171,22 +172,171 @@ table, thead, tbody {
   animation: fade-in 0.3s ease-out forwards;
 }
 
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
 /* Custom colors for Syllabus page */
 .syllabus-bg {
-  background-color: #E8F1F7;
+  background-color: #E8F1F7 !important;
 }
 
 .card-bg {
+  background-color: #dbeafe !important;
+}
+
+/* Syllabus page specific styles */
+.syllabus-day-card {
+  background-color: #dbeafe !important;
+  border-color: #d1d5db !important;
+}
+
+.syllabus-problem-card {
+  background-color: #94C3D2 !important;
+  border-color: #d1d5db !important;
+}
+
+.syllabus-tab-active {
+  border-color: #94C3D2 !important;
+  background-color: #dbeafe !important;
+  color: #1f2937 !important;
+}
+
+.syllabus-tab {
+  color: #4b5563 !important;
+}
+
+.syllabus-tab:hover {
+  background-color: #e0f2fe !important;
+}
+
+/* Calendar styles for Syllabus page */
+.react-calendar {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #334155 !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.react-calendar__tile {
+  color: #334155 !important;
+  background: none !important;
+}
+
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus,
+.react-calendar__tile--active {
+  background-color: #94C3D2 !important;
+  color: #1f2937 !important;
+}
+
+.react-calendar__tile--now {
+  background-color: #f1f5f9 !important;
+}
+
+.react-calendar__navigation button {
+  color: #334155 !important;
+  background: none !important;
+}
+
+.react-calendar__navigation button:disabled {
+  background-color: #f1f5f9 !important;
+}
+
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus {
+  background-color: #f1f5f9 !important;
+}
+
+/* Badge colors for difficulty levels */
+.difficulty-easy {
+  background-color: #dcfce7 !important;
+  color: #166534 !important;
+  border-color: #bbf7d0 !important;
+}
+
+.difficulty-medium {
+  background-color: #fef9c3 !important;
+  color: #854d0e !important;
+  border-color: #fef08a !important;
+}
+
+.difficulty-hard {
+  background-color: #fee2e2 !important;
+  color: #b91c1c !important;
+  border-color: #fecaca !important;
+}
+
+/* Modal styles for Syllabus page */
+.syllabus-modal {
+  background-color: #dbeafe !important;
+  color: #1f2937 !important;
+}
+
+/* Input fields for Syllabus modals */
+.syllabus-input {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #1f2937 !important;
+}
+
+.syllabus-input:focus {
+  border-color: #94C3D2 !important;
+  box-shadow: 0 0 0 2px rgba(148, 195, 210, 0.3) !important;
+}
+
+/* Button styles for Syllabus page */
+.syllabus-button-primary {
+  background-color: #94C3D2 !important;
+  color: #1f2937 !important;
+}
+
+.syllabus-button-secondary {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #4b5563 !important;
+}
+
+/* Code snippet styling for consistency across all pages */
+.code-snippet {
+  background-color: black;
+  color: #f8f8f2;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.code-snippet code {
+  color: #f8f8f2;
+}
+
+/* Consistent form styling */
+.form-input {
+  background-color: #E8F1F7;
+  border-color: #e2e8f0;
+  color: #1f2937;
+}
+
+.form-input:focus {
+  border-color: #94C3D2;
+  box-shadow: 0 0 0 2px rgba(148, 195, 210, 0.3);
+}
+
+/* Button styles */
+.btn-primary {
+  background-color: #94C3D2;
+  color: white;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* Card styles */
+.app-card {
   background-color: #dbeafe;
+  border-color: #e2e8f0;
+  border-radius: 0.5rem;
 }
 
 @theme inline {

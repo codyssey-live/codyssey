@@ -1,60 +1,75 @@
-const StatCard = ({ stats }) => {
+const StatCard = ({ title, stats, cardStyle }) => {
   const total = stats.solved + stats.unsolved + stats.solveLater;
   
   return (
-    <div className="bg-[#dbeafe] rounded-2xl shadow-md border border-gray-200 p-6 h-[300px] flex flex-col">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Problem Solving Stats</h3>
+    <div className={`bg-[#dbeafe] rounded-2xl p-6 shadow h-[300px] flex flex-col transition-all duration-300 ease-in-out hover:-translate-y-[5px] hover:shadow-lg ${cardStyle}`}>
+      <h2 className="text-lg font-semibold text-[#333333] mb-4">Problem Solving Stats</h2>
       
-      <div className="space-y-5 flex-grow">
-        {/* Solved */}
+      <div className="space-y-4 flex-grow">
         <div>
           <div className="flex justify-between mb-1">
-            <span className="text-sm font-medium text-green-600">Solved</span>
-            <span className="text-sm font-medium text-green-600">{stats.solved}</span>
+            <span className="text-sm text-[#10b981] flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-[#10b981]" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Solved
+            </span>
+            <span className="text-sm text-[#10b981]">{stats.solved}</span>
           </div>
-          <div className="w-full bg-gray-300 rounded-full h-2.5">
+          <div className="w-full bg-[#94a3b8] rounded-full h-2 overflow-hidden">
             <div 
-              className="bg-green-500 h-2.5 rounded-full" 
-              style={{ width: `${Math.round((stats.solved / total) * 100)}%` }}
+              className="bg-[#10b981] h-2 rounded-full transition-all duration-500 ease-in-out"
+              style={{ 
+                width: `${(stats.solved / total) * 100}%`
+              }}
             ></div>
           </div>
         </div>
         
-        {/* Unsolved */}
         <div>
           <div className="flex justify-between mb-1">
-            <span className="text-sm font-medium text-red-600">Unsolved</span>
-            <span className="text-sm font-medium text-red-600">{stats.unsolved}</span>
+            <span className="text-sm text-[#ef4444] flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-[#ef4444]" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              Unsolved
+            </span>
+            <span className="text-sm text-[#ef4444]">{stats.unsolved}</span>
           </div>
-          <div className="w-full bg-gray-300 rounded-full h-2.5">
+          <div className="w-full bg-[#94a3b8] rounded-full h-2 overflow-hidden">
             <div 
-              className="bg-red-500 h-2.5 rounded-full" 
-              style={{ width: `${Math.round((stats.unsolved / total) * 100)}%` }}
+              className="bg-[#ef4444] h-2 rounded-full transition-all duration-500 ease-in-out"
+              style={{ 
+                width: `${(stats.unsolved / total) * 100}%`
+              }}
             ></div>
           </div>
         </div>
         
-        {/* Solve Later */}
         <div>
           <div className="flex justify-between mb-1">
-            <span className="text-sm font-medium text-purple-600">Solve Later</span>
-            <span className="text-sm font-medium text-purple-600">{stats.solveLater}</span>
+            <span className="text-sm text-[#f59e0b] flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-[#f59e0b]" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+              </svg>
+              Solve Later
+            </span>
+            <span className="text-sm text-[#f59e0b]">{stats.solveLater}</span>
           </div>
-          <div className="w-full bg-gray-300 rounded-full h-2.5">
+          <div className="w-full bg-[#94a3b8] rounded-full h-2 overflow-hidden">
             <div 
-              className="bg-purple-500 h-2.5 rounded-full" 
-              style={{ width: `${Math.round((stats.solveLater / total) * 100)}%` }}
+              className="bg-[#f59e0b] h-2 rounded-full transition-all duration-500 ease-in-out"
+              style={{ 
+                width: `${(stats.solveLater / total) * 100}%`
+              }}
             ></div>
           </div>
         </div>
       </div>
       
-      {/* Total */}
-      <div className="pt-3 mt-auto border-t border-gray-200">
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">Total</span>
-          <span className="font-bold text-lg text-gray-800">{total}</span>
-        </div>
+      <div className="mt-4 flex justify-between items-center">
+        <span className="text-sm text-[#333333]">Total</span>
+        <span className="text-xl font-semibold text-[#333333]">{total}</span>
       </div>
     </div>
   );
