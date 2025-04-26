@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Syllabus from './pages/Syllabus';
-import WatchVideo from './pages/WatchVideo';
+import LectureRoom from './pages/LectureRoom';
 import CollabRoom from './pages/CollabRoom';
 import UserProfile from './pages/UserProfile';
 import Signup from './pages/Signup';
@@ -20,24 +20,21 @@ function App() {
     <Router>
       <div className="app min-h-screen flex flex-col">
         <div className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/syllabus" element={<Syllabus />} />
-            <Route path="/watch-video" element={<WatchVideo />} />
-            <Route path="/collab-room" element={<CollabRoom />} />
-            <Route path="/profile" element={<UserProfile />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
           </Routes>
         </div>
-        
-        {/* Don't show Footer on the Home page as it already has its own */}
         <Routes>
           <Route path="/" element={null} />
           <Route path="*" element={<Footer />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/syllabus" element={<Syllabus />} />
+          <Route path="/lecture-room" element={<LectureRoom />} />
+          <Route path="/collab-room" element={<CollabRoom />} />
+          <Route path="/profile" element={<UserProfile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
         </Routes>
       </div>
     </Router>

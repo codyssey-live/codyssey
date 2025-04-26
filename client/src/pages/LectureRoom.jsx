@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
-const WatchVideo = () => {
+const LectureRoom = () => {
   const location = useLocation();
   const [videoUrl, setVideoUrl] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
@@ -227,4 +227,4 @@ const WatchVideo = () => {
   );
 };
 
-export default WatchVideo;
+export default LectureRoom;
