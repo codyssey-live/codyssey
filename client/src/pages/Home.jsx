@@ -130,9 +130,7 @@ const Home = () => {
           ))}
         </motion.div>
       </section>
-
-      {/* Footer */}
-      <Footer />
+ 
     </div>
   );
 };
