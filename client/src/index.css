@@ -4,13 +4,53 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Apply Work Sans font to all elements */
+html, body, #root {
+  font-family: "Work Sans", sans-serif;
+  font-optical-sizing: auto;
+  background-color: #E8F1F7 !important;
+}
+
 body {
   background-color: #E8F1F7 !important; /* Updated background color */
   color: #1f2937 !important; /* text-gray-800 */
+  font-family: "Work Sans", sans-serif;
 }
 
-html, body, #root {
-  background-color: #E8F1F7 !important;
+/* Work Sans utility classes for different font weights */
+.work-sans-300 {
+  font-family: "Work Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.work-sans-400 {
+  font-family: "Work Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.work-sans-500 {
+  font-family: "Work Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.work-sans-600 {
+  font-family: "Work Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.work-sans-700 {
+  font-family: "Work Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
 }
 
 /* Force dark backgrounds to be light blue */
