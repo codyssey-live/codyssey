@@ -401,7 +401,9 @@ const UserProfile = () => {
               <div className="bg-[#dbeafe] rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Change Password</h3>
                 <p className="text-sm text-gray-600 mb-4">Update your account security by changing your password.</p>
-                <button className="bg-[#94c3d2] text-white px-4 py-2 rounded text-sm font-medium hover:bg-[#7ba9b8]">
+                <button className="bg-[#94c3d2] px-4 py-2 rounded text-sm font-medium hover:bg-[#7ba9b8]" style={{
+                  color: "white"
+                }}>
                   Change My Password
                 </button>
               </div>
@@ -410,7 +412,9 @@ const UserProfile = () => {
               <div className="bg-[#dbeafe] rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Account Deletion</h3>
                 <p className="text-sm text-gray-600 mb-4">All your profile and learning data will be permanently deleted.</p>
-                <button className="bg-red-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-600">
+                <button className="bg-red-500 px-4 py-2 rounded text-sm font-medium hover:bg-red-600" style={{
+                  color: "white"
+                }}>
                   Delete My Account
                 </button>
               </div>
