@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Syllabus from './pages/Syllabus';
-import WatchVideo from './pages/WatchVideo';
+import LectureRoom from './pages/LectureRoom';
 import CollabRoom from './pages/CollabRoom';
 import UserProfile from './pages/UserProfile';
 import Signup from './pages/Signup';
@@ -22,7 +22,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/syllabus" element={<Syllabus />} />
-          <Route path="/watch-video" element={<WatchVideo />} />
+          <Route path="/lecture-room" element={<LectureRoom />} />
           <Route path="/collab-room" element={<CollabRoom />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/settings" element={<Settings />} />
