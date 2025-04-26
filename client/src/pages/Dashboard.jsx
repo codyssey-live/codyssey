@@ -158,6 +158,9 @@ const Dashboard = () => {
         
         <ProblemList problems={problems} />
       </main>
+      
+      {/* Added margin at the bottom */}
+      <div className="pb-16"></div>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import Footer from "../components/Footer";
 
 const Home = () => {
   return (
@@ -42,7 +43,7 @@ const Home = () => {
         >
           <Link
             to="/signup"
-            className="bg-blue-500 text-white font-semibold py-3 px-8 rounded-lg shadow-sm hover:bg-blue-600 transition-all transform hover:scale-105"
+            className="bg-[#94C3d2] text-white font-semibold py-3 px-8 rounded-lg shadow-sm hover:bg-opacity-90 transition-all transform hover:scale-105"
           >
             Get Started
           </Link>
@@ -120,7 +121,7 @@ const Home = () => {
                 visible: { opacity: 1, y: 0 }
               }}
             >
-              <div className="bg-blue-500 text-white w-12 h-12 flex items-center justify-center rounded-full text-lg font-bold mb-4 shadow-sm">
+              <div className="bg-[#94c3d2] text-white w-12 h-12 flex items-center justify-center rounded-full text-lg font-bold mb-4 shadow-sm">
                 {item.step}
               </div>
               <h3 className="text-xl font-semibold mb-2 text-black">{item.title}</h3>
@@ -130,49 +131,8 @@ const Home = () => {
         </motion.div>
       </section>
 
-      {/* Preview Section */}
-      <section className="py-20 px-6 bg-blue-50">
-        <h2 className="text-3xl font-bold text-center mb-12 text-black">Preview</h2>
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={{
-            hidden: { opacity: 0, scale: 0.8 },
-            visible: { opacity: 1, scale: 1, transition: { staggerChildren: 0.2 } },
-          }}
-        >
-          {["Dashboard", "Collaboration Room", "Daily Plan"].map((title, index) => (
-            <motion.div
-              key={index}
-              className="bg-indigo-100 p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all"
-              whileHover={{ scale: 1.05 }}
-              variants={{
-                hidden: { opacity: 0, scale: 0.9 },
-                visible: { opacity: 1, scale: 1 }
-              }}
-            >
-              <h3 className="text-xl font-semibold mb-4 text-black">{title}</h3>
-              <div className="h-40 bg-purple-100 rounded-lg"></div>
-            </motion.div>
-          ))}
-        </motion.div>
-      </section>
-
       {/* Footer */}
-      <footer className="bg-indigo-100 py-8 text-center text-black mt-auto">
-        <div className="max-w-6xl mx-auto px-6">
-          <p>© {new Date().getFullYear()} Codyssey. All rights reserved.</p>
-          <div className="flex justify-center space-x-6 mt-4">
-            <Link to="/about" className="hover:text-blue-600 transition-colors">About</Link>
-            <Link to="/contact" className="hover:text-blue-600 transition-colors">Contact</Link>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">GitHub</a>
-            <Link to="/feedback" className="hover:text-blue-600 transition-colors">Feedback</Link>
-            <Link to="/terms" className="hover:text-blue-600 transition-colors">Terms</Link>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
