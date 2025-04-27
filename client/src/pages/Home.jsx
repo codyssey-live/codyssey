@@ -74,8 +74,8 @@ const Home = () => {
             { icon: "🎥", title: "Watch Videos Together", description: "Learn with curated tutorials in synchronized viewing sessions." },
             { icon: "💬", title: "Real-time Chat & Code Sharing", description: "Share and review code seamlessly with integrated tools." },
             { icon: "📊", title: "Track Your Progress", description: "Monitor your learning journey with detailed analytics." },
-            { icon: "📁", title: "Annual Report Portal", description: "Access comprehensive reports of your growth over time." },
-            { icon: "🧠", title: "Smart Dashboard", description: "Get personalized insights and recommendations for improvement." },
+            { icon: "📚", title: "Syllabus & Study Tracker", description: "Plan, Learn, and Achieve your goals with personalized daily tasks and progress tracking." },
+            { icon: "📈", title: "Problem Dashboard", description: "Track problem-solving metrics by difficulty and platform to optimize your learning journey." },
           ].map((feature, index) => (
             <motion.div
               key={index}
