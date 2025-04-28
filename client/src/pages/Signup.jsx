@@ -41,12 +41,12 @@ const Signup = () => {
     try {
       // First check if server is reachable with a simple ping
       try {
-        await fetch('http://localhost:5000/api/healthcheck', { method: 'GET' });
+        await fetch('http://localhost:8080/api/healthcheck', { method: 'GET' });
       } catch (pingErr) {
         throw new Error('Server appears to be offline or unreachable. Please check if the backend server is running.');
       }
       
-      const response = await fetch('http://localhost:5000/api/auth/signup', {
+      const response = await fetch('http://localhost:8080/api/auth/signup', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
