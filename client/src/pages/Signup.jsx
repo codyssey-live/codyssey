@@ -52,6 +52,7 @@ const Signup = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password
+
       });
       
       console.log('Server response received:', response.status);
