@@ -16,23 +16,34 @@ export const signup = async (req, res) => {
   }
 
   try {
+    // Only check for duplicate email since we don't require unique names
     const userExist = await User.findOne({ email });
     if (userExist) {
       return res.status(400).json({ message: 'Email already in use. Please use another email address.' });
     }
 
     // Create password hash
-    const hashedPassword = await bcrypt.hash(password, 12); // Increased rounds for security
+    const hashedPassword = await bcrypt.hash(password, 12);
     
-    // Create new user with error handling
+    // Create new user
     const user = await User.create({ 
       name, 
       email, 
       password: hashedPassword 
     }).catch(err => {
-      // Handle duplicate key error specifically for email
+      console.error('Database error during user creation:', err);
+      
+      // If there's a MongoDB duplicate key error
       if (err.code === 11000) {
-        throw new Error(`Email already exists. Please use another email address.`);
+        // Only email should trigger a duplicate key error
+        if (err.keyPattern && err.keyPattern.email) {
+          throw new Error('Email already exists. Please use another email address.');
+        } else if (err.keyPattern && err.keyPattern.name) {
+          // This means there's still a unique index on the name field in MongoDB
+          throw new Error('There is a database configuration issue with user names. Please contact support.');
+        } else {
+          throw new Error(`Duplicate key error on field: ${Object.keys(err.keyPattern || {}).join(', ')}`);
+        }
       }
       throw err;
     });
