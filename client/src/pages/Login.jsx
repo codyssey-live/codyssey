@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import apiClient from '../utils/apiClient'; // Import the API client instead of axios
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -23,23 +24,22 @@ const Login = () => {
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: formData.email, 
-          password: formData.password 
-        })
+      // Use apiClient instead of axios with full URL
+      const response = await apiClient.post('/auth/login', { 
+        email: formData.email, 
+        password: formData.password 
       });
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
+      // With axios, data is directly available in response.data
+      const data = response.data;
       
       // Store token in localStorage
       localStorage.setItem('token', data.token);
+      
+      // Also store the user's name for displaying on dashboard
+      if (data.user && data.user.name) {
+        localStorage.setItem('userName', data.user.name);
+      }
       
       // Show success message
       alert('Logged in successfully!');
@@ -48,8 +48,10 @@ const Login = () => {
       navigate('/dashboard');
       
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
-      alert(err.message || 'Login failed. Please try again.');
+      // Axios specific error handling
+      const errorMessage = err.response?.data?.message || err.message || 'Login failed. Please try again.';
+      setError(errorMessage);
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }

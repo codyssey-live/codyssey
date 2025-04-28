@@ -7,9 +7,12 @@ import PlatformCard from '../components/dashboard/PlatformCard';
 import ProblemList from '../components/dashboard/ProblemList';
 
 const Dashboard = () => {
-  // Mock data for the user
+  // Get the user's name from localStorage
+  const userName = localStorage.getItem('userName') || 'User';
+  
+  // Mock data for the user - keeping stats but using real name
   const userData = {
-    name: 'John Doe',
+    name: userName,
     stats: {
       solved: 78,
       unsolved: 45,
