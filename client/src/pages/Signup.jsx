@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import apiClient from '../utils/apiClient'; // Import the API client instead of axios
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -21,14 +22,14 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Enhanced validation
+    // Enhanced validation (keep existing validation)
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords don't match");
       alert("Passwords don't match");
       return;
     }
     
-    // Add password length validation
+    // Add password length validation (keep existing validation)
     if (formData.password.length < 8) {
       setError("Password must be at least 8 characters long");
       alert("Password must be at least 8 characters long");
@@ -41,61 +42,54 @@ const Signup = () => {
     try {
       // First check if server is reachable with a simple ping
       try {
-        await fetch('http://localhost:5000/api/healthcheck', { method: 'GET' });
+        await apiClient.get('/healthcheck');
       } catch (pingErr) {
         throw new Error('Server appears to be offline or unreachable. Please check if the backend server is running.');
       }
       
-      const response = await fetch('http://localhost:5000/api/auth/signup', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          // Adding these headers can help with CORS issues
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password
-        })
+      // Use apiClient instead of axios with full URL
+      const response = await apiClient.post('/auth/signup', {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
       });
       
       console.log('Server response received:', response.status);
       
-      // For non-JSON responses
-      if (!response.ok && response.status !== 400) {
-        if (response.status === 0) {
-          throw new Error('Network error: Failed to connect to the server');
-        } else if (response.status === 404) {
-          throw new Error('API endpoint not found. Check server routes.');
-        } else if (response.status === 500) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('Server error details:', errorData);
-          throw new Error(errorData.message || 'Server error: Database connection issue or invalid data. Please try again with different information.');
-        } else {
-          throw new Error(`HTTP error: ${response.status}`);
-        }
+      // Axios has data directly available in response.data
+      const data = response.data;
+      
+      // Store user information for later use
+      if (data.token) {
+        localStorage.setItem('token', data.token);
       }
       
-      const data = await response.json().catch(e => {
-        console.error('Failed to parse JSON response:', e);
-        throw new Error('Invalid response from server');
-      });
-      
-      console.log('Response data:', data);
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Signup failed');
+      if (data.user && data.user.name) {
+        localStorage.setItem('userName', data.user.name);
       }
       
-      // If we got here, signup was successful
+      if (data.user && data.user.email) {
+        localStorage.setItem('userEmail', data.user.email);
+      }
+      
+      // Display success message and navigate
       alert('Account created successfully!');
       navigate('/login');
       
     } catch (err) {
-      setError(err.message || 'Signup failed. Please try again.');
-      alert(err.message || 'Signup failed. Please try again.');
+      // Axios specific error handling
+      console.error('Signup error:', err);
+      
+      if (!err.response) {
+        // Network error
+        setError('Network error: Failed to connect to the server');
+        alert('Network error: Failed to connect to the server');
+      } else {
+        // Server returned an error
+        const errorMessage = err.response.data?.message || 'Signup failed. Please try again.';
+        setError(errorMessage);
+        alert(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

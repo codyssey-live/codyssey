@@ -1,10 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const location = useLocation();
+  const [userName, setUserName] = useState('User');
+  const [userEmail, setUserEmail] = useState('user@example.com');
+  
+  // Get user details from localStorage on component mount
+  useEffect(() => {
+    const storedName = localStorage.getItem('userName');
+    const storedEmail = localStorage.getItem('userEmail');
+    
+    if (storedName) setUserName(storedName);
+    if (storedEmail) setUserEmail(storedEmail);
+  }, []);
   
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -92,11 +103,11 @@ const Navbar = () => {
             <div className="relative">
               <button 
                 onClick={toggleDropdown}
-                className="flex items-center px-4 py-2 rounded-full text-sm font-medium bg-[#dbeafe] text-gray-800 shadow-sm hover:shadow-md transition-all transform hover:scale-105"
+                className="flex items-center justify-center p-2 rounded-full bg-[#dbeafe] text-gray-800 shadow-sm hover:shadow-md transition-all transform hover:scale-105 w-10 h-10"
+                aria-label="User menu"
               >
-                <span className="mr-1">Account</span>
-                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </button>
               <AnimatePresence>
@@ -117,8 +128,8 @@ const Navbar = () => {
                             </svg>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-800">User Name</p>
-                            <p className="text-xs text-gray-500">user@example.com</p>
+                            <p className="text-sm font-medium text-gray-800">{userName}</p>
+                            <p className="text-xs text-gray-500">{userEmail}</p>
                           </div>
                         </div>
                       </div>
