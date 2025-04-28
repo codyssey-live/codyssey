@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const Signup = () => {
@@ -9,16 +9,96 @@ const Signup = () => {
     password: "",
     confirmPassword: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add signup logic here
-    console.log("Signup form submitted:", formData);
+    
+    // Enhanced validation
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords don't match");
+      alert("Passwords don't match");
+      return;
+    }
+    
+    // Add password length validation
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      alert("Password must be at least 8 characters long");
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // First check if server is reachable with a simple ping
+      try {
+        await fetch('http://localhost:5000/api/healthcheck', { method: 'GET' });
+      } catch (pingErr) {
+        throw new Error('Server appears to be offline or unreachable. Please check if the backend server is running.');
+      }
+      
+      const response = await fetch('http://localhost:5000/api/auth/signup', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          // Adding these headers can help with CORS issues
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password
+        })
+      });
+      
+      console.log('Server response received:', response.status);
+      
+      // For non-JSON responses
+      if (!response.ok && response.status !== 400) {
+        if (response.status === 0) {
+          throw new Error('Network error: Failed to connect to the server');
+        } else if (response.status === 404) {
+          throw new Error('API endpoint not found. Check server routes.');
+        } else if (response.status === 500) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Server error details:', errorData);
+          throw new Error(errorData.message || 'Server error: Database connection issue or invalid data. Please try again with different information.');
+        } else {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+      }
+      
+      const data = await response.json().catch(e => {
+        console.error('Failed to parse JSON response:', e);
+        throw new Error('Invalid response from server');
+      });
+      
+      console.log('Response data:', data);
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Signup failed');
+      }
+      
+      // If we got here, signup was successful
+      alert('Account created successfully!');
+      navigate('/login');
+      
+    } catch (err) {
+      setError(err.message || 'Signup failed. Please try again.');
+      alert(err.message || 'Signup failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -141,7 +221,8 @@ const Signup = () => {
                     value={formData.password}
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 py-2.5 bg-[#E8F1F7] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-800 placeholder-gray-400"
-                    placeholder="Password"
+                    placeholder="Password (min. 8 characters)"
+                    minLength="8"
                     required
                   />
                 </div>
@@ -177,16 +258,25 @@ const Signup = () => {
               <motion.button
                 type="submit"
                 className="w-full bg-[#94C3D2] hover:opacity-90 transition-all py-3 rounded-lg text-white font-medium shadow-lg mt-2 flex items-center justify-center group"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+                whileHover={{ scale: loading ? 1 : 1.01 }}
+                whileTap={{ scale: loading ? 1 : 0.99 }}
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.6, duration: 0.4 }}
+                disabled={loading}
               >
-                <span className="group-hover:translate-x-0.5 transition-transform">Create Account</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
+                {loading ? (
+                  <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : null}
+                <span className="group-hover:translate-x-0.5 transition-transform">{loading ? 'Creating Account...' : 'Create Account'}</span>
+                {!loading && (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                )}
               </motion.button>
             </form>
           </div>
