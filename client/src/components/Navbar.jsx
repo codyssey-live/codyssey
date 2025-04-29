@@ -6,7 +6,7 @@ const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const location = useLocation();
   const [userName, setUserName] = useState('User');
-  const [userEmail, setUserEmail] = useState('user@example.com');
+  const [userEmail, setUserEmail] = useState('Email');
   
   // Get user details from localStorage on component mount
   useEffect(() => {
