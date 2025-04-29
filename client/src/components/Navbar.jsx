@@ -11,7 +11,7 @@ const Navbar = () => {
   const [userData, setUserData] = useState({ name: 'User', email: 'Email' });
   const [loading, setLoading] = useState(true);
   
-  // Fetch user data from the API
+  // Fetch user data from the API - run this early and with higher priority
   useEffect(() => {
     const getUserData = async () => {
       setLoading(true);
@@ -31,7 +31,19 @@ const Navbar = () => {
       }
     };
     
-    getUserData();
+    // Add high priority to this fetch
+    const fetchData = async () => {
+      try {
+        await Promise.race([
+          getUserData(),
+          new Promise(resolve => setTimeout(resolve, 3000)) // 3 second timeout fallback
+        ]);
+      } catch (error) {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
   }, []);
   
   const handleSignOut = async () => {
@@ -65,12 +77,15 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
-              <img 
-                src="logo-grayscale.png" 
-                alt="Codyssey Logo" 
-                className="h-8 w-auto mr-2" 
-              />
-              <span className="text-xl font-bold text-gray-800">Codyssey</span>
+              {/* Added Link to home page */}
+              <Link to="/" className="flex items-center">
+                <img 
+                  src="logo-grayscale.png" 
+                  alt="Codyssey Logo" 
+                  className="h-8 w-auto mr-2" 
+                />
+                <span className="text-xl font-bold text-gray-800">Codyssey</span>
+              </Link>
             </div>
             
             {/* Tubelight Navigation Menu */}
@@ -158,12 +173,22 @@ const Navbar = () => {
                             </svg>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-800">
-                              {loading ? 'Loading...' : userData.name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {loading ? '' : userData.email}
-                            </p>
+                            {/* Enhanced loading state with skeleton */}
+                            {loading ? (
+                              <div>
+                                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-1"></div>
+                                <div className="h-3 w-32 bg-gray-100 rounded animate-pulse"></div>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="text-sm font-medium text-gray-800">
+                                  {userData.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {userData.email}
+                                </p>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
