@@ -5,14 +5,11 @@ import StatCard from '../components/dashboard/StatCard';
 import DistributionCard from '../components/dashboard/DistributionCard';
 import PlatformCard from '../components/dashboard/PlatformCard';
 import ProblemList from '../components/dashboard/ProblemList';
+import { fetchCurrentUser } from '../utils/apiClient';
 
 const Dashboard = () => {
-  // Get the user's name from localStorage
-  const userName = localStorage.getItem('userName') || 'User';
-  
-  // Mock data for the user - keeping stats but using real name
-  const userData = {
-    name: userName,
+  const [userData, setUserData] = useState({
+    name: 'User',
     stats: {
       solved: 78,
       unsolved: 45,
@@ -28,7 +25,30 @@ const Dashboard = () => {
       codeforces: 12,
       hackerrank: 8
     }
-  };
+  });
+  
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user data from the API
+  useEffect(() => {
+    const getUserData = async () => {
+      try {
+        const user = await fetchCurrentUser();
+        if (user) {
+          setUserData(prevData => ({
+            ...prevData,
+            name: user.name
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to fetch user data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    getUserData();
+  }, []);
 
   // Mock data for problems
   const mockProblems = [
@@ -94,7 +114,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-[#E8F1F7]">
       <Navbar />
-      <Header userName={userData.name} />
+      <Header userName={loading ? 'Loading...' : userData.name} />
       
       <div className="container mx-auto px-6 md:px-10">
         <h2 className="text-2xl font-bold text-[#333333] mt-8 mb-6">Your Dashboard</h2>

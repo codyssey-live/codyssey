@@ -1,21 +1,55 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { fetchCurrentUser } from '../utils/apiClient';
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const location = useLocation();
-  const [userName, setUserName] = useState('User');
-  const [userEmail, setUserEmail] = useState('Email');
+  const navigate = useNavigate();
+  const [userData, setUserData] = useState({ name: 'User', email: 'Email' });
+  const [loading, setLoading] = useState(true);
   
-  // Get user details from localStorage on component mount
+  // Fetch user data from the API
   useEffect(() => {
-    const storedName = localStorage.getItem('userName');
-    const storedEmail = localStorage.getItem('userEmail');
+    const getUserData = async () => {
+      setLoading(true);
+      // Check if we have a token first
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // If no token, we're not logged in
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        const user = await fetchCurrentUser();
+        if (user) {
+          setUserData({
+            name: user.name,
+            email: user.email
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch user data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    if (storedName) setUserName(storedName);
-    if (storedEmail) setUserEmail(storedEmail);
+    getUserData();
   }, []);
+  
+  const handleSignOut = () => {
+    // Clear authentication data
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    
+    // Close the dropdown and redirect to login
+    setIsDropdownOpen(false);
+    navigate('/login');
+  };
   
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -128,8 +162,12 @@ const Navbar = () => {
                             </svg>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-800">{userName}</p>
-                            <p className="text-xs text-gray-500">{userEmail}</p>
+                            <p className="text-sm font-medium text-gray-800">
+                              {loading ? 'Loading...' : userData.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {loading ? '' : userData.email}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -144,12 +182,15 @@ const Navbar = () => {
                       
                       <div className="border-t border-gray-100 my-1"></div>
                       
-                      <Link to="/" className="flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                      <button 
+                        onClick={handleSignOut}
+                        className="flex items-center w-full px-4 py-3 text-sm text-left text-red-600 hover:bg-red-50 transition-colors"
+                      >
                         <svg className="w-5 h-5 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                         </svg>
                         Sign out
-                      </Link>
+                      </button>
                     </div>
                   </motion.div>
                 )}

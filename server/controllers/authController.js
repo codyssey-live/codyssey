@@ -93,3 +93,29 @@ export const login = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Add a new getCurrentUser function
+export const getCurrentUser = async (req, res) => {
+  try {
+    // req.user comes from the auth middleware
+    const userId = req.user.id;
+    
+    // Find the user by ID but don't return the password
+    const user = await User.findById(userId).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Return user data
+    res.status(200).json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      profilePicture: user.profilePicture
+    });
+  } catch (err) {
+    console.error('Error fetching user data:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
