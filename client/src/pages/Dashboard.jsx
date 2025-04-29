@@ -5,7 +5,7 @@ import StatCard from '../components/dashboard/StatCard';
 import DistributionCard from '../components/dashboard/DistributionCard';
 import PlatformCard from '../components/dashboard/PlatformCard';
 import ProblemList from '../components/dashboard/ProblemList';
-import { fetchCurrentUser } from '../utils/apiClient';
+import { fetchCurrentUser } from '../utils/authUtils';
 
 const Dashboard = () => {
   const [userData, setUserData] = useState({

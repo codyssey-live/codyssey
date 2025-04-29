@@ -47,31 +47,13 @@ const Signup = () => {
         throw new Error('Server appears to be offline or unreachable. Please check if the backend server is running.');
       }
       
-      // Use apiClient instead of axios with full URL
       const response = await apiClient.post('/auth/signup', {
         name: formData.name,
         email: formData.email,
         password: formData.password
-
       });
       
       console.log('Server response received:', response.status);
-      
-      // Axios has data directly available in response.data
-      const data = response.data;
-      
-      // Store user information for later use
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-      }
-      
-      if (data.user && data.user.name) {
-        localStorage.setItem('userName', data.user.name);
-      }
-      
-      if (data.user && data.user.email) {
-        localStorage.setItem('userEmail', data.user.email);
-      }
       
       // Display success message and navigate
       alert('Account created successfully!');

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fetchCurrentUser } from '../utils/apiClient';
+import { fetchCurrentUser } from '../utils/authUtils';
+import apiClient from '../utils/apiClient';
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -14,13 +15,6 @@ const Navbar = () => {
   useEffect(() => {
     const getUserData = async () => {
       setLoading(true);
-      // Check if we have a token first
-      const token = localStorage.getItem('token');
-      if (!token) {
-        // If no token, we're not logged in
-        setLoading(false);
-        return;
-      }
       
       try {
         const user = await fetchCurrentUser();
@@ -40,15 +34,17 @@ const Navbar = () => {
     getUserData();
   }, []);
   
-  const handleSignOut = () => {
-    // Clear authentication data
-    localStorage.removeItem('token');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userEmail');
-    
-    // Close the dropdown and redirect to login
-    setIsDropdownOpen(false);
-    navigate('/login');
+  const handleSignOut = async () => {
+    try {
+      // Call signout endpoint to clear the cookie
+      await apiClient.post('/auth/signout');
+      
+      // Close the dropdown and redirect to home
+      setIsDropdownOpen(false);
+      navigate('/');
+    } catch (error) {
+      console.error('Sign out failed:', error);
+    }
   };
   
   const toggleDropdown = () => {

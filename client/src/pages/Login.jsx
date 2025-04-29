@@ -24,7 +24,7 @@ const Login = () => {
     setError(null);
     
     try {
-      // Use apiClient instead of axios with full URL
+      // Use apiClient with credentials to allow cookie setting
       const response = await apiClient.post('/auth/login', { 
         email: formData.email, 
         password: formData.password 
@@ -33,13 +33,6 @@ const Login = () => {
       // With axios, data is directly available in response.data
       const data = response.data;
       
-      // Store token in localStorage
-      localStorage.setItem('token', data.token);
-      
-      // Also store the user's name for displaying on dashboard
-      if (data.user && data.user.name) {
-        localStorage.setItem('userName', data.user.name);
-      }
       
       // Show success message
       alert('Logged in successfully!');

@@ -7,19 +7,11 @@ const apiClient = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  // Important for cookies to be sent with requests
+  withCredentials: true
 });
 
-// Add a request interceptor to include the token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// No need for Authorization header interceptor since we're using cookies
 
 export default apiClient;

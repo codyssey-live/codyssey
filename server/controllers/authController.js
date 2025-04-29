@@ -2,6 +2,14 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
+// Cookie options
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+  sameSite: 'strict',
+  maxAge: 24 * 60 * 60 * 1000 // 1 day in milliseconds
+};
+
 export const signup = async (req, res) => {
   const { name, email, password } = req.body;
   
@@ -55,10 +63,12 @@ export const signup = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    // Return success response
+    // We're removing this code - no cookie setting after signup
+    // No automatic login after signup
+
+    // Return success response (without token in body)
     res.status(201).json({ 
       message: 'User created successfully',
-      token, 
       user: { 
         id: user._id, 
         name: user.name, 
@@ -83,10 +93,12 @@ export const login = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    
+    // Send token in cookie
+    res.cookie('token', token, cookieOptions);
 
     res.status(200).json({ 
       message: 'Login successful!', 
-      token,
       user: { id: user._id, name: user.name, email: user.email } 
     });
   } catch (err) {
@@ -94,7 +106,15 @@ export const login = async (req, res) => {
   }
 };
 
-// Add a new getCurrentUser function
+export const signout = async (req, res) => {
+  res.cookie('token', '', { 
+    httpOnly: true,
+    expires: new Date(0) // Expires immediately
+  });
+  
+  res.status(200).json({ message: 'Signed out successfully' });
+};
+
 export const getCurrentUser = async (req, res) => {
   try {
     // req.user comes from the auth middleware
