@@ -9,6 +9,8 @@ import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Footer from "./components/Footer";
+import ProtectedRoute from "./components/ProtectedRoute";
+import PublicRoute from "./components/PublicRoute";
 import "./App.css";
 
 // Placeholder components for routes that don't exist yet
@@ -22,16 +24,59 @@ function App() {
       <div className="app min-h-screen flex flex-col">
         <div className="flex-grow">
           <Routes>
+            {/* Public routes */}
             <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/syllabus" element={<Syllabus />} />
-            <Route path="/lecture-room" element={<LectureRoom />} />
-            <Route path="/collab-room" element={<CollabRoom />} />
-            <Route path="/profile" element={<UserProfile />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+            
+            {/* Auth routes - redirect to dashboard if already logged in */}
+            <Route path="/signup" element={
+              <PublicRoute>
+                <Signup />
+              </PublicRoute>
+            } />
+            <Route path="/login" element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            } />
+            <Route path="/forgot-password" element={
+              <PublicRoute>
+                <ForgotPassword />
+              </PublicRoute>
+            } />
+            
+            {/* Protected routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/syllabus" element={
+              <ProtectedRoute>
+                <Syllabus />
+              </ProtectedRoute>
+            } />
+            <Route path="/lecture-room" element={
+              <ProtectedRoute>
+                <LectureRoom />
+              </ProtectedRoute>
+            } />
+            <Route path="/collab-room" element={
+              <ProtectedRoute>
+                <CollabRoom />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } />
+            
+            {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

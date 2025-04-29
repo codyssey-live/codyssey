@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import apiClient from '../utils/apiClient'; // Import the API client instead of axios
 
@@ -12,6 +12,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the intended destination from location state, or default to dashboard
+  const from = location.state?.from?.pathname || "/dashboard";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,15 +34,9 @@ const Login = () => {
         password: formData.password 
       });
       
-      // With axios, data is directly available in response.data
-      const data = response.data;
-      
-      
-      // Show success message
-      alert('Logged in successfully!');
-      
-      // Navigate to dashboard
-      navigate('/dashboard');
+      // Replace the history entry instead of pushing a new one
+      // This prevents going back to the login page
+      navigate(from, { replace: true });
       
     } catch (err) {
       // Axios specific error handling

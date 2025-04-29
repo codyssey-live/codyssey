@@ -19,60 +19,31 @@ const Signup = () => {
     setFormData({ ...formData, [name]: value });
   };
 
+  // In the handleSubmit function of Signup.jsx
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Enhanced validation (keep existing validation)
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords don't match");
-      alert("Passwords don't match");
-      return;
-    }
-    
-    // Add password length validation (keep existing validation)
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
-      alert("Password must be at least 8 characters long");
-      return;
-    }
-    
     setLoading(true);
     setError(null);
     
     try {
-      // First check if server is reachable with a simple ping
-      try {
-        await apiClient.get('/healthcheck');
-      } catch (pingErr) {
-        throw new Error('Server appears to be offline or unreachable. Please check if the backend server is running.');
-      }
+      // API call to register user
+      await apiClient.post('/auth/signup', formData);
       
-      const response = await apiClient.post('/auth/signup', {
-        name: formData.name,
+      // Login the user after successful signup
+      const loginResponse = await apiClient.post('/auth/login', {
         email: formData.email,
         password: formData.password
       });
       
-      console.log('Server response received:', response.status);
-      
-      // Display success message and navigate
-      alert('Account created successfully!');
-      navigate('/login');
+      // Replace the history entry instead of pushing a new one
+      // This prevents going back to the signup page
+      navigate('/dashboard', { replace: true });
       
     } catch (err) {
-      // Axios specific error handling
-      console.error('Signup error:', err);
-      
-      if (!err.response) {
-        // Network error
-        setError('Network error: Failed to connect to the server');
-        alert('Network error: Failed to connect to the server');
-      } else {
-        // Server returned an error
-        const errorMessage = err.response.data?.message || 'Signup failed. Please try again.';
-        setError(errorMessage);
-        alert(errorMessage);
-      }
+      const errorMessage = err.response?.data?.message || err.message || 'Registration failed. Please try again.';
+      setError(errorMessage);
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
