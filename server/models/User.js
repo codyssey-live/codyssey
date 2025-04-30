@@ -17,11 +17,28 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Password is required'],
-    minlength: [8, 'Password must be at least 8 characters long']  // Changed from 6 to 8
+    minlength: [8, 'Password must be at least 8 characters long']
   },
   profilePicture: {
     type: String,
-    default: 'https://example.com/default-profile-picture.png', // Placeholder URL
+    default: 'https://example.com/default-profile-picture.png',
+  },
+  // New field for bio
+  bio: {
+    type: String,
+    trim: true,
+    maxlength: [250, 'Bio cannot be more than 250 characters']
+  },
+  // New field for social links
+  socials: {
+    github: {
+      type: String,
+      trim: true
+    },
+    linkedin: {
+      type: String,
+      trim: true
+    }
   },
   friendList: [
     {

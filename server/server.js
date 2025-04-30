@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 // Load environment variables
 dotenv.config({ path: path.resolve('..', '.env') });
@@ -14,6 +15,7 @@ const app = express();
 
 // 1. Parse incoming JSON first
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // 2. Add cookie-parser
 app.use(cookieParser());
@@ -29,11 +31,15 @@ app.get('/api/healthcheck', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running' });
 });
 
+// Serve static files
+app.use('/uploads', express.static(path.join('..', '/uploads')));
+
 // 5. Connect to MongoDB
 connectDB();  // Connect AFTER healthcheck (optional), but must succeed
 
 // 6. Set up other routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // 7. Start the server
 const PORT = process.env.PORT || 8080;
