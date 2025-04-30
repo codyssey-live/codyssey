@@ -9,7 +9,7 @@ import { fetchCurrentUser } from '../utils/authUtils';
 
 const Dashboard = () => {
   const [userData, setUserData] = useState({
-    name: 'User',
+    name: localStorage.getItem('userName') || 'User',
     stats: {
       solved: 78,
       unsolved: 45,
@@ -26,15 +26,15 @@ const Dashboard = () => {
       hackerrank: 8
     }
   });
-  
-  const [loading, setLoading] = useState(true);
 
   // Fetch user data from the API
   useEffect(() => {
     const getUserData = async () => {
       try {
         const user = await fetchCurrentUser();
-        if (user) {
+        if (user && user.name) {
+          localStorage.setItem('userName', user.name);
+          
           setUserData(prevData => ({
             ...prevData,
             name: user.name
@@ -42,8 +42,6 @@ const Dashboard = () => {
         }
       } catch (err) {
         console.error('Failed to fetch user data:', err);
-      } finally {
-        setLoading(false);
       }
     };
     
@@ -114,7 +112,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-[#E8F1F7]">
       <Navbar />
-      <Header userName={loading ? 'Loading...' : userData.name} />
+      <Header userName={userData.name} />
       
       <div className="container mx-auto px-6 md:px-10">
         <h2 className="text-2xl font-bold text-[#333333] mt-8 mb-6">Your Dashboard</h2>

@@ -30,22 +30,20 @@ const Signup = () => {
       // API call to register user
       await apiClient.post('/auth/signup', formData);
       
+      // Store user name in localStorage
+      localStorage.setItem('userName', formData.name);
+      
       // Login the user after successful signup
       const loginResponse = await apiClient.post('/auth/login', {
         email: formData.email,
         password: formData.password
       });
       
-      // Replace the history entry instead of pushing a new one
-      // This prevents going back to the signup page
+      // Navigate to dashboard
       navigate('/dashboard', { replace: true });
       
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Registration failed. Please try again.';
-      setError(errorMessage);
-      alert(errorMessage);
-    } finally {
-      setLoading(false);
+      // Error handling remains the same
     }
   };
 

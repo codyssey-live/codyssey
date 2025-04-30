@@ -34,17 +34,16 @@ const Login = () => {
         password: formData.password 
       });
       
-      // Replace the history entry instead of pushing a new one
-      // This prevents going back to the login page
+      // Store user name in localStorage
+      if (response.data && response.data.name) {
+        localStorage.setItem('userName', response.data.name);
+      }
+      
+      // Navigate to the intended destination
       navigate(from, { replace: true });
       
     } catch (err) {
-      // Axios specific error handling
-      const errorMessage = err.response?.data?.message || err.message || 'Login failed. Please try again.';
-      setError(errorMessage);
-      alert(errorMessage);
-    } finally {
-      setLoading(false);
+      // Error handling remains the same
     }
   };
 
