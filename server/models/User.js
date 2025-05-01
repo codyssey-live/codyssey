@@ -23,13 +23,13 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'https://example.com/default-profile-picture.png',
   },
-  // New field for bio
+  // Bio field
   bio: {
     type: String,
     trim: true,
     maxlength: [250, 'Bio cannot be more than 250 characters']
   },
-  // New field for social links
+  // Social links
   socials: {
     github: {
       type: String,
@@ -50,6 +50,25 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-})
+  // Now we use references instead of embedding
+  // These will be populated when needed
+});
 
-export default mongoose.model('User', userSchema)
+// Virtual properties to get education and work experience
+userSchema.virtual('education', {
+  ref: 'Education',
+  localField: '_id',
+  foreignField: 'user'
+});
+
+userSchema.virtual('workExperience', {
+  ref: 'WorkExperience',
+  localField: '_id', 
+  foreignField: 'user'
+});
+
+// Ensure virtuals are included when converting to JSON
+userSchema.set('toJSON', { virtuals: true });
+userSchema.set('toObject', { virtuals: true });
+
+export default mongoose.model('User', userSchema);
