@@ -117,53 +117,20 @@ export const signout = async (req, res) => {
 
 export const getCurrentUser = async (req, res) => {
   try {
-    // req.user comes from the auth middleware
-    const userId = req.user.id || req.user._id;
+    // The user is already attached to the request by the protect middleware
+    const user = req.user;
     
-    // Find the user by ID but don't return the password
-    // Populate the virtual fields for education and work experience
-    const user = await User.findById(userId)
-      .select('-password')
-      .populate('education')
-      .populate('workExperience');
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    // Map the education and work experience to match frontend expectations
-    const mappedEducation = user.education ? user.education.map(edu => ({
-      id: edu._id, // Map _id to id for frontend
-      _id: edu._id,
-      school: edu.school,
-      degree: edu.degree,
-      startYear: edu.startYear,
-      endYear: edu.endYear
-    })) : [];
-
-    const mappedWorkExperience = user.workExperience ? user.workExperience.map(exp => ({
-      id: exp._id, // Map _id to id for frontend
-      _id: exp._id,
-      company: exp.company,
-      position: exp.position,
-      startDate: exp.startDate,
-      endDate: exp.endDate
-    })) : [];
-    
-    // Return user data with consistent id format
+    // Return user data (excluding password)
     res.status(200).json({
       id: user._id,
-      _id: user._id,
       name: user.name,
       email: user.email,
-      profilePicture: user.profilePicture,
+      profilePicture: user.profilePicture || '',
       bio: user.bio || '',
-      socials: user.socials || { github: '', linkedin: '' },
-      education: mappedEducation,
-      workExperience: mappedWorkExperience
+      socials: user.socials || { github: '', linkedin: '' }
     });
-  } catch (err) {
-    console.error('Error fetching user data:', err);
+  } catch (error) {
+    console.error('Error getting current user:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

@@ -8,7 +8,9 @@ import {
   addEducation,
   deleteEducation,
   addWorkExperience,
-  deleteWorkExperience
+  deleteWorkExperience,
+  changePassword,
+  deleteAccount
 } from "../utils/profileApiUtils";
 
 // Add this helper function near the top of your component
@@ -412,6 +414,48 @@ const UserProfile = () => {
     }
   };
 
+  // Function to handle changing password
+  const handleChangePassword = async (passwordData) => {
+    try {
+      const response = await changePassword(user.id, passwordData);
+      
+      if (response && response.success) {
+        alert('Password changed successfully!');
+        closeModal();
+      } else {
+        // Show the specific error message from the server
+        throw new Error(response?.message || 'Failed to change password');
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      alert(`Failed to change password: ${error.message || 'Unknown error'}`);
+    }
+  };
+
+  // Function to handle account deletion
+  const handleDeleteAccount = async (passwordData) => {
+    try {
+      const response = await deleteAccount(user.id, passwordData);
+      
+      if (response && response.success) {
+        alert('Your account has been successfully deleted. You will be redirected to the home page.');
+        // Clear any user data from local storage
+        localStorage.removeItem('userId');
+        localStorage.removeItem('token');
+        // Redirect to home or login page after a brief delay
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1500);
+      } else {
+        // Show the specific error message from the server
+        throw new Error(response?.message || 'Failed to delete account');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert(`Failed to delete account: ${error.message || 'Unknown error'}`);
+    }
+  };
+
   // Photo Upload Modal Component
   function PhotoUploadModal({ onClose }) {
     return (
@@ -740,6 +784,232 @@ const UserProfile = () => {
     );
   }
 
+  // Password Change Modal Component
+  function PasswordChangeModal({ onClose }) {
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
+    
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      
+      // Reset any previous errors
+      setError('');
+      
+      // Validate form
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        setError('All fields are required');
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        setError('New passwords do not match');
+        return;
+      }
+      
+      if (newPassword.length < 8) {
+        setError('New password must be at least 8 characters long');
+        return;
+      }
+      
+      // Call the parent handler to change password
+      handleChangePassword({
+        currentPassword,
+        newPassword
+      });
+    };
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-[#dbeafe] rounded-lg shadow-xl max-w-md w-full p-6 text-gray-800">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium">Change Password</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <HiX className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">Old Password</label>
+              <input 
+                type="password" 
+                id="currentPassword" 
+                style={{backgroundColor: "white"}}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Your old password"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+              <input 
+                type="password" 
+                id="newPassword" 
+                style={{backgroundColor: "white"}}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Your new password"
+                minLength="8"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+              <input 
+                type="password" 
+                id="confirmPassword" 
+                style={{backgroundColor: "white"}}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter your new password"
+                minLength="8"
+                required
+              />
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-2">
+              <button 
+                type="button"
+                onClick={onClose} 
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                className="px-4 py-2 bg-[#94c3d2] rounded-md text-sm font-medium text-white hover:bg-[#7ba9b8]"
+              >
+                Change Password
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+  
+  // Account Delete Confirmation Modal
+  function DeleteAccountModal({ onClose }) {
+    const [password, setPassword] = useState('');
+    const [confirmText, setConfirmText] = useState('');
+    const [error, setError] = useState('');
+    
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      
+      // Reset any previous errors
+      setError('');
+      
+      // Validate form
+      if (!password) {
+        setError('Password is required to confirm deletion');
+        return;
+      }
+      
+      if (confirmText !== 'DELETE') {
+        setError('Please type DELETE to confirm');
+        return;
+      }
+      
+      // Call the parent handler to delete account
+      handleDeleteAccount({ password });
+    };
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-[#dbeafe] rounded-lg shadow-xl max-w-md w-full p-6 text-gray-800">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-red-600">Delete Account</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <HiX className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">
+                  This action <span className="font-bold">cannot be undone</span>. This will permanently delete your account and all associated data.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Enter your password to confirm</label>
+              <input 
+                type="password" 
+                id="password" 
+                style={{backgroundColor: "white"}}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="confirmText" className="block text-sm font-medium text-gray-700 mb-1">
+                Type <span className="font-bold">DELETE</span> to confirm
+              </label>
+              <input 
+                type="text" 
+                id="confirmText" 
+                style={{backgroundColor: "white"}}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-2">
+              <button 
+                type="button"
+                onClick={onClose} 
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                className="px-4 py-2 bg-red-600 rounded-md text-sm font-medium text-white hover:bg-red-700"
+              >
+                Delete My Account
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   const SectionButton = ({ id, title, activeSection, setActiveSection }) => (
     <button
       onClick={() => setActiveSection(id)}
@@ -1038,20 +1308,24 @@ const UserProfile = () => {
                 <div className="bg-[#dbeafe] rounded-lg shadow-sm p-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Change Password</h3>
                   <p className="text-sm text-gray-600 mb-4">Update your account security by changing your password.</p>
-                  <button className="bg-[#94c3d2] px-4 py-2 rounded text-sm font-medium hover:bg-[#7ba9b8]" style={{
-                    color: "white"
-                  }}>
+                  <button 
+                    onClick={() => openModal('password')} 
+                    className="bg-[#94c3d2] px-4 py-2 rounded text-sm font-medium hover:bg-[#7ba9b8]" 
+                    style={{ color: "white" }}
+                  >
                     Change My Password
                   </button>
                 </div>
 
-                {/* Account Deletion - Keeping this section but removing Account Disable */}
+                {/* Account Deletion */}
                 <div className="bg-[#dbeafe] rounded-lg shadow-sm p-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Account Deletion</h3>
                   <p className="text-sm text-gray-600 mb-4">All your profile and learning data will be permanently deleted.</p>
-                  <button className="bg-red-500 px-4 py-2 rounded text-sm font-medium hover:bg-red-600" style={{
-                    color: "white"
-                  }}>
+                  <button 
+                    onClick={() => openModal('deleteAccount')} 
+                    className="bg-red-500 px-4 py-2 rounded text-sm font-medium hover:bg-red-600" 
+                    style={{ color: "white" }}
+                  >
                     Delete My Account
                   </button>
                 </div>
@@ -1076,6 +1350,14 @@ const UserProfile = () => {
       
       {activeModal === 'workExperience' && (
         <WorkExperienceModal onClose={closeModal} />
+      )}
+      
+      {activeModal === 'password' && (
+        <PasswordChangeModal onClose={closeModal} />
+      )}
+      
+      {activeModal === 'deleteAccount' && (
+        <DeleteAccountModal onClose={closeModal} />
       )}
     </div>
   );

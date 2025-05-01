@@ -35,15 +35,26 @@ const Login = () => {
       });
       
       // Store user name in localStorage
-      if (response.data && response.data.name) {
-        localStorage.setItem('userName', response.data.name);
+      if (response.data && response.data.user && response.data.user.name) {
+        localStorage.setItem('userName', response.data.user.name);
       }
       
       // Navigate to the intended destination
       navigate(from, { replace: true });
       
     } catch (err) {
-      // Error handling remains the same
+      // Extract error message from the response
+      const errorMessage = err.response?.data?.message || 'An error occurred during login. Please try again.';
+      console.error('Login error:', errorMessage);
+      
+      // Set the error state
+      setError(errorMessage);
+      
+      // Show alert for more visibility
+      alert(errorMessage);
+    } finally {
+      // Always reset loading state regardless of success or failure
+      setLoading(false);
     }
   };
 
@@ -167,6 +178,18 @@ const Login = () => {
                   </button>
                 </div>
               </motion.div>
+              
+              {/* Display error message */}
+              {error && (
+                <motion.div 
+                  className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <span className="block sm:inline">{error}</span>
+                </motion.div>
+              )}
               
               <motion.button
                 type="submit"
