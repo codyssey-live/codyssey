@@ -117,25 +117,20 @@ export const signout = async (req, res) => {
 
 export const getCurrentUser = async (req, res) => {
   try {
-    // req.user comes from the auth middleware
-    const userId = req.user.id;
+    // The user is already attached to the request by the protect middleware
+    const user = req.user;
     
-    // Find the user by ID but don't return the password
-    const user = await User.findById(userId).select('-password');
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    // Return user data
+    // Return user data (excluding password)
     res.status(200).json({
       id: user._id,
       name: user.name,
       email: user.email,
-      profilePicture: user.profilePicture
+      profilePicture: user.profilePicture || '',
+      bio: user.bio || '',
+      socials: user.socials || { github: '', linkedin: '' }
     });
-  } catch (err) {
-    console.error('Error fetching user data:', err);
+  } catch (error) {
+    console.error('Error getting current user:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

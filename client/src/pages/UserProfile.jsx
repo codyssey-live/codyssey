@@ -1,7 +1,34 @@
 import { HiPencil, HiUpload, HiOutlineCalendar, HiOutlineMail, HiX } from "react-icons/hi";
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
-import { fetchCurrentUser } from "../utils/authUtils";
+import { fetchCurrentUser, getUserId } from "../utils/authUtils";
+import { 
+  updateUserProfile, 
+  uploadProfilePicture,
+  addEducation,
+  deleteEducation,
+  addWorkExperience,
+  deleteWorkExperience,
+  changePassword,
+  deleteAccount
+} from "../utils/profileApiUtils";
+
+// Add this helper function near the top of your component
+const getIdFromResponse = (response) => {
+  // Try to get the id from different possible locations in the response
+  if (response && response.data) {
+    if (response.data.id) return response.data.id;
+    if (response.data._id) return response.data._id;
+    // For responses with nested data structure
+    if (response.data.data && (response.data.data.id || response.data.data._id)) {
+      return response.data.data.id || response.data.data._id;
+    }
+  }
+  
+  console.error('Could not find ID in response:', response);
+  // Return a fallback if we can't find an ID
+  return getUserId(); // Return the ID from localStorage as fallback
+};
 
 // Separate component for personal info modal to prevent focus issues
 function PersonalInfoModal({ user, onClose, onUpdate }) {
@@ -138,8 +165,10 @@ const UserProfile = () => {
   const [profileProgress, setProfileProgress] = useState(10); // Start with 10% for having an account
   const [loading, setLoading] = useState(true);
   
-  // User data state with minimal initial values
+  // User data state with minimal initial values and ID from localStorage
   const [user, setUser] = useState({
+    id: getUserId(), // Add the ID from localStorage right from the start
+    _id: getUserId(), // Add the ID as _id too for consistency
     name: "",
     email: "",
     avatarLetter: "",
@@ -157,13 +186,34 @@ const UserProfile = () => {
     const fetchUserData = async () => {
       setLoading(true);
       try {
+        // Try to get user ID from localStorage first as a starting point
+        const savedUserId = getUserId();
+        if (savedUserId) {
+          console.log("Found user ID in localStorage:", savedUserId);
+          setUser(prevUser => ({
+            ...prevUser,
+            id: savedUserId,
+            _id: savedUserId
+          }));
+        }
+        
         const userData = await fetchCurrentUser();
         if (userData) {
-          // Only set what we get from the API, no defaults
+          // Ensure both ID properties exist and save to localStorage
+          const userId = userData.id || userData._id || savedUserId;
+          if (userId) {
+            localStorage.setItem('userId', userId);
+            console.log("Setting userId in localStorage:", userId);
+          }
+          
+          // Set all user data including consistent IDs
           setUser({
+            ...userData,
+            id: userId,
+            _id: userId,
             name: userData.name || "",
             email: userData.email || "",
-            avatarLetter: userData.name ? userData.name.charAt(0) : "",
+            avatarLetter: userData.name ? userData.name.charAt(0).toUpperCase() : "",
             bio: userData.bio || "",
             profilePicture: userData.profilePicture || "",
             socials: userData.socials || { github: "", linkedin: "" },
@@ -178,6 +228,15 @@ const UserProfile = () => {
         }
       } catch (err) {
         console.error('Failed to fetch user data:', err);
+        // Even on error, try to use localStorage as backup
+        const savedUserId = getUserId();
+        if (savedUserId) {
+          setUser(prevState => ({
+            ...prevState,
+            id: savedUserId,
+            _id: savedUserId
+          }));
+        }
       } finally {
         setLoading(false);
       }
@@ -242,31 +301,39 @@ const UserProfile = () => {
       };
       reader.readAsDataURL(file);
       
-      // Upload to server - replace with your actual API endpoint
-      // const response = await fetch(`/api/users/${user._id}/profile-picture`, {
-      //   method: 'POST',
-      //   body: formData,
-      //   credentials: 'include'
-      // });
+      // Upload to server
+      const response = await uploadProfilePicture(user.id, formData);
+      console.log("Profile picture upload response:", response);
       
-      // if (!response.ok) throw new Error('Failed to upload profile picture');
-      // const data = await response.json();
-      // setProfilePhoto(data.data.profilePicture); // Update with the server URL
-      
-      updateProgress('photo', true);
-      closeModal();
+      if (response && response.data && response.data.profilePicture) {
+        // Update with the server URL
+        setProfilePhoto(response.data.profilePicture);
+        
+        // Also update the user object to ensure consistency
+        setUser(prevUser => ({
+          ...prevUser,
+          profilePicture: response.data.profilePicture
+        }));
+        
+        // Update progress
+        updateProgress('photo', true);
+        closeModal();
+      } else {
+        console.error('Invalid response format:', response);
+        alert('Failed to upload profile picture: Invalid server response');
+      }
     } catch (error) {
       console.error('Error uploading profile picture:', error);
       alert('Failed to upload profile picture');
     }
   };
-  
+
   // Handle personal info update
   const handlePersonalInfoUpdate = async (updatedInfo) => {
     const { name, bio, github, linkedin } = updatedInfo;
     
     try {
-      // Update user state
+      // Update user state first for responsive UI
       const updatedUser = {
         ...user,
         name: name || user.name,
@@ -280,23 +347,15 @@ const UserProfile = () => {
       // Update state first for responsive UI
       setUser(updatedUser);
       
-      // Save to API - replace with your actual API endpoint
-      // const response = await fetch(`/api/users/${user._id}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     name,
-      //     bio,
-      //     socials: {
-      //       github,
-      //       linkedin
-      //     }
-      //   }),
-      //   credentials: 'include'
-      // });
-      
-      // if (!response.ok) throw new Error('Failed to update profile');
-      // const data = await response.json();
+      // Save to API
+      await updateUserProfile(user.id, {
+        name,
+        bio,
+        socials: {
+          github,
+          linkedin
+        }
+      });
       
       // Update progress based on whether fields have content
       updateProgress('bio', bio && bio.trim().length > 0);
@@ -310,23 +369,91 @@ const UserProfile = () => {
   };
 
   // Handle deleting education item
-  const handleDeleteEducation = (id) => {
-    const updatedEducation = user.education.filter(edu => edu.id !== id);
-    setUser({
-      ...user,
-      education: updatedEducation
-    });
-    localStorage.setItem('userEducation', JSON.stringify(updatedEducation));
+  const handleDeleteEducation = async (id) => {
+    try {
+      // Call the API to delete the education entry
+      await deleteEducation(user.id, id);
+      
+      // Update UI after successful deletion
+      const updatedEducation = user.education.filter((edu) => edu.id !== id);
+      setUser((prevUser) => ({
+        ...prevUser,
+        education: updatedEducation,
+      }));
+
+      // Update progress if there are no more education entries
+      if (updatedEducation.length === 0) {
+        updateProgress('education', false);
+      }
+    } catch (error) {
+      console.error('Error deleting education:', error);
+      alert('Failed to delete education entry');
+    }
   };
 
   // Handle deleting work experience item
-  const handleDeleteWorkExperience = (id) => {
-    const updatedWorkExperience = user.workExperience.filter(exp => exp.id !== id);
-    setUser({
-      ...user,
-      workExperience: updatedWorkExperience
-    });
-    localStorage.setItem('userWorkExperience', JSON.stringify(updatedWorkExperience));
+  const handleDeleteWorkExperience = async (id) => {
+    try {
+      // Call the API to delete the work experience entry
+      await deleteWorkExperience(user.id, id);
+      
+      // Update UI after successful deletion
+      const updatedWorkExperience = user.workExperience.filter((work) => work.id !== id);
+      setUser((prevUser) => ({
+        ...prevUser,
+        workExperience: updatedWorkExperience,
+      }));
+
+      // Update progress if there are no more work experience entries
+      if (updatedWorkExperience.length === 0) {
+        updateProgress('workExperience', false);
+      }
+    } catch (error) {
+      console.error('Error deleting work experience:', error);
+      alert('Failed to delete work experience entry');
+    }
+  };
+
+  // Function to handle changing password
+  const handleChangePassword = async (passwordData) => {
+    try {
+      const response = await changePassword(user.id, passwordData);
+      
+      if (response && response.success) {
+        alert('Password changed successfully!');
+        closeModal();
+      } else {
+        // Show the specific error message from the server
+        throw new Error(response?.message || 'Failed to change password');
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      alert(`Failed to change password: ${error.message || 'Unknown error'}`);
+    }
+  };
+
+  // Function to handle account deletion
+  const handleDeleteAccount = async (passwordData) => {
+    try {
+      const response = await deleteAccount(user.id, passwordData);
+      
+      if (response && response.success) {
+        alert('Your account has been successfully deleted. You will be redirected to the home page.');
+        // Clear any user data from local storage
+        localStorage.removeItem('userId');
+        localStorage.removeItem('token');
+        // Redirect to home or login page after a brief delay
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1500);
+      } else {
+        // Show the specific error message from the server
+        throw new Error(response?.message || 'Failed to delete account');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert(`Failed to delete account: ${error.message || 'Unknown error'}`);
+    }
   };
 
   // Photo Upload Modal Component
@@ -381,7 +508,7 @@ const UserProfile = () => {
     const [startYear, setStartYear] = useState('');
     const [endYear, setEndYear] = useState('');
     
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
       e.preventDefault();
       
       if (!school || !degree || !startYear) {
@@ -390,28 +517,41 @@ const UserProfile = () => {
       }
       
       const newEducation = {
-        id: Date.now(),
         school,
         degree,
         startYear,
         endYear: endYear || 'Present'
       };
       
-      const updatedEducation = [...user.education, newEducation];
-      
-      // Update user state
-      setUser({
-        ...user,
-        education: updatedEducation
-      });
-      
-      // Save to localStorage
-      localStorage.setItem('userEducation', JSON.stringify(updatedEducation));
-      
-      // Update progress
-      updateProgress('education', true);
-      
-      onClose();
+      try {
+        // Save to API
+        console.log('Sending education data to API:', newEducation);
+        const response = await addEducation(user.id || user._id, newEducation);
+        
+        // Check if we got a valid response with data
+        if (!response || !response.data) {
+          throw new Error('Invalid response from server');
+        }
+        
+        console.log('Education added successfully:', response);
+        
+        // Update user state with the response that includes the generated ID from the server
+        const updatedEducation = [...user.education, response.data];
+        
+        // Update user state
+        setUser(prevUser => ({
+          ...prevUser,
+          education: updatedEducation
+        }));
+        
+        // Update progress
+        updateProgress('education', true);
+        
+        onClose();
+      } catch (error) {
+        console.error('Error adding education:', error);
+        alert(`Failed to add education information: ${error.message || 'Unknown error'}`);
+      }
     };
     
     return (
@@ -506,7 +646,7 @@ const UserProfile = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
       e.preventDefault();
       
       if (!company || !position || !startDate) {
@@ -514,29 +654,49 @@ const UserProfile = () => {
         return;
       }
       
-      const newExperience = {
-        id: Date.now(),
+      // Create a new work experience object
+      const newWorkExperience = {
         company,
         position,
         startDate,
         endDate: endDate || 'Present'
       };
       
-      const updatedExperience = [...user.workExperience, newExperience];
-      
-      // Update user state
-      setUser({
-        ...user,
-        workExperience: updatedExperience
-      });
-      
-      // Save to localStorage
-      localStorage.setItem('userWorkExperience', JSON.stringify(updatedExperience));
-      
-      // Update progress
-      updateProgress('workExperience', true);
-      
-      onClose();
+      try {
+        // Check if user ID is available
+        const userId = user.id || user._id;
+        
+        if (!userId) {
+          console.error('User ID is missing:', user);
+          alert('User ID is missing. Please try refreshing the page or logging in again.');
+          return;
+        }
+        
+        console.log('Adding work experience for user:', userId);
+        
+        // Save to API using the user ID
+        const response = await addWorkExperience(userId, newWorkExperience);
+        
+        if (!response || !response.data) {
+          throw new Error('Invalid response from server');
+        }
+        
+        // Update user state with the new work experience
+        const updatedWorkExperience = [...user.workExperience, response.data];
+        
+        setUser({
+          ...user,
+          workExperience: updatedWorkExperience
+        });
+        
+        // Update progress
+        updateProgress('workExperience', true);
+        
+        onClose();
+      } catch (error) {
+        console.error('Error adding work experience:', error);
+        alert(`Failed to add work experience: ${error.message}`);
+      }
     };
     
     return (
@@ -623,6 +783,233 @@ const UserProfile = () => {
       </div>
     );
   }
+
+  // Password Change Modal Component
+  function PasswordChangeModal({ onClose }) {
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
+    
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      
+      // Reset any previous errors
+      setError('');
+      
+      // Validate form
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        setError('All fields are required');
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        setError('New passwords do not match');
+        return;
+      }
+      
+      if (newPassword.length < 8) {
+        setError('New password must be at least 8 characters long');
+        return;
+      }
+      
+      // Call the parent handler to change password
+      handleChangePassword({
+        currentPassword,
+        newPassword
+      });
+    };
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-[#dbeafe] rounded-lg shadow-xl max-w-md w-full p-6 text-gray-800">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium">Change Password</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <HiX className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">Old Password</label>
+              <input 
+                type="password" 
+                id="currentPassword" 
+                style={{backgroundColor: "white"}}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Your old password"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+              <input 
+                type="password" 
+                id="newPassword" 
+                style={{backgroundColor: "white"}}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Your new password"
+                minLength="8"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+              <input 
+                type="password" 
+                id="confirmPassword" 
+                style={{backgroundColor: "white"}}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter your new password"
+                minLength="8"
+                required
+              />
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-2">
+              <button 
+                type="button"
+                onClick={onClose} 
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                className="px-4 py-2 bg-[#94c3d2] rounded-md text-sm font-medium text-white hover:bg-[#7ba9b8]"
+              >
+                Change Password
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+  
+  // Account Delete Confirmation Modal
+  function DeleteAccountModal({ onClose }) {
+    const [password, setPassword] = useState('');
+    const [confirmText, setConfirmText] = useState('');
+    const [error, setError] = useState('');
+    
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      
+      // Reset any previous errors
+      setError('');
+      
+      // Validate form
+      if (!password) {
+        setError('Password is required to confirm deletion');
+        return;
+      }
+      
+      if (confirmText !== 'DELETE') {
+        setError('Please type DELETE to confirm');
+        return;
+      }
+      
+      // Call the parent handler to delete account
+      handleDeleteAccount({ password });
+    };
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-[#dbeafe] rounded-lg shadow-xl max-w-md w-full p-6 text-gray-800">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-red-600">Delete Account</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <HiX className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">
+                  This action <span className="font-bold">cannot be undone</span>. This will permanently delete your account and all associated data.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Enter your password to confirm</label>
+              <input 
+                type="password" 
+                id="password" 
+                style={{backgroundColor: "white"}}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="confirmText" className="block text-sm font-medium text-gray-700 mb-1">
+                Type <span className="font-bold">DELETE</span> to confirm
+              </label>
+              <input 
+                type="text" 
+                id="confirmText" 
+                style={{backgroundColor: "white"}}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-2">
+              <button 
+                type="button"
+                onClick={onClose} 
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                className="px-4 py-2 bg-red-600 rounded-md text-sm font-medium text-white hover:bg-red-700"
+              >
+                Delete My Account
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   const SectionButton = ({ id, title, activeSection, setActiveSection }) => (
     <button
       onClick={() => setActiveSection(id)}
@@ -661,9 +1048,20 @@ const UserProfile = () => {
                     <img 
                       src={profilePhoto}  
                       className="w-full h-full object-cover"
+                      alt="Profile"
+                      onError={(e) => {
+                        console.error("Image failed to load:", e);
+                        e.target.onerror = null; 
+                        e.target.src = ""; // Clear the source to prevent continuous errors
+                        setProfilePhoto(null); // Reset to default display
+                      }}
                     />
                   ) : (
-                    <div className="w-full h-full bg-[#94c3d2]"></div>
+                    <div className="w-full h-full bg-[#94c3d2] flex items-center justify-center">
+                      <span className="text-white text-2xl font-bold">
+                        {user.avatarLetter || user.name?.charAt(0).toUpperCase() || "?"}
+                      </span>
+                    </div>
                   )}
                   
                   {/* Overlay that appears on hover */}
@@ -910,20 +1308,24 @@ const UserProfile = () => {
                 <div className="bg-[#dbeafe] rounded-lg shadow-sm p-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Change Password</h3>
                   <p className="text-sm text-gray-600 mb-4">Update your account security by changing your password.</p>
-                  <button className="bg-[#94c3d2] px-4 py-2 rounded text-sm font-medium hover:bg-[#7ba9b8]" style={{
-                    color: "white"
-                  }}>
+                  <button 
+                    onClick={() => openModal('password')} 
+                    className="bg-[#94c3d2] px-4 py-2 rounded text-sm font-medium hover:bg-[#7ba9b8]" 
+                    style={{ color: "white" }}
+                  >
                     Change My Password
                   </button>
                 </div>
 
-                {/* Account Deletion - Keeping this section but removing Account Disable */}
+                {/* Account Deletion */}
                 <div className="bg-[#dbeafe] rounded-lg shadow-sm p-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Account Deletion</h3>
                   <p className="text-sm text-gray-600 mb-4">All your profile and learning data will be permanently deleted.</p>
-                  <button className="bg-red-500 px-4 py-2 rounded text-sm font-medium hover:bg-red-600" style={{
-                    color: "white"
-                  }}>
+                  <button 
+                    onClick={() => openModal('deleteAccount')} 
+                    className="bg-red-500 px-4 py-2 rounded text-sm font-medium hover:bg-red-600" 
+                    style={{ color: "white" }}
+                  >
                     Delete My Account
                   </button>
                 </div>
@@ -949,8 +1351,16 @@ const UserProfile = () => {
       {activeModal === 'workExperience' && (
         <WorkExperienceModal onClose={closeModal} />
       )}
+      
+      {activeModal === 'password' && (
+        <PasswordChangeModal onClose={closeModal} />
+      )}
+      
+      {activeModal === 'deleteAccount' && (
+        <DeleteAccountModal onClose={closeModal} />
+      )}
     </div>
   );
-};
+}
 
 export default UserProfile;
