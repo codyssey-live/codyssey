@@ -993,13 +993,15 @@ const UserProfile = () => {
               <button 
                 type="button"
                 onClick={onClose} 
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-100 transition-colors"
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium bg-white hover:bg-gray-100 transition-colors"
+                style={{color: "white"}}
               >
                 Cancel
               </button>
               <button 
                 type="submit"
-                className="px-4 py-2 bg-red-600 rounded-md text-sm font-medium text-white hover:bg-red-700"
+                className="px-4 py-2 bg-red-600 rounded-md text-sm font-medium hover:bg-red-700"
+                style={{color: "white"}}  
               >
                 Delete My Account
               </button>
