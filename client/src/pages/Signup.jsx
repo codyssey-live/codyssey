@@ -19,8 +19,6 @@ const Signup = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  // In the handleSubmit function of Signup.jsx
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -30,20 +28,24 @@ const Signup = () => {
       // API call to register user
       await apiClient.post('/auth/signup', formData);
       
-      // Store user name in localStorage
-      localStorage.setItem('userName', formData.name);
-      
-      // Login the user after successful signup
-      const loginResponse = await apiClient.post('/auth/login', {
-        email: formData.email,
-        password: formData.password
+      // Navigate to login page with success message
+      navigate('/login', { 
+        replace: true,
+        state: { 
+          signupSuccess: true,
+          message: 'Account created successfully! Please login with your credentials.' 
+        }
       });
       
-      // Navigate to dashboard
-      navigate('/dashboard', { replace: true });
-      
     } catch (err) {
-      // Error handling remains the same
+      // Extract error message from the response
+      const errorMessage = err.response?.data?.message || 'An error occurred during signup. Please try again.';
+      console.error('Signup error:', errorMessage);
+      
+      // Set the error state
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import apiClient from '../utils/apiClient'; // Import the API client instead of axios
@@ -11,11 +11,21 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   
   // Get the intended destination from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/dashboard";
+
+  // Check for success message from signup
+  useEffect(() => {
+    if (location.state?.signupSuccess) {
+      setSuccessMessage(location.state.message);
+      // Clean up the location state to prevent message reappearing on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -101,6 +111,18 @@ const Login = () => {
                 Welcome back to Codyssey
               </p>
             </motion.div>
+            
+            {/* Display success message */}
+            {successMessage && (
+              <motion.div 
+                className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <span className="block sm:inline">{successMessage}</span>
+              </motion.div>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-5">
               <motion.div 
