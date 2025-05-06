@@ -255,6 +255,81 @@ router.post('/:id/profile-picture', protect, upload.single('profilePicture'), as
   }
 });
 
+// @desc    Delete profile picture
+// @route   DELETE /api/users/:id/profile-picture
+// @access  Private
+router.delete('/:id/profile-picture', protect, async (req, res) => {
+  try {
+    // Check if user is updating their own profile
+    if (req.user._id.toString() !== req.params.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this profile'
+      });
+    }
+    
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Check if user actually has a profile picture to delete
+    if (!user.profilePicture) {
+      return res.status(400).json({
+        success: false,
+        message: 'No profile picture found to remove'
+      });
+    }
+    
+    let cloudinaryDeletionStatus = 'not_attempted';
+    
+    // If user has a profile picture in Cloudinary, delete it
+    if (user.profilePicture && user.profilePicture.includes('cloudinary')) {
+      try {
+        // Extract public_id from the Cloudinary URL
+        const publicIdMatch = user.profilePicture.match(/\/([^/]+)\.[^.]+$/);
+        if (publicIdMatch && publicIdMatch[1]) {
+          const publicId = `leetroom/profile-pictures/${publicIdMatch[1]}`;
+          const result = await deleteImage(publicId);
+          cloudinaryDeletionStatus = result.result || 'success';
+          console.log('Deleted profile picture from Cloudinary:', result);
+        } else {
+          cloudinaryDeletionStatus = 'no_match_found';
+        }
+      } catch (err) {
+        console.error('Error deleting profile picture from Cloudinary:', err);
+        cloudinaryDeletionStatus = 'error';
+        // Continue even if Cloudinary deletion fails
+      }
+    }
+    
+    // Remove the profile picture URL from the user
+    const oldPicture = user.profilePicture;
+    user.profilePicture = '';
+    await user.save();
+    
+    res.status(200).json({
+      success: true,
+      message: 'Profile picture removed successfully',
+      data: {
+        oldPicture,
+        cloudinaryDeletionStatus
+      }
+    });
+  } catch (error) {
+    console.error('Error removing profile picture:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during profile picture removal',
+      error: error.message
+    });
+  }
+});
+
 // @desc    Add education entry
 // @route   POST /api/users/:id/education
 // @access  Private

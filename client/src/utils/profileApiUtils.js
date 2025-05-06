@@ -120,6 +120,18 @@ export const uploadProfilePicture = async (userId, formData) => {
   }
 };
 
+// Remove profile picture
+export const removeProfilePicture = async (userId) => {
+  try {
+    userId = validateUserId(userId);
+    console.log('Removing profile picture for user:', userId);
+    const response = await apiClient.delete(`/users/${userId}/profile-picture`);
+    return handleResponse(response, 'Profile picture removal');
+  } catch (error) {
+    return handleError(error, 'Profile picture removal');
+  }
+};
+
 // Add education entry
 export const addEducation = async (userId, educationData) => {
   try {
