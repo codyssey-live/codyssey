@@ -411,7 +411,7 @@ const Syllabus = () => {
                                   <h4 className="font-medium text-gray-800">{video.title}</h4>
                                   <div className="mt-1 flex items-center gap-3">
                                     <Link 
-                                      to="/watch-video" 
+                                      to="/lecture-room" 
                                       state={{ videoLink: video.url }}
                                       className="text-sm text-white bg-[#94C3D2] hover:bg-opacity-90 px-3 py-1.5 rounded-lg flex items-center transition-colors shadow-sm"
                                     >

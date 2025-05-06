@@ -10,6 +10,8 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [userData, setUserData] = useState({ name: 'User', email: 'Email' });
   const [loading, setLoading] = useState(true);
+  const [hasActiveRoom, setHasActiveRoom] = useState(false);
+  const [activeRoomId, setActiveRoomId] = useState(null);
   
   // Fetch user data from the API - run this early and with higher priority
   useEffect(() => {
@@ -46,6 +48,50 @@ const Navbar = () => {
     fetchData();
   }, []);
   
+  // Check for active room when component mounts and when localStorage changes
+  useEffect(() => {
+    const checkForActiveRoom = () => {
+      const roomInfo = localStorage.getItem('roomInfo');
+      if (roomInfo) {
+        try {
+          const parsedInfo = JSON.parse(roomInfo);
+          if (parsedInfo.roomId) {
+            setHasActiveRoom(true);
+            setActiveRoomId(parsedInfo.roomId);
+          } else {
+            setHasActiveRoom(false);
+            setActiveRoomId(null);
+          }
+        } catch (error) {
+          console.error('Error parsing room info:', error);
+          setHasActiveRoom(false);
+          setActiveRoomId(null);
+        }
+      } else {
+        setHasActiveRoom(false);
+        setActiveRoomId(null);
+      }
+    };
+    
+    // Check initially
+    checkForActiveRoom();
+    
+    // Listen for storage changes (for when room is created in another tab)
+    window.addEventListener('storage', checkForActiveRoom);
+    
+    // Listen for custom room events
+    window.addEventListener('roomCreated', checkForActiveRoom);
+    window.addEventListener('roomJoined', checkForActiveRoom);
+    window.addEventListener('roomLeft', checkForActiveRoom);
+    
+    return () => {
+      window.removeEventListener('storage', checkForActiveRoom);
+      window.removeEventListener('roomCreated', checkForActiveRoom);
+      window.removeEventListener('roomJoined', checkForActiveRoom);
+      window.removeEventListener('roomLeft', checkForActiveRoom);
+    };
+  }, []);
+
   const handleSignOut = async () => {
     try {
       // Call signout endpoint to clear the cookie
@@ -68,7 +114,9 @@ const Navbar = () => {
     { name: "Dashboard", path: "/dashboard" },
     { name: "Syllabus", path: "/syllabus" },
     { name: "Lecture Room", path: "/lecture-room" },
-    { name: "Collab Room", path: "/collab-room" }
+    { name: "Collab Room", path: "/collab-room" },
+    // Only show Room if the user has an active room
+    ...(hasActiveRoom ? [{ name: "Room", path: `/room/${activeRoomId}` }] : [])
   ];
 
   return (
@@ -80,7 +128,7 @@ const Navbar = () => {
               {/* Added Link to home page */}
               <Link to="/" className="flex items-center">
                 <img 
-                  src="logo-grayscale.png" 
+                  src="/logo-grayscale.png" 
                   alt="Codyssey Logo" 
                   className="h-8 w-auto mr-2" 
                 />

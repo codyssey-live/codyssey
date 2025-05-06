@@ -14,7 +14,7 @@ const connectDB = async () => {
     // Add additional connection options for better error handling
     const conn = await mongoose.connect(dbURI, {
       // These options help with connection stability
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 50000,
       socketTimeoutMS: 45000,
     });
     

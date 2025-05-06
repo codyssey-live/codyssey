@@ -380,7 +380,7 @@ const TopicCard = ({
                       </div>
                       <div className="flex space-x-2 ml-3">
                         <Link 
-                          to="/watch-video" 
+                          to="/lecture-room" 
                           state={{ videoLink: video.link }}
                           className="p-1.5 text-white bg-purple-600 rounded-md hover:bg-purple-700 flex items-center"
                           title="Watch Video Together"
