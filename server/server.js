@@ -139,6 +139,6 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 8080;
 
 // Update this to listen on the HTTP server, not the Express app
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, '0.0.0.0',  () => {
   console.log(`Server running on port ${PORT}`);
 });

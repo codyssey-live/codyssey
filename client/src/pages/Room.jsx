@@ -58,39 +58,66 @@ const Room = () => {
   // Socket connection and event handling
   useEffect(() => {
     const getUserData = async () => {
+      let username;
+      
+      // Try to restore username from localStorage first
+      const savedUsername = localStorage.getItem('roomUsername');
+      
       try {
         const user = await fetchCurrentUser();
         if (user && user.name) {
-          setUserName(user.name);
+          username = user.name;
+          // Save username for persistence across refreshes
+          localStorage.setItem('roomUsername', username);
+        } else if (savedUsername) {
+          // Use saved username if API didn't return a name
+          username = savedUsername;
         } else {
-          setUserName(`Guest-${Math.floor(Math.random() * 1000)}`);
+          // Generate a persistent guest name
+          const guestName = `Guest-${Math.floor(Math.random() * 1000)}`;
+          username = guestName;
+          localStorage.setItem('roomUsername', guestName);
         }
       } catch (err) {
         console.error('Failed to fetch user data:', err);
-        setUserName(`Guest-${Math.floor(Math.random() * 1000)}`);
+        if (savedUsername) {
+          username = savedUsername;
+        } else {
+          // Generate a persistent guest name
+          const guestName = `Guest-${Math.floor(Math.random() * 1000)}`;
+          username = guestName;
+          localStorage.setItem('roomUsername', guestName);
+        }
       }
-
+      
+      // Set the username in state
+      setUserName(username);
+      console.log(`Using username: ${username}`);
+      
+      // Now handle socket connection
+      handleSocketConnection(username);
+    };
+    
+    const handleSocketConnection = (username) => {
+      // Ensure socket is disconnected before reconnecting to prevent duplicates
+      if (socket.connected) {
+        console.log('Socket already connected, disconnecting first to prevent duplicate');
+        socket.disconnect();
+      }
+      
       // Store socket reference for later use
       socketRef.current = socket;
       
-      // To prevent multiple setups, only setup connection once
+      // Define setup function
       const setupOnce = () => {
-        console.log('Socket connected, setting up room connection');
-        setupConnection(userName);
+        console.log(`Socket connected with ID: ${socket.id}, setting up for user: ${username}`);
+        setupConnection(username);
         socket.off('connect', setupOnce); // Remove listener after first connection
       };
       
-      // Check if socket is connected
-      if (!socket.connected) {
-        console.log('Socket not connected yet, connecting...');
-        socket.connect();
-        
-        // Wait for connection before setting up
-        socket.on('connect', setupOnce);
-      } else {
-        console.log('Socket already connected, setting up room connection');
-        setupConnection(userName);
-      }
+      // Connect socket and set up handler
+      socket.connect();
+      socket.on('connect', setupOnce);
     };
 
     getUserData();
@@ -98,6 +125,7 @@ const Room = () => {
     return () => {
       // Clean up event listeners
       if (socketRef.current) {
+        console.log('Cleaning up socket event listeners');
         socketRef.current.off('user-joined');
         socketRef.current.off('receive-message');
         socketRef.current.off('user-left');
@@ -107,8 +135,12 @@ const Room = () => {
         
         // Leave room when component unmounts
         if (userName && roomId) {
+          console.log(`Leaving room ${roomId} as ${userName}`);
           socketRef.current.emit('leave-room', { roomId, username: userName });
         }
+        
+        // Disconnect to prevent duplicate connections
+        socketRef.current.disconnect();
       }
     };
   }, [roomId]);
@@ -132,7 +164,7 @@ const Room = () => {
     socketRef.current.off('user-left');
     socketRef.current.off('room_data');
     
-    console.log(`Joining room ${roomId} as ${username}`);
+    console.log(`Joining room ${roomId} as ${username} with socket ID: ${socketRef.current.id}`);
     
     // Join the room
     socketRef.current.emit('join-room', {
@@ -149,7 +181,7 @@ const Room = () => {
       }
       
       if (data.participants) {
-        console.log('Updated participants list:', data.participants);
+        console.log('Setting participants list:', data.participants);
         setParticipants(data.participants);
       }
     });
