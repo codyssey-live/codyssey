@@ -146,8 +146,9 @@ const Room = () => {
   }, [roomId]);
 
   // Add message cache to prevent duplicate messages
-  const processedMessages = useRef(new Set());
+  const processedMessages = useRef(new Map()); // Changed from Set to Map
   const messageIdCounter = useRef(0);
+  const joinedTimestamp = useRef(Date.now());
   
   const setupConnection = (username) => {
     if (!socketRef.current) {
@@ -159,9 +160,11 @@ const Room = () => {
     
     // Clear event listeners to prevent duplicates
     socketRef.current.off('user-joined');
+    socketRef.current.off('user_joined'); // Add underscore version
     socketRef.current.off('receive-message');
     socketRef.current.off('receive_message');
     socketRef.current.off('user-left');
+    socketRef.current.off('user_left'); // Add underscore version
     socketRef.current.off('room_data');
     
     console.log(`Joining room ${roomId} as ${username} with socket ID: ${socketRef.current.id}`);
@@ -171,17 +174,43 @@ const Room = () => {
       roomId,
       username
     });
+
+    // Also emit underscore version for compatibility
+    socketRef.current.emit('join_room', {
+      roomId,
+      username
+    });
     
     // Listen for user joined events
     socketRef.current.on('user-joined', (data) => {
       console.log('User joined event received:', data);
-      // Only add system message if it's not the current user
-      if (data.username !== username) {
-        addSystemMessage(`${data.username} joined the room`);
-      }
       
+      // Skip own join notifications
+      if (data.username === username) return;
+      
+      // Add a join message to the chat
+      addSystemMessage(`${data.username} joined the room`);
+      
+      // Always update participants
       if (data.participants) {
         console.log('Setting participants list:', data.participants);
+        setParticipants(data.participants);
+      }
+    });
+    
+    // Also listen for underscore version
+    socketRef.current.on('user_joined', (data) => {
+      console.log('User_joined event received (underscore):', data);
+      
+      // Skip own join notifications
+      if (data.username === username) return;
+      
+      // Add a join message to the chat
+      addSystemMessage(`${data.username} joined the room`);
+      
+      // Always update participants
+      if (data.participants) {
+        console.log('Setting participants list from underscore event:', data.participants);
         setParticipants(data.participants);
       }
     });
@@ -219,11 +248,27 @@ const Room = () => {
     // Listen for user left events
     socketRef.current.on('user-left', (data) => {
       console.log('User left event received:', data);
-      if (data.username !== username) {
-        addSystemMessage(`${data.username} left the room`);
-      }
+      
+      // Add a leave message to the chat
+      addSystemMessage(`${data.username} left the room`);
+      
+      // Always update participants
       if (data.participants) {
         console.log('Updated participants after leave:', data.participants);
+        setParticipants(data.participants);
+      }
+    });
+    
+    // Also listen for underscore version of user left
+    socketRef.current.on('user_left', (data) => {
+      console.log('User_left event received (underscore):', data);
+      
+      // Add a leave message to the chat
+      addSystemMessage(`${data.username} left the room`);
+      
+      // Always update participants
+      if (data.participants) {
+        console.log('Updated participants after leave (underscore):', data.participants);
         setParticipants(data.participants);
       }
     });
@@ -239,6 +284,26 @@ const Room = () => {
     
     setLoading(false);
     console.log('Socket connection setup complete');
+  };
+
+  // A dedicated function to handle deduplication of system messages
+  const addSystemMessage = (text) => {
+    // Simple time-based deduplication (1 second)
+    const now = Date.now();
+    const key = text;
+    const lastTime = processedMessages.current.get(key) || 0;
+    
+    // Only add if it's been more than 1 second since the last identical message
+    if (now - lastTime > 1000) {
+      processedMessages.current.set(key, now);
+      setMessages(prev => [...prev, {
+        type: 'system',
+        text,
+        timestamp: new Date()
+      }]);
+    } else {
+      console.log('Duplicate system message filtered:', text);
+    }
   };
 
   // Effect to match chat height with instructions height
@@ -272,14 +337,6 @@ const Room = () => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const addSystemMessage = (text) => {
-    setMessages(prev => [...prev, {
-      type: 'system',
-      text,
-      timestamp: new Date()
-    }]);
   };
 
   const handleSendMessage = (e) => {

@@ -139,55 +139,39 @@ const Dashboard = () => {
     try {
       setCreatingRoom(true);
       
-      // Get token for authorization
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        toast.error("You must be logged in to create a room");
-        setCreatingRoom(false);
-        return;
-      }
-      
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+      // Make the API call directly without checking for a token
+      // The server will handle authentication via cookies
+      try {
+        // Use axios with credentials included
+        const response = await axios.post('/api/rooms/create', {}, {
+          withCredentials: true // This ensures cookies are sent with the request
+        });
+        
+        const data = response.data;
+        
+        if (data.success && data.data.roomId) {
+          const newRoomId = data.data.roomId;
+          setRoomId(newRoomId);
+          setRoomCreated(true);
+          
+          // Save the room information in localStorage
+          localStorage.setItem('roomInfo', JSON.stringify({ 
+            roomId: newRoomId, 
+            createdAt: new Date().toISOString() 
+          }));
+          
+          // Dispatch event to notify Navbar component
+          window.dispatchEvent(new CustomEvent('roomCreated'));
+          
+          toast.success("Room created successfully!");
         }
-      };
-      
-      // Call the create room API endpoint
-      const { data } = await axios.post('/api/rooms/create', {}, config);
-      
-      if (data.success && data.data.roomId) {
-        const newRoomId = data.data.roomId;
-        setRoomId(newRoomId);
-        setRoomCreated(true);
-        
-        // Save the room information in localStorage
-        localStorage.setItem('roomInfo', JSON.stringify({ 
-          roomId: newRoomId, 
-          createdAt: new Date().toISOString() 
-        }));
-        
-        // Dispatch event to notify Navbar component
-        window.dispatchEvent(new CustomEvent('roomCreated'));
-        
-        toast.success("Room created successfully!");
-      } else {
-        throw new Error("Failed to create room");
+      } catch (error) {
+        console.error('Error from server:', error.response?.data || error);
+        toast.error(error.response?.data?.message || "Failed to create room");
       }
-      
-      // NOTE: Comment out or remove the mock implementation
-      /* Mock implementation - REMOVE THIS
-      setTimeout(() => {
-        const newRoomId = "mock-room-" + Math.random().toString(36).substring(2, 10);
-        // ...rest of mock code
-      }, 1500);
-      */
-      
     } catch (error) {
       console.error('Error creating room:', error);
-      toast.error(error.response?.data?.message || "Failed to create room");
+      toast.error("Failed to create room");
     } finally {
       setCreatingRoom(false);
     }

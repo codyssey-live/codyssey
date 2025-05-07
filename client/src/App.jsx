@@ -13,6 +13,11 @@ import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import "./App.css";
+import axios from 'axios';
+
+// Configure axios defaults
+axios.defaults.baseURL = 'http://localhost:8080'; // Match your server port
+axios.defaults.withCredentials = true; // Important for sending cookies
 
 // Placeholder components for routes that don't exist yet
 const Profile = () => <div className="p-10">Profile Page (Coming Soon)</div>;

@@ -1,10 +1,12 @@
 import { Server } from 'socket.io';
 
 let io;
-// Track room participants by roomId -> Map of username -> Set of socketId
+// Track room participants by roomId -> Map of username -> connection count
 const roomUsers = new Map();
 // Track socket connections by socketId -> {username, roomId}
 const socketMap = new Map();
+// Store the last activity timestamps to prevent duplicate notifications
+const lastActivity = new Map();
 
 export const initSocket = (server) => {
   io = new Server(server, {
@@ -17,48 +19,36 @@ export const initSocket = (server) => {
 
   io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`);
-
-    // Ensure we don't have duplicate connection handlers
-    socket.removeAllListeners('join-room');
-    socket.removeAllListeners('send-message');
-    socket.removeAllListeners('disconnect');
-    socket.removeAllListeners('leave-room');
-
-    // Handle room joining
-    socket.on('join-room', ({ roomId, username }) => {
+    
+    // Handle both join-room and join_room events (for compatibility)
+    const handleJoinRoom = ({ roomId, username }) => {
       console.log(`${username} joining room: ${roomId} (socket ${socket.id})`);
       
       // Join the socket to the room
       socket.join(roomId);
       
-      // Store user information with socket data
+      // Store user information
       socket.data.username = username;
       socket.data.roomId = roomId;
       
-      // Store in our socket mapping
-      socketMap.set(socket.id, { username, roomId });
-      
-      // Initialize room if it doesn't exist
+      // Initialize room if needed
       if (!roomUsers.has(roomId)) {
         roomUsers.set(roomId, new Map());
       }
       
-      // Store socket ID for this username in this room
       const roomUserMap = roomUsers.get(roomId);
-      if (!roomUserMap.has(username)) {
-        roomUserMap.set(username, new Set());
-      }
       
-      // Add this socket ID to the user's socket set
-      roomUserMap.get(username).add(socket.id);
+      // Add this user to the room
+      roomUserMap.set(username, (roomUserMap.get(username) || 0) + 1);
       
-      // Get unique participants list (just usernames)
+      // Get current participants list
       const participants = Array.from(roomUserMap.keys());
       
-      console.log(`Room ${roomId} participants after join:`, participants);
+      console.log(`Room ${roomId} participants:`, participants);
       
-      // Broadcast to everyone that user joined with updated participants
-      io.to(roomId).emit('user-joined', { 
+      // Emit both kebab-case and snake_case events for compatibility
+      // Let others know someone joined
+      socket.to(roomId).emit('user-joined', { 
         username, 
         message: `${username} has joined the room`,
         userId: socket.id,
@@ -66,9 +56,20 @@ export const initSocket = (server) => {
         participants
       });
       
-      // Also send room data with participants list
+      // Also emit underscore version
+      socket.to(roomId).emit('user_joined', { 
+        username,
+        participants,
+        message: `${username} has joined the room` 
+      });
+      
+      // Send updated participants to everyone
       io.to(roomId).emit('room_data', { participants });
-    });
+    };
+    
+    // Register both event names for compatibility
+    socket.on('join-room', handleJoinRoom);
+    socket.on('join_room', handleJoinRoom);
 
     // Handle chat messages
     socket.on('send-message', ({ roomId, message, username, messageId }) => {
@@ -84,7 +85,7 @@ export const initSocket = (server) => {
       });
     });
 
-    // Handle user disconnection
+    // Update the disconnect handler to emit both event types
     socket.on('disconnect', () => {
       // Get user data from our mapping
       const userData = socketMap.get(socket.id);
@@ -92,23 +93,81 @@ export const initSocket = (server) => {
       if (userData) {
         const { username, roomId } = userData;
         
-        console.log(`${username} disconnected from room ${roomId} (socket ${socket.id})`);
-        
-        // Remove this socket from the user's socket set
-        if (roomUsers.has(roomId) && roomUsers.get(roomId).has(username)) {
-          const userSocketsSet = roomUsers.get(roomId).get(username);
-          userSocketsSet.delete(socket.id);
+        if (roomUsers.has(roomId)) {
+          const roomUserMap = roomUsers.get(roomId);
           
-          // If user has no more sockets, remove them from room
-          if (userSocketsSet.size === 0) {
-            roomUsers.get(roomId).delete(username);
+          if (roomUserMap.has(username)) {
+            const connectionsCount = roomUserMap.get(username) - 1;
             
-            // Get updated participants list
-            const participants = Array.from(roomUsers.get(roomId).keys());
+            if (connectionsCount <= 0) {
+              // User has fully left the room
+              roomUserMap.delete(username);
+              
+              // Prevent duplicate leave notifications
+              const now = Date.now();
+              const lastLeave = lastActivity.get(`${username}:leave:${roomId}`) || 0;
+              const leaveThreshold = 5000; // 5 seconds
+              
+              if (now - lastLeave > leaveThreshold) {
+                // Get updated participants
+                const participants = Array.from(roomUserMap.keys());
+                
+                // Notify room that user left
+                io.to(roomId).emit('user-left', {
+                  username,
+                  message: `${username} has left the room`,
+                  userId: socket.id,
+                  time: new Date(),
+                  participants
+                });
+                
+                io.to(roomId).emit('user_left', {
+                  username,
+                  message: `${username} has left the room`,
+                  userId: socket.id,
+                  time: new Date(),
+                  participants
+                });
+                
+                lastActivity.set(`${username}:leave:${roomId}`, now);
+                console.log(`${username} disconnected from room ${roomId}`);
+                
+                // Update everyone's participant list
+                io.to(roomId).emit('room_data', { participants });
+              }
+            } else {
+              // User still has other connections
+              roomUserMap.set(username, connectionsCount);
+              console.log(`${username} still has ${connectionsCount} connections to room ${roomId}`);
+            }
+          }
+        }
+        
+        // Clean up socket mapping
+        socketMap.delete(socket.id);
+      } else {
+        console.log(`User disconnected: ${socket.id} (no user data)`);
+      }
+    });
+    
+    // Handle both leave-room and leave_room events
+    const handleLeaveRoom = ({ roomId, username }) => {
+      socket.leave(roomId);
+      
+      if (roomUsers.has(roomId)) {
+        const roomUserMap = roomUsers.get(roomId);
+        
+        if (roomUserMap.has(username)) {
+          const connectionsCount = roomUserMap.get(username) - 1;
+          
+          if (connectionsCount <= 0) {
+            // User has fully left the room
+            roomUserMap.delete(username);
             
-            console.log(`${username} fully left room ${roomId}, participants:`, participants);
+            // Get updated participants
+            const participants = Array.from(roomUserMap.keys());
             
-            // Notify room that user left with updated participants
+            // Notify everyone in the room
             io.to(roomId).emit('user-left', {
               username,
               message: `${username} has left the room`,
@@ -117,56 +176,34 @@ export const initSocket = (server) => {
               participants
             });
             
-            // Also send updated participants to all clients
+            io.to(roomId).emit('user_left', {
+              username,
+              message: `${username} has left the room`,
+              userId: socket.id,
+              time: new Date(),
+              participants
+            });
+            
+            console.log(`${username} left room: ${roomId}`);
+            
+            // Send updated participant list
             io.to(roomId).emit('room_data', { participants });
+          } else {
+            // User still has other connections
+            roomUserMap.set(username, connectionsCount);
+            console.log(`${username} still has ${connectionsCount} connections to room ${roomId}`);
           }
         }
-        
-        // Clean up socket mapping
-        socketMap.delete(socket.id);
-      } else {
-        console.log(`User disconnected: ${socket.id} (no username/room data)`);
-      }
-    });
-    
-    // Handle user leaving room
-    socket.on('leave-room', ({ roomId, username }) => {
-      console.log(`${username} leaving room: ${roomId} (socket ${socket.id})`);
-      socket.leave(roomId);
-      
-      // Remove this socket from the user's socket set
-      if (roomUsers.has(roomId) && roomUsers.get(roomId).has(username)) {
-        const userSocketsSet = roomUsers.get(roomId).get(username);
-        userSocketsSet.delete(socket.id);
-        
-        // If user has no more sockets, remove them from room
-        if (userSocketsSet.size === 0) {
-          roomUsers.get(roomId).delete(username);
-          
-          // Get updated participants list
-          const participants = Array.from(roomUsers.get(roomId).keys());
-          
-          console.log(`${username} fully left room ${roomId}, participants:`, participants);
-          
-          // Notify room that user left with updated participants
-          io.to(roomId).emit('user-left', {
-            username,
-            message: `${username} has left the room`,
-            userId: socket.id,
-            time: new Date(),
-            participants
-          });
-          
-          // Also send updated participants to all clients
-          io.to(roomId).emit('room_data', { participants });
-        }
       }
       
-      // Clean up socket mapping
+      // Update socket mapping
       socketMap.delete(socket.id);
       socket.data.roomId = null;
       socket.data.username = null;
-    });
+    };
+    
+    socket.on('leave-room', handleLeaveRoom);
+    socket.on('leave_room', handleLeaveRoom);
   });
 
   return io;

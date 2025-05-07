@@ -52,10 +52,13 @@ app.use('/api/rooms', roomRoutes);
 
 // Socket.IO connection handling
 const connectedUsers = new Map(); // Store connected users with their socket IDs
-const roomUsers = new Map(); // Store room participants
+const roomUsers = new Map(); // Store room participants with connection count
 
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
+  
+  // Store the last activity timestamps to prevent duplicate notifications
+  const lastActivity = new Map();
 
   // Handle joining a room
   socket.on('join_room', ({ roomId, username }) => {
@@ -64,22 +67,39 @@ io.on('connection', (socket) => {
     // Store the user info
     connectedUsers.set(socket.id, { username, roomId });
     
-    // Add user to room participants list
+    // Initialize room if needed
     if (!roomUsers.has(roomId)) {
-      roomUsers.set(roomId, new Set());
+      roomUsers.set(roomId, new Map());
     }
-    roomUsers.get(roomId).add(username);
+    
+    const roomUserMap = roomUsers.get(roomId);
+    
+    // Check if this is a new join or a refresh
+    const isNewUser = !roomUserMap.has(username);
+    
+    // Update or initialize the user's connection count
+    roomUserMap.set(username, (roomUserMap.get(username) || 0) + 1);
     
     // Get all participants in the room
-    const participants = Array.from(roomUsers.get(roomId));
+    const participants = Array.from(roomUserMap.keys());
     
-    // Broadcast system message that user joined
-    socket.to(roomId).emit('user_joined', { username, participants });
+    // Prevent duplicate join notifications
+    const now = Date.now();
+    const lastJoin = lastActivity.get(`${username}:join:${roomId}`) || 0;
+    const joinThreshold = 3000; // 3 seconds
     
-    // Send participants list to the new user
-    socket.emit('room_data', { participants });
+    // Only broadcast join if it's a new user or enough time has passed since last join
+    if (isNewUser || (now - lastJoin > joinThreshold)) {
+      // Broadcast system message that user joined
+      socket.to(roomId).emit('user_joined', { username, participants });
+      lastActivity.set(`${username}:join:${roomId}`, now);
+      console.log(`${username} joined room: ${roomId}`);
+    } else {
+      console.log(`${username} reconnected to room: ${roomId}`);
+    }
     
-    console.log(`${username} joined room: ${roomId}`);
+    // Always send the updated participant list to everyone
+    io.to(roomId).emit('room_data', { participants });
   });
 
   // Handle sending messages
@@ -98,17 +118,42 @@ io.on('connection', (socket) => {
     
     if (userInfo) {
       const { username, roomId } = userInfo;
-      console.log(`User disconnected: ${username} from room ${roomId}`);
       
-      // Remove user from the room participants
+      // Check if user has other connections to this room
       if (roomUsers.has(roomId)) {
-        roomUsers.get(roomId).delete(username);
+        const roomUserMap = roomUsers.get(roomId);
         
-        // Get updated participants list
-        const participants = Array.from(roomUsers.get(roomId));
-        
-        // Notify others that user has left
-        socket.to(roomId).emit('user_left', { username, participants });
+        // Decrease connection count
+        if (roomUserMap.has(username)) {
+          const connectionsCount = roomUserMap.get(username) - 1;
+          
+          if (connectionsCount <= 0) {
+            // User has fully left the room
+            roomUserMap.delete(username);
+            
+            // Prevent duplicate leave notifications
+            const now = Date.now();
+            const lastLeave = lastActivity.get(`${username}:leave:${roomId}`) || 0;
+            const leaveThreshold = 3000; // 3 seconds
+            
+            if (now - lastLeave > leaveThreshold) {
+              // Get updated participants list
+              const participants = Array.from(roomUserMap.keys());
+              
+              // Notify others that user has left
+              socket.to(roomId).emit('user_left', { username, participants });
+              lastActivity.set(`${username}:leave:${roomId}`, now);
+              console.log(`${username} left room: ${roomId}`);
+              
+              // Update participants list for everyone
+              io.to(roomId).emit('room_data', { participants });
+            }
+          } else {
+            // User still has other connections, just update the count
+            roomUserMap.set(username, connectionsCount);
+            console.log(`${username} still has ${connectionsCount} connections to room: ${roomId}`);
+          }
+        }
       }
       
       // Remove from connected users
@@ -122,15 +167,29 @@ io.on('connection', (socket) => {
     
     // Update room participants
     if (roomUsers.has(roomId)) {
-      roomUsers.get(roomId).delete(username);
+      const roomUserMap = roomUsers.get(roomId);
       
-      // Get updated participants list
-      const participants = Array.from(roomUsers.get(roomId));
-      
-      // Broadcast that user left
-      socket.to(roomId).emit('user_left', { username, participants });
-      
-      console.log(`${username} left room: ${roomId}`);
+      if (roomUserMap.has(username)) {
+        const connectionsCount = roomUserMap.get(username) - 1;
+        
+        if (connectionsCount <= 0) {
+          // User has fully left the room
+          roomUserMap.delete(username);
+          
+          // Get updated participants list
+          const participants = Array.from(roomUserMap.keys());
+          
+          // Broadcast that user left
+          socket.to(roomId).emit('user_left', { username, participants });
+          console.log(`${username} left room: ${roomId}`);
+          
+          // Update participants list for everyone
+          io.to(roomId).emit('room_data', { participants });
+        } else {
+          // User still has other connections, just update the count
+          roomUserMap.set(username, connectionsCount);
+        }
+      }
     }
   });
 });
@@ -139,6 +198,6 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 8080;
 
 // Update this to listen on the HTTP server, not the Express app
-httpServer.listen(PORT, '0.0.0.0',  () => {
+httpServer.listen(PORT,  () => {
   console.log(`Server running on port ${PORT}`);
 });
