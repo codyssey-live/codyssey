@@ -20,9 +20,6 @@ const CollabRoom = () => {
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isCodeMessage, setIsCodeMessage] = useState(false);
-  const [notes, setNotes] = useState('');
-  const [savedNotes, setSavedNotes] = useState([]);
-  const [showNotesModal, setShowNotesModal] = useState(false);
   const [isSolved, setIsSolved] = useState(false);
   const [isSavedForLater, setIsSavedForLater] = useState(false);
 
@@ -37,9 +34,6 @@ const CollabRoom = () => {
     if (location.state && location.state.problemLink) {
       const link = location.state.problemLink;
       setProblemLink(link);
-
-      const notesFromStorage = localStorage.getItem(`notes_${link}`);
-      if (notesFromStorage) setSavedNotes(JSON.parse(notesFromStorage));
 
       const solved = localStorage.getItem(`solved_${link}`);
       setIsSolved(solved === 'true');
@@ -142,67 +136,6 @@ const CollabRoom = () => {
     }).catch(err => {
       console.error('Could not copy room link: ', err);
     });
-  };
-
-  const saveNote = () => {
-    if (!notes.trim()) {
-      alert('Please add some notes before saving.');
-      return;
-    }
-    
-    if (!problemLink) {
-      alert('No problem link found. Please select a problem from the Syllabus page first.');
-      return;
-    }
-    
-    const newNote = {
-      id: Date.now(),
-      text: notes,
-      date: new Date().toISOString()
-    };
-    
-    const updatedNotes = [...savedNotes, newNote];
-    setSavedNotes(updatedNotes);
-    
-    try {
-      localStorage.setItem(`notes_${problemLink}`, JSON.stringify(updatedNotes));
-      alert('Note saved successfully!');
-      setNotes('');
-    } catch (error) {
-      console.error("Error saving note:", error);
-      alert('Failed to save note. Please try again.');
-    }
-  };
-
-  const deleteNote = (noteId) => {
-    if (window.confirm('Are you sure you want to delete this note?')) {
-      const updatedNotes = savedNotes.filter(note => note.id !== noteId);
-      setSavedNotes(updatedNotes);
-      localStorage.setItem(`notes_${problemLink}`, JSON.stringify(updatedNotes));
-    }
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-  };
-
-  const handlePasteMessage = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text) setNewMessage(text);
-    } catch (err) {
-      console.error("Failed to read clipboard: ", err);
-    }
-  };
-
-  const handlePasteNotes = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text) setNotes(text);
-    } catch (err) {
-      console.error("Failed to read clipboard: ", err);
-    }
   };
 
   const handleLanguageChange = (newLang) => {
@@ -318,51 +251,6 @@ const CollabRoom = () => {
                 </button>
               </div>
             </div>
-
-            {/* Notes Section */}
-            <div className="mt-6 bg-[#dbeafe] rounded-lg overflow-hidden border border-gray-200">
-              <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                <h2 className="font-semibold">Notes</h2>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={handlePasteNotes}
-                    className="px-4 py-2 bg-[#94C3D2] text-white rounded-lg flex items-center hover:bg-opacity-90"
-                    title="Paste from clipboard"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                    Paste
-                  </button>
-                  <button
-                    onClick={() => setShowNotesModal(true)}
-                    className="px-4 py-2 bg-[#94C3D2] text-white rounded-lg flex items-center hover:bg-opacity-90"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                    View Saved
-                    {savedNotes.length > 0 && (
-                      <span className="ml-2 bg-[#dbeafe] border border-blue-300 shadow-sm rounded-full h-6 w-6 flex items-center justify-center text-blue-700 font-bold text-xs">
-                        {savedNotes.length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={saveNote}
-                    className="px-4 py-2 bg-[#94C3D2] text-white rounded-lg flex items-center hover:bg-opacity-90"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-                    Save Note
-                  </button>
-                </div>
-              </div>
-              <div className="p-0" style={{ minHeight: '450px' }}>
-                <textarea
-                  className="w-full h-full p-4 font-mono text-sm bg-[#E8F1F7] text-gray-800 focus:outline-none block resize-none focus:ring-[#94C3D2] focus:border-[#94C3D2]"
-                  style={{ minHeight: '450px' }}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Take notes for this problem..."
-                ></textarea>
-              </div>
-            </div>
           </div>
 
           {/* Chat Section - Fixed height to match code editor exactly */}
@@ -449,59 +337,6 @@ const CollabRoom = () => {
             </div>
           </div>
         </div>
-
-        {/* Modal for viewing saved notes */}
-        {showNotesModal && (
-          <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg w-full max-w-3xl max-h-[80vh] overflow-hidden flex flex-col shadow-xl">
-              <div className="p-4 flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-gray-800">Saved Notes</h2>
-                <button
-                  onClick={() => setShowNotesModal(false)}
-                  className="text-white bg-red-600 rounded-full p-1.5 hover:bg-opacity-90"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="white"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-              <div 
-                className="p-4 overflow-y-auto flex-1" 
-                style={{ 
-                  maxHeight: '60vh', 
-                  overflowY: 'auto',
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#d1d5db #f3f4f6'
-                }}
-              >
-                {savedNotes.length > 0 ? (
-                  <ul className="space-y-4">
-                    {savedNotes.map(note => (
-                      <li key={note.id} className="bg-[#E6F0FE] p-4 rounded-lg">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs text-gray-600 font-medium">{formatDate(note.date)}</span>
-                          <button
-                            onClick={() => deleteNote(note.id)}
-                            style={{
-                              backgroundColor: '#ef4444',
-                              color: '#ffffff',
-                              fontWeight: '500',
-                              borderRadius: '0.375rem',
-                              padding: '0.375rem 0.75rem',
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                        <p className="whitespace-pre-wrap text-gray-800 font-medium">{note.text}</p>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-600 text-center">No notes saved for this problem yet.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

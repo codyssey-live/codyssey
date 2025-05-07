@@ -10,7 +10,8 @@ import {
   addWorkExperience,
   deleteWorkExperience,
   changePassword,
-  deleteAccount
+  deleteAccount,
+  removeProfilePicture // Add this import
 } from "../utils/profileApiUtils";
 
 // Add this helper function near the top of your component
@@ -165,6 +166,20 @@ const UserProfile = () => {
   const [profileProgress, setProfileProgress] = useState(10); // Start with 10% for having an account
   const [loading, setLoading] = useState(true);
   
+  // Function to handle toast notifications - optimized for immediate display
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  
+  const showNotification = (message, type = 'success') => {
+    // Immediately clear any existing notification
+    setNotification({ show: false, message: '', type: '' });
+    
+    // Set the new notification without delay
+    setNotification({ show: true, message, type });
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
+  };
+
   // User data state with minimal initial values and ID from localStorage
   const [user, setUser] = useState({
     id: getUserId(), // Add the ID from localStorage right from the start
@@ -301,6 +316,9 @@ const UserProfile = () => {
       };
       reader.readAsDataURL(file);
       
+      // Show notification that upload is in progress
+      showNotification('Uploading profile photo...', 'info');
+      
       // Upload to server
       const response = await uploadProfilePicture(user.id, formData);
       console.log("Profile picture upload response:", response);
@@ -317,14 +335,60 @@ const UserProfile = () => {
         
         // Update progress
         updateProgress('photo', true);
+        
+        // Close modal immediately after successful upload
         closeModal();
+        
+        // Show success notification
+        showNotification('Profile photo uploaded successfully!');
       } else {
         console.error('Invalid response format:', response);
-        alert('Failed to upload profile picture: Invalid server response');
+        showNotification('Failed to upload profile picture: Invalid server response', 'error');
       }
     } catch (error) {
       console.error('Error uploading profile picture:', error);
-      alert('Failed to upload profile picture');
+      showNotification(`Failed to upload profile picture: ${error.message || 'Unknown error'}`, 'error');
+    }
+  };
+
+  // Function to remove profile photo with better error handling
+  const handleRemovePhoto = async () => {
+    try {
+      if (!user.id) {
+        showNotification('User ID not found', 'error');
+        return;
+      }
+      
+      // Show notification that removal is in progress
+      showNotification('Removing profile photo...', 'info');
+      
+      // Use the profileApiUtils helper
+      const response = await removeProfilePicture(user.id);
+      
+      if (response && response.success) {
+        // Clear the profile photo
+        setProfilePhoto(null);
+        
+        // Update user state
+        setUser(prevUser => ({
+          ...prevUser,
+          profilePicture: ''
+        }));
+        
+        // Close modal immediately after successful removal
+        closeModal();
+        
+        // Show success notification
+        showNotification('Profile photo removed successfully!');
+        
+        // Update progress if needed
+        updateProgress('photo', false);
+      } else {
+        throw new Error(response?.message || 'Failed to remove profile photo');
+      }
+    } catch (error) {
+      console.error('Error removing profile photo:', error);
+      showNotification(`Failed to remove profile photo: ${error.message || 'Unknown error'}`, 'error');
     }
   };
 
@@ -486,6 +550,18 @@ const UserProfile = () => {
                 />
               </label>
             </div>
+            
+            {/* Add remove photo button if user has a profile photo */}
+            {profilePhoto && (
+              <div className="flex justify-center">
+                <button
+                  onClick={handleRemovePhoto}
+                  className="px-4 py-2 text-red-600 border border-red-600 rounded-md text-sm font-medium hover:bg-red-50"
+                >
+                  Remove Current Photo
+                </button>
+              </div>
+            )}
           </div>
           
           <div className="mt-6 flex justify-end gap-2">
@@ -1028,6 +1104,15 @@ const UserProfile = () => {
   return (
     <div className="min-h-screen bg-[#E8F1F7] text-gray-800">
       <Navbar />
+      
+      {/* Notification toast */}
+      {notification.show && (
+        <div className={`fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
+          notification.type === 'error' ? 'bg-red-500' : 'bg-green-500'
+        } text-white`}>
+          {notification.message}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center items-center h-[70vh]">
