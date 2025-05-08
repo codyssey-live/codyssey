@@ -1,14 +1,16 @@
 import express from 'express';
-import { createRoom } from '../controllers/roomController.js';
+import { createRoom, validateRoom, endRoom } from '../controllers/roomController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Log the request when trying to create a room
-router.post('/create', (req, res, next) => {
-  console.log('Room creation request received. Checking authentication...');
-  console.log('Cookies:', req.cookies);
-  next();
-}, protect, createRoom);
+// Create a new room (requires authentication)
+router.post('/create', protect, createRoom);
+
+// Validate if a room exists and is active (public)
+router.get('/validate/:roomId', validateRoom);
+
+// End a room (public - anyone can end)
+router.post('/end/:roomId', endRoom);
 
 export default router;

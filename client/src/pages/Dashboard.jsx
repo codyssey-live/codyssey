@@ -139,12 +139,10 @@ const Dashboard = () => {
     try {
       setCreatingRoom(true);
       
-      // Make the API call directly without checking for a token
-      // The server will handle authentication via cookies
       try {
         // Use axios with credentials included
         const response = await axios.post('/api/rooms/create', {}, {
-          withCredentials: true // This ensures cookies are sent with the request
+          withCredentials: true
         });
         
         const data = response.data;
@@ -154,11 +152,20 @@ const Dashboard = () => {
           setRoomId(newRoomId);
           setRoomCreated(true);
           
-          // Save the room information in localStorage
+          // Make sure to include all required room info
           localStorage.setItem('roomInfo', JSON.stringify({ 
             roomId: newRoomId, 
-            createdAt: new Date().toISOString() 
+            createdAt: new Date().toISOString(),
+            isCreator: true, // Explicitly mark as creator
+            userId: localStorage.getItem('userId') // Include user ID for verification
           }));
+          
+          // Also add to validated rooms cache
+          const validatedRooms = JSON.parse(localStorage.getItem('validatedRooms') || '[]');
+          if (!validatedRooms.includes(newRoomId)) {
+            validatedRooms.push(newRoomId);
+            localStorage.setItem('validatedRooms', JSON.stringify(validatedRooms));
+          }
           
           // Dispatch event to notify Navbar component
           window.dispatchEvent(new CustomEvent('roomCreated'));
@@ -190,15 +197,16 @@ const Dashboard = () => {
       return;
     }
     
-    navigator.clipboard.writeText(inviteLinkRef.current?.value || generateInviteLink())
+    // Only copy the room ID, not a full URL
+    navigator.clipboard.writeText(roomId)
       .then(() => {
         setCopySuccess(true);
-        toast.success('Link copied to clipboard!');
+        toast.success('Room ID copied to clipboard!');
         setTimeout(() => setCopySuccess(false), 3000);
       })
       .catch(err => {
-        console.error('Failed to copy link: ', err);
-        toast.error('Failed to copy link');
+        console.error('Failed to copy room ID: ', err);
+        toast.error('Failed to copy room ID');
       });
   };
 
@@ -218,56 +226,95 @@ const Dashboard = () => {
       toast.info('Please create a room first');
       return;
     }
-    
     const link = generateInviteLink();
     const subject = encodeURIComponent('Join me on Codyssey');
     const body = encodeURIComponent(`I'm inviting you to join me on Codyssey. Click this link to join: ${link}`);
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
   };
 
-  const handleJoinRoom = (e) => {
+  const handleJoinRoom = async (e) => {
     e.preventDefault();
     if (!joinLink) {
-      setJoinError('Please enter an invite link or room ID');
+      setJoinError('Please enter a room ID');
       return;
     }
 
     try {
-      // Try parsing as a URL first
+      // Extract room ID - either directly entered or from a URL
       let roomIdToJoin;
-      try {
-        const url = new URL(joinLink);
-        const pathSegments = url.pathname.split('/');
-        roomIdToJoin = pathSegments[pathSegments.length - 1];
-      } catch (error) {
-        // If not a URL, use the input directly as a roomId
+      if (joinLink.includes('/') || joinLink.includes('://')) {
+        try {
+          const url = new URL(joinLink);
+          const pathSegments = url.pathname.split('/');
+          roomIdToJoin = pathSegments[pathSegments.length - 1];
+        } catch (error) {
+          // If URL parsing fails, use input directly
+          roomIdToJoin = joinLink.trim();
+        }
+      } else {
+        // Not a URL, use the input directly as roomId
         roomIdToJoin = joinLink.trim();
       }
 
-      if (roomIdToJoin) {
-        // Save the joined room info
-        localStorage.setItem('roomInfo', JSON.stringify({ 
-          roomId: roomIdToJoin, 
-          joinedAt: new Date().toISOString() 
-        }));
+      console.log("Attempting to join room:", roomIdToJoin);
+
+      // Check if this room has been ended locally
+      const endedRooms = JSON.parse(localStorage.getItem('endedRooms') || '[]');
+      if (endedRooms.includes(roomIdToJoin)) {
+        console.log("Room was previously ended");
+        setJoinError('This room has been ended and is no longer available');
+        return;
+      }
+
+      // Validate via REST API which is faster and more reliable
+      try {
+        const response = await axios.get(`/api/rooms/validate/${roomIdToJoin}`);
         
-        // Dispatch event to notify Navbar component
-        window.dispatchEvent(new CustomEvent('roomJoined'));
-        
-        // Navigate to the room
-        navigate(`/room/${roomIdToJoin}`);
-        setShowJoinModal(false);
-      } else {
-        setJoinError('Invalid room link or ID');
+        if (response.data.success) {
+          console.log("Room validation successful");
+          
+          // Save the joined room info
+          localStorage.setItem('roomInfo', JSON.stringify({ 
+            roomId: roomIdToJoin, 
+            joinedAt: new Date().toISOString()
+          }));
+          
+          // Track this room as validated
+          const validatedRooms = JSON.parse(localStorage.getItem('validatedRooms') || '[]');
+          if (!validatedRooms.includes(roomIdToJoin)) {
+            validatedRooms.push(roomIdToJoin);
+            localStorage.setItem('validatedRooms', JSON.stringify(validatedRooms));
+          }
+          
+          // Dispatch event to notify Navbar component
+          window.dispatchEvent(new CustomEvent('roomJoined'));
+          
+          // Navigate to the room
+          navigate(`/room/${roomIdToJoin}`);
+          setShowJoinModal(false);
+        }
+      } catch (error) {
+        if (error.response && error.response.status === 404) {
+          setJoinError('Room not found or is no longer active');
+        } else {
+          console.error('Error joining room:', error);
+          setJoinError('Error validating room. Please try again.');
+        }
       }
     } catch (error) {
-      setJoinError('Invalid invite link or ID');
-      console.error('Error joining room:', error);
+      console.error('Error in join room process:', error);
+      setJoinError('Invalid room ID or connection issue');
     }
   };
 
   const handleOpenRoom = () => {
     if (roomCreated && roomId) {
+      // First check if this room was previously ended
+      const endedRooms = JSON.parse(localStorage.getItem('endedRooms') || '[]');
+      if (endedRooms.includes(roomId)) {
+        toast.error("This room has been ended and is no longer available");
+        return;
+      }
       // Navigate to the room page with the roomId
       navigate(`/room/${roomId}`);
     }
@@ -282,11 +329,9 @@ const Dashboard = () => {
         onCreateRoom={handleCreateRoomClick}
         onJoinRoom={() => setShowJoinModal(true)}
       />
-      
       <div className="container mx-auto px-6 md:px-10">
         <h2 className="text-2xl font-bold text-[#333333] mt-8 mb-6">Your Dashboard</h2>
       </div>
-      
       <main className="container mx-auto px-6 md:px-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <StatCard 
@@ -304,7 +349,7 @@ const Dashboard = () => {
         </div>
         
         <div className="mb-6 flex space-x-2">
-          <button 
+          <button
             onClick={() => setActiveTab('recent')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'recent' 
@@ -314,7 +359,7 @@ const Dashboard = () => {
           >
             Recent
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('solved')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'solved' 
@@ -324,7 +369,7 @@ const Dashboard = () => {
           >
             Solved
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('unsolved')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'unsolved' 
@@ -334,7 +379,7 @@ const Dashboard = () => {
           >
             Unsolved
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('solveLater')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'solveLater' 
@@ -372,7 +417,7 @@ const Dashboard = () => {
             <div className="space-y-4">
               {!roomCreated ? (
                 <div className="flex justify-center">
-                  <button
+                  <button 
                     onClick={() => {
                       console.log("Create New Room button clicked");
                       handleCreateRoom();
@@ -445,7 +490,6 @@ const Dashboard = () => {
                       Open Room
                     </button>
                   </div>
-                  
                   <div className="border-t border-gray-200 pt-4">
                     <p className="text-sm text-gray-500 mb-3">Or share directly via:</p>
                     <div className="flex space-x-3">
