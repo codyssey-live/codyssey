@@ -5,6 +5,7 @@ import { fetchCurrentUser } from '../utils/authUtils';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import socket from '../socket'; // Import socket directly
+import { loadMessages, saveMessages, clearMessages } from '../utils/chatPersistence';
 
 const Room = () => {
   const { roomId } = useParams();
@@ -16,9 +17,18 @@ const Room = () => {
   const socketRef = useRef(null);
   const isRefreshing = useRef(false);
 
-  const [messages, setMessages] = useState([
-    { type: 'system', text: 'Welcome to the room! Share the room code with your friends to collaborate.', timestamp: new Date() }
-  ]);
+  const [messages, setMessages] = useState(() => {
+    // Try to load saved messages first
+    const savedMessages = loadMessages(roomId);
+    if (savedMessages && savedMessages.length > 0) {
+      console.log('Loaded saved messages from localStorage:', savedMessages.length);
+      return savedMessages;
+    }
+    // Fall back to the welcome message if no saved messages
+    return [
+      { type: 'system', text: 'Welcome to the room! Share the room code with your friends to collaborate.', timestamp: new Date() }
+    ];
+  });
   const [newMessage, setNewMessage] = useState('');
   const [userName, setUserName] = useState('User');
   const [participants, setParticipants] = useState(['You']);
@@ -90,6 +100,9 @@ const Room = () => {
   
   // Common cleanup function for room ending
   const cleanupAfterRoomEnd = (roomId, endedBy) => {
+    // Clear messages for this room
+    clearMessages(roomId);
+    
     // Clear room information from localStorage
     localStorage.removeItem('roomInfo');
     
@@ -545,6 +558,13 @@ const Room = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Add an effect to save messages when they change
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveMessages(roomId, messages);
+    }
+  }, [messages, roomId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
