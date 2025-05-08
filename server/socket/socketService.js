@@ -138,7 +138,7 @@ export const initSocket = (server) => {
     });
     
     // SIMPLIFIED - Allow any user to end the room
-    socket.on('end-room', async ({ roomId, username }) => {
+    socket.on('end-room', async ({ roomId, username, deleteCompletely = true }) => {
       console.log(`Request to end room ${roomId} by ${username} (socket ${socket.id})`);
       
       if (!roomId || !activeRooms.has(roomId)) {
@@ -150,16 +150,13 @@ export const initSocket = (server) => {
       }
       
       try {
-        // Mark room as inactive in database (CRITICAL)
-        const result = await Room.findOneAndUpdate(
-          { roomId },
-          { active: false, endedAt: new Date() }
-        );
+        // Always delete the room from the database
+        const result = await Room.findOneAndDelete({ roomId });
         
         if (!result) {
-          console.log(`No room found with ID ${roomId} in database`);
+          console.log(`No room found with ID ${roomId} in database to delete`);
         } else {
-          console.log(`Room ${roomId} marked as inactive in database`);
+          console.log(`Room ${roomId} completely deleted from database`);
         }
         
         // Notify all users in the room
@@ -190,7 +187,7 @@ export const initSocket = (server) => {
         // Confirm to the user that the room was ended
         socket.emit('end-room-success', {
           success: true,
-          message: 'Room ended successfully'
+          message: 'Room deleted successfully'
         });
         
         console.log(`Room ${roomId} ended successfully by ${username}`);

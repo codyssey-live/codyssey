@@ -17,7 +17,7 @@ const Room = () => {
   const isRefreshing = useRef(false);
 
   const [messages, setMessages] = useState([
-    { type: 'system', text: 'Welcome to the room! Share the room link with your friends to collaborate.', timestamp: new Date() }
+    { type: 'system', text: 'Welcome to the room! Share the room code with your friends to collaborate.', timestamp: new Date() }
   ]);
   const [newMessage, setNewMessage] = useState('');
   const [userName, setUserName] = useState('User');
@@ -39,6 +39,15 @@ const Room = () => {
       socketRef.current.emit('leave-room', { roomId, username: userName });
     }
     
+    // If this user is the creator, remember this for when they rejoin
+    if (isRoomCreator) {
+      // Save to a "room creator history" object in localStorage
+      const creatorHistory = JSON.parse(localStorage.getItem('roomCreatorHistory') || '{}');
+      creatorHistory[roomId] = true;
+      localStorage.setItem('roomCreatorHistory', JSON.stringify(creatorHistory));
+      console.log(`Saved creator status for room ${roomId} before leaving`);
+    }
+    
     // Clear room information from localStorage
     localStorage.removeItem('roomInfo');
     
@@ -50,18 +59,19 @@ const Room = () => {
     toast.info('You have left the room');
   };
 
-  // Handle room ending more robustly
+  // Handle room ending - modified to delete the room directly
   const handleEndRoom = () => {
-    console.log("Ending room", roomId);
+    console.log(`Ending room ${roomId} (with deletion)`);
     
     // Emit an end-room event to inform all participants
     if (socketRef.current) {
       socketRef.current.emit('end-room', { 
         roomId, 
-        username: userName
+        username: userName,
+        deleteCompletely: true // Always delete completely when ending the room
       });
       
-      // Listen for success or error
+      // Listen for success response
       socketRef.current.once('end-room-success', (data) => {
         console.log("Room ended successfully:", data);
         
@@ -88,6 +98,13 @@ const Room = () => {
     if (!endedRooms.includes(roomId)) {
       endedRooms.push(roomId);
       localStorage.setItem('endedRooms', JSON.stringify(endedRooms));
+    }
+    
+    // Also clear the creator history for this room since it no longer exists
+    const creatorHistory = JSON.parse(localStorage.getItem('roomCreatorHistory') || '{}');
+    if (creatorHistory[roomId]) {
+      delete creatorHistory[roomId];
+      localStorage.setItem('roomCreatorHistory', JSON.stringify(creatorHistory));
     }
     
     // Remove from validated rooms if present
@@ -152,9 +169,13 @@ const Room = () => {
           return false;
         }
         
-        // Check if user is the creator
-        setIsRoomCreator(!!parsedInfo.isCreator);
-        console.log("User is room creator:", !!parsedInfo.isCreator);
+        // Check if user is the creator from roomInfo OR from roomCreatorHistory
+        const creatorHistory = JSON.parse(localStorage.getItem('roomCreatorHistory') || '{}');
+        const wasCreator = creatorHistory[roomId] === true;
+        
+        // Set isRoomCreator based on current roomInfo OR previous history as creator
+        setIsRoomCreator(!!parsedInfo.isCreator || wasCreator);
+        console.log("User is room creator:", !!parsedInfo.isCreator || wasCreator);
         
         return true;
       } catch (error) {
@@ -579,12 +600,12 @@ const Room = () => {
     navigator.clipboard.writeText(roomId)
       .then(() => {
         setInviteLinkCopied(true);
-        toast.success('Room ID copied to clipboard!');
+        toast.success('Room code copied to clipboard!');
         setTimeout(() => setInviteLinkCopied(false), 3000);
       })
       .catch(err => {
         console.error('Failed to copy room ID:', err);
-        toast.error('Failed to copy room ID');
+        toast.error('Failed to copy room code');
       });
   };
 
@@ -617,14 +638,14 @@ const Room = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Codyssey Hub</h1>
-                <p className="text-gray-600 mt-1">Room ID: <span className="font-semibold">{roomId}</span></p>
+                <p className="text-gray-600 mt-1">Room Code: <span className="font-semibold">{roomId}</span></p>
               </div>
               
               <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto mt-4 md:mt-0">
                 <button
                   onClick={handleCopyInviteLink}
                   className="px-4 py-2 bg-[#3B82F6] text-white rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center w-full md:w-auto min-w-[140px]"
-                  title="Copy room ID to clipboard"
+                  title="Copy room code to clipboard"
                 >
                   {inviteLinkCopied ? (
                     <>
@@ -638,30 +659,36 @@ const Room = () => {
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{color: 'white'}}>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2" />
                       </svg>
-                      <span style={{color: 'white'}}>Copy Room ID</span>
+                      <span style={{color: 'white'}}>Copy Room Code</span>
                     </>
                   )}
                 </button>
                 
-                {isRoomCreator ? (
+                {/* Leave Room button for ALL users */}
+                <button
+                  onClick={handleLeaveRoom}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center w-full md:w-auto"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Leave Room
+                </button>
+                
+                {/* End Room button only for room creators */}
+                {isRoomCreator && (
                   <button
-                    onClick={handleEndRoom}
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center w-full md:w-auto"
+                    onClick={() => {
+                      if(confirm("Are you sure you want to end this room? This will delete the room permanently and cannot be undone.")) {
+                        handleEndRoom();
+                      }
+                    }}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center w-full md:w-auto"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                     End Room
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleLeaveRoom}
-                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center w-full md:w-auto"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Leave Room
                   </button>
                 )}
                 

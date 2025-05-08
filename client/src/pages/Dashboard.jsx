@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast, ToastContainer } from 'react-toastify'; // Import ToastContainer too
-import 'react-toastify/dist/ReactToastify.css'; // Import the toast styles
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Navbar from '../components/Navbar';
 import Header from '../components/dashboard/Header';
 import StatCard from '../components/dashboard/StatCard';
@@ -123,7 +123,7 @@ const Dashboard = () => {
       setProblems(mockProblems.filter(p => p.status === 'solveLater'));
     }
   }, [activeTab]);
-
+  
   // Generate a mock userId for demo
   const mockUserId = 'user123';
   
@@ -184,9 +184,10 @@ const Dashboard = () => {
     }
   };
 
-  const generateInviteLink = () => {
+  // Return just the room ID instead of a URL
+  const generateInviteCode = () => {
     if (roomCreated && roomId) {
-      return `${BASE_URL}/join/${roomId}`;
+      return roomId;
     }
     return '';
   };
@@ -201,12 +202,12 @@ const Dashboard = () => {
     navigator.clipboard.writeText(roomId)
       .then(() => {
         setCopySuccess(true);
-        toast.success('Room ID copied to clipboard!');
+        toast.success('Room code copied to clipboard!');
         setTimeout(() => setCopySuccess(false), 3000);
       })
       .catch(err => {
         console.error('Failed to copy room ID: ', err);
-        toast.error('Failed to copy room ID');
+        toast.error('Failed to copy room code');
       });
   };
 
@@ -216,8 +217,7 @@ const Dashboard = () => {
       return;
     }
     
-    const link = generateInviteLink();
-    const text = encodeURIComponent(`Join me on Codyssey! ${link}`);
+    const text = encodeURIComponent(`Join me on Codyssey! Use room code: ${roomId}`);
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
@@ -226,16 +226,15 @@ const Dashboard = () => {
       toast.info('Please create a room first');
       return;
     }
-    const link = generateInviteLink();
     const subject = encodeURIComponent('Join me on Codyssey');
-    const body = encodeURIComponent(`I'm inviting you to join me on Codyssey. Click this link to join: ${link}`);
+    const body = encodeURIComponent(`I'm inviting you to join me on Codyssey. Use this room code to join: ${roomId}`);
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
   };
 
   const handleJoinRoom = async (e) => {
     e.preventDefault();
     if (!joinLink) {
-      setJoinError('Please enter a room ID');
+      setJoinError('Please enter a room code');
       return;
     }
 
@@ -266,6 +265,10 @@ const Dashboard = () => {
         return;
       }
 
+      // Check if user was the original creator of this room
+      const creatorHistory = JSON.parse(localStorage.getItem('roomCreatorHistory') || '{}');
+      const wasRoomCreator = creatorHistory[roomIdToJoin] === true;
+
       // Validate via REST API which is faster and more reliable
       try {
         const response = await axios.get(`/api/rooms/validate/${roomIdToJoin}`);
@@ -273,10 +276,11 @@ const Dashboard = () => {
         if (response.data.success) {
           console.log("Room validation successful");
           
-          // Save the joined room info
+          // Save the joined room info - include isCreator if user was previously creator
           localStorage.setItem('roomInfo', JSON.stringify({ 
             roomId: roomIdToJoin, 
-            joinedAt: new Date().toISOString()
+            joinedAt: new Date().toISOString(),
+            isCreator: wasRoomCreator // Set this if user was previously creator
           }));
           
           // Track this room as validated
@@ -303,7 +307,7 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Error in join room process:', error);
-      setJoinError('Invalid room ID or connection issue');
+      setJoinError('Invalid room code or connection issue');
     }
   };
 
@@ -447,7 +451,7 @@ const Dashboard = () => {
                 <>
                   <div>
                     <label htmlFor="invite-link" className="block text-sm font-medium text-gray-700 mb-1">
-                      Share this link with your friends
+                      Share this code with your friends
                     </label>
                     <div className="flex">
                       <input
@@ -455,7 +459,7 @@ const Dashboard = () => {
                         type="text"
                         id="invite-link"
                         readOnly
-                        value={generateInviteLink()}
+                        value={generateInviteCode()}
                         className="w-full px-4 py-2.5 bg-[#E8F1F7] border border-gray-200 rounded-l-lg focus:ring-[#94C3D2] focus:border-[#94C3D2] text-gray-800"
                       />
                       <button
@@ -474,7 +478,7 @@ const Dashboard = () => {
                       </button>
                     </div>
                     {copySuccess && (
-                      <p className="mt-2 text-sm text-green-600">Link copied to clipboard!</p>
+                      <p className="mt-2 text-sm text-green-600">Room code copied to clipboard!</p>
                     )}
                   </div>
                   
@@ -491,7 +495,7 @@ const Dashboard = () => {
                     </button>
                   </div>
                   <div className="border-t border-gray-200 pt-4">
-                    <p className="text-sm text-gray-500 mb-3">Or share directly via:</p>
+                    <p className="text-sm text-gray-500 mb-3">Or share code directly via:</p>
                     <div className="flex space-x-3">
                       <button
                         onClick={shareOnWhatsApp}
@@ -543,7 +547,7 @@ const Dashboard = () => {
             <form onSubmit={handleJoinRoom} className="space-y-4">
               <div>
                 <label htmlFor="join-link" className="block text-sm font-medium text-gray-700 mb-1">
-                  Paste invite link or room ID
+                  Enter room code
                 </label>
                 <input
                   type="text"
@@ -553,7 +557,7 @@ const Dashboard = () => {
                     setJoinLink(e.target.value);
                     setJoinError('');
                   }}
-                  placeholder="https://codyssey.live/join?inviterId=user123"
+                  placeholder="Enter an 8-character room code"
                   className="w-full px-4 py-2.5 bg-[#E8F1F7] border border-gray-200 rounded-lg focus:ring-[#94C3D2] focus:border-[#94C3D2] text-gray-800"
                 />
                 {joinError && (

@@ -4,11 +4,10 @@ const roomSchema = new mongoose.Schema({
   roomId: {
     type: String,
     required: true,
-    unique: true,
-    length: 8 // Ensure room IDs are 8 characters
+    unique: true
   },
   inviterId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId, 
     ref: 'User',
     required: true
   },
@@ -21,11 +20,11 @@ const roomSchema = new mongoose.Schema({
     default: Date.now
   },
   endedAt: {
-    type: Date,
-    default: null
+    type: Date
   }
 });
 
-const Room = mongoose.model('Room', roomSchema);
+// Add TTL index to automatically delete ended rooms after 7 days
+roomSchema.index({ endedAt: 1 }, { expireAfterSeconds: 7 * 24 * 60 * 60 }); // 7 days
 
-export default Room;
+export default mongoose.model('Room', roomSchema);

@@ -1,6 +1,6 @@
 import express from 'express';
-import { createRoom, validateRoom, endRoom } from '../controllers/roomController.js';
-import { protect } from '../middleware/authMiddleware.js';
+import { createRoom, validateRoom, endRoom, cleanupOldRooms } from '../controllers/roomController.js';
+import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -12,5 +12,8 @@ router.get('/validate/:roomId', validateRoom);
 
 // End a room (public - anyone can end)
 router.post('/end/:roomId', endRoom);
+
+// Cleanup old rooms (admin only)
+router.post('/cleanup', protect, adminOnly, cleanupOldRooms);
 
 export default router;
