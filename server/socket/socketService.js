@@ -95,13 +95,6 @@ export const initSocket = (server) => {
         // Get participants list
         const participants = Array.from(roomUserMap.keys());
         
-        // Notify others in the room
-        socket.to(roomId).emit('user-joined', { 
-          username,
-          participants,
-          time: new Date()
-        });
-        
         // Send success response to the user who joined
         socket.emit('join-room-success', {
           success: true,
@@ -233,35 +226,7 @@ export const initSocket = (server) => {
             // Get updated participants
             const participants = Array.from(roomUserMap.keys());
             
-            // Prevent duplicate leave notifications
-            const now = Date.now();
-            const lastLeave = lastActivity.get(`${username}:leave:${roomId}`) || 0;
-            const leaveThreshold = 5000; // 5 seconds
-            
-            if (now - lastLeave > leaveThreshold) {
-              // Notify everyone in the room
-              io.to(roomId).emit('user-left', {
-                username,
-                message: `${username} has left the room`,
-                userId: socket.id,
-                time: new Date(),
-                participants
-              });
-              
-              io.to(roomId).emit('user_left', {
-                username,
-                message: `${username} has left the room`,
-                userId: socket.id,
-                time: new Date(),
-                participants
-              });
-              
-              lastActivity.set(`${username}:leave:${roomId}`, now);
-            }
-            
-            console.log(`${username} left room: ${roomId}`);
-            
-            // Send updated participant list
+            // Only update the participant list without a message
             io.to(roomId).emit('room_data', { participants });
           } else {
             // User still has other connections
@@ -309,36 +274,10 @@ export const initSocket = (server) => {
               // Get updated participants
               const participants = Array.from(roomUserMap.keys());
               
-              // Prevent duplicate leave notifications
-              const now = Date.now();
-              const lastLeave = lastActivity.get(`${username}:leave:${roomId}`) || 0;
-              const leaveThreshold = 5000; // 5 seconds
-              
-              if (now - lastLeave > leaveThreshold) {
-                // Notify everyone in the room
-                io.to(roomId).emit('user-left', {
-                  username,
-                  message: `${username} has left the room`,
-                  userId: socket.id,
-                  time: new Date(),
-                  participants
-                });
-                
-                io.to(roomId).emit('user_left', {
-                  username,
-                  message: `${username} has left the room`,
-                  userId: socket.id,
-                  time: new Date(),
-                  participants
-                });
-                
-                lastActivity.set(`${username}:leave:${roomId}`, now);
-              }
+              // Only update the participant list
+              io.to(roomId).emit('room_data', { participants });
               
               console.log(`${username} left room: ${roomId}`);
-              
-              // Send updated participant list
-              io.to(roomId).emit('room_data', { participants });
               
               // If room is empty after this user left, clean it up
               if (participants.length === 0) {

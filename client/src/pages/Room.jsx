@@ -56,9 +56,23 @@ const Room = () => {
   const handleLeaveRoom = () => {
     console.log("Leaving room", roomId);
     
+    // Set a flag in localStorage to indicate this is an intentional leave
+    localStorage.setItem('intentionalLeave', 'true');
+    
     // Leave the room on the socket
     if (socketRef.current) {
-      socketRef.current.emit('leave-room', { roomId, username: userName });
+      socketRef.current.emit('leave-room', { 
+        roomId, 
+        username: userName,
+        isIntentionalLeave: true // Add flag to indicate intentional leave
+      });
+      
+      // Also emit with underscore format for compatibility
+      socketRef.current.emit('leave_room', { 
+        roomId, 
+        username: userName,
+        isIntentionalLeave: true
+      });
     }
     
     // If this user is the creator, remember this for when they rejoin
@@ -251,8 +265,21 @@ const Room = () => {
       isRefreshing.current = true;
     };
     
+    // Track internal navigation vs. page refresh
+    const handleInternalNavigation = () => {
+      console.log('Internal navigation detected');
+      localStorage.setItem('internalNavigation', 'true');
+    };
+    
     // Add listener to detect page refreshes
     window.addEventListener('beforeunload', beforeUnloadHandler);
+    
+    // Listen for internal navigation
+    const unlisten = navigate((location, action) => {
+      if (action === 'PUSH' && location.pathname !== `/room/${roomId}`) {
+        handleInternalNavigation();
+      }
+    });
     
     const getUserData = async () => {
       let username;
@@ -330,25 +357,34 @@ const Room = () => {
         socketRef.current.off('receive_message');
         socket.off('connect');
         
-        // Only leave room when component unmounts and NOT during page refresh
-        if (userName && roomId && !isRefreshing.current) {
-          console.log(`Leaving room ${roomId} as ${userName}`);
-          socketRef.current.emit('leave-room', { roomId, username: userName });
+        // Only send leave event for actual component unmount, not page refresh or internal navigation
+        if (userName && roomId && !isRefreshing.current && !localStorage.getItem('internalNavigation')) {
+          console.log(`Leaving room ${roomId} as ${userName} - actual leave`);
+          socketRef.current.emit('leave-room', { 
+            roomId, 
+            username: userName,
+            isIntentionalLeave: true
+          });
         }
+        
+        // Clear the navigation flag
+        localStorage.removeItem('internalNavigation');
         
         // Disconnect to prevent duplicate connections
         socketRef.current.disconnect();
       }
       
       window.removeEventListener('beforeunload', beforeUnloadHandler);
+      if (typeof unlisten === 'function') unlisten();
     };
-  }, [roomId]);
+  }, [roomId, navigate]);
 
   // Add message cache to prevent duplicate messages
   const processedMessages = useRef(new Map()); // Changed from Set to Map
   const messageIdCounter = useRef(0);
   const joinedTimestamp = useRef(Date.now());
   const recentJoins = useRef(new Map()); // Track recent joins to suppress immediate leaves
+  const shownJoinMessages = useRef(new Set()); // Track users we've already shown join messages for
   
   const setupConnection = (username) => {
     if (!socketRef.current) {
@@ -360,14 +396,17 @@ const Room = () => {
     
     // Clear event listeners to prevent duplicates
     socketRef.current.off('user-joined');
-    socketRef.current.off('user_joined'); // Add underscore version
+    socketRef.current.off('user_joined'); 
     socketRef.current.off('receive-message');
     socketRef.current.off('receive_message');
     socketRef.current.off('user-left');
-    socketRef.current.off('user_left'); // Add underscore version
+    socketRef.current.off('user_left');
     socketRef.current.off('room_data');
     
     console.log(`Joining room ${roomId} as ${username} with socket ID: ${socketRef.current.id}`);
+    
+    // First time joining flag - use this to differentiate between first join and refreshes
+    const firstTimeJoining = !localStorage.getItem(`joined_${roomId}`);
     
     // Join the room
     socketRef.current.emit('join-room', {
@@ -381,42 +420,17 @@ const Room = () => {
       username
     });
     
-    // Listen for user joined events
-    socketRef.current.on('user-joined', (data) => {
-      console.log('User joined event received:', data);
-      
-      // Skip own join notifications
-      if (data.username === username) return;
-      
-      // Record this join to filter potential immediate leave messages
-      recentJoins.current.set(data.username, Date.now());
-      
-      // Add a join message to the chat
-      addSystemMessage(`${data.username} joined the room`, `join:${data.username}`);
-      
-      // Always update participants
-      if (data.participants) {
-        console.log('Setting participants list:', data.participants);
-        setParticipants(data.participants);
-      }
-    });
+    // Mark as joined in localStorage to track refreshes vs new joins
+    localStorage.setItem(`joined_${roomId}`, 'true');
     
-    // Also listen for underscore version
-    socketRef.current.on('user_joined', (data) => {
-      console.log('User_joined event received (underscore):', data);
-      
-      // Skip own join notifications
-      if (data.username === username) return;
-      
-      // Record this join to filter potential immediate leave messages
-      recentJoins.current.set(data.username, Date.now());
-      
-      // Add a join message to the chat
-      addSystemMessage(`${data.username} joined the room`, `join:${data.username}`);
-      
-      // Always update participants
+    // Remove self-join message - no longer needed
+    
+    // Listen for direct room data events to update participants 
+    // (but don't show join messages)
+    socketRef.current.on('room_data', (data) => {
+      console.log('Room data event received:', data);
       if (data.participants) {
-        console.log('Setting participants list from underscore event:', data.participants);
+        console.log('Setting participants from room_data:', data.participants);
         setParticipants(data.participants);
       }
     });
@@ -450,79 +464,6 @@ const Room = () => {
         }]);
       }
     });
-    
-    // Listen for user left events with strict filtering
-    socketRef.current.on('user-left', (data) => {
-      console.log('User left event received:', data);
-      
-      // Skip own leave notifications
-      if (data.username === username) return;
-      
-      // Check if this is a leave message shortly after joining (likely a refresh)
-      const recentJoinTime = recentJoins.current.get(data.username);
-      const now = Date.now();
-      
-      if (recentJoinTime && now - recentJoinTime < 10000) { // 10 seconds threshold
-        console.log(`Filtering leave message for ${data.username} - too soon after join`);
-        // Still update participants without showing the message
-        if (data.participants) {
-          setParticipants(data.participants);
-        }
-        return;
-      }
-      
-      // Add a leave message to the chat
-      const leaveMessage = `${data.username} left the room`;
-      const messageKey = `leave:${data.username}`;
-      addSystemMessage(leaveMessage, messageKey);
-      
-      // Always update participants
-      if (data.participants) {
-        console.log('Updated participants after leave:', data.participants);
-        setParticipants(data.participants);
-      }
-    });
-    
-    // Also listen for underscore version of user left with same filtering
-    socketRef.current.on('user_left', (data) => {
-      console.log('User_left event received (underscore):', data);
-      
-      // Skip own leave notifications
-      if (data.username === username) return;
-      
-      // Check if this is a leave message shortly after joining (likely a refresh)
-      const recentJoinTime = recentJoins.current.get(data.username);
-      const now = Date.now();
-      
-      if (recentJoinTime && now - recentJoinTime < 10000) { // 10 seconds threshold
-        console.log(`Filtering underscore leave message for ${data.username} - too soon after join`);
-        // Still update participants without showing the message
-        if (data.participants) {
-          setParticipants(data.participants);
-        }
-        return;
-      }
-      
-      // Add a leave message to the chat WITH a specific key to prevent duplicates
-      const leaveMessage = `${data.username} left the room`;
-      const messageKey = `leave:${data.username}`;
-      addSystemMessage(leaveMessage, messageKey);
-      
-      // Always update participants
-      if (data.participants) {
-        console.log('Updated participants after leave (underscore):', data.participants);
-        setParticipants(data.participants);
-      }
-    });
-
-    // Listen for direct room data events
-    socketRef.current.on('room_data', (data) => {
-      console.log('Room data event received:', data);
-      if (data.participants) {
-        console.log('Setting participants from room_data:', data.participants);
-        setParticipants(data.participants);
-      }
-    });
 
     // Setup for room-ended event - update to use common cleanup
     socketRef.current.on('room-ended', (data) => {
@@ -536,6 +477,15 @@ const Room = () => {
     setLoading(false);
     console.log('Socket connection setup complete');
   };
+
+  // Component cleanup effect to reset the join message tracking when component unmounts
+  useEffect(() => {
+    return () => {
+      if (!isRefreshing.current) {
+        shownJoinMessages.current.clear();
+      }
+    };
+  }, []);
 
   // A dedicated function to handle deduplication of system messages with longer time window
   const addSystemMessage = (text, key = null) => {
@@ -633,7 +583,7 @@ const Room = () => {
     navigator.clipboard.writeText(roomId)
       .then(() => {
         setCopySuccess(true);
-        toast.success('Room ID copied to clipboard!');
+        toast.success('Room ID copied to clipboard!');  
         setTimeout(() => setCopySuccess(false), 3000);
       })
       .catch(err => {
@@ -685,11 +635,6 @@ const Room = () => {
         </div>
       ) : (
         <div className="container mx-auto px-4 py-8 relative z-10">
-          <h1 className="text-3xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
-              Room {roomId}
-            </span>
-          </h1>
           
           {/* Room Header */}
           <div className="bg-white/10 rounded-2xl shadow-lg border border-white/20 p-6 backdrop-blur-md hover:bg-white/15 transition-all duration-300 rounded-lg shadow-md p-6 mb-6">
