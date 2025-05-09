@@ -49,6 +49,9 @@ const Login = () => {
         localStorage.setItem('userName', response.data.user.name);
       }
       
+      // Clear any existing room info to prevent automatic room creation on login
+      localStorage.removeItem('roomInfo');
+      
       // Navigate to the intended destination
       navigate(from, { replace: true });
       

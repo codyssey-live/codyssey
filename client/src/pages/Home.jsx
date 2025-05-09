@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
+import { fetchCurrentUser } from "../utils/authUtils";
 
 const Home = () => {
   const [currentSection, setCurrentSection] = useState(0);
@@ -8,6 +9,22 @@ const Home = () => {
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll();
   const [showLoginOptions, setShowLoginOptions] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
+
+  // Check if user is authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = await fetchCurrentUser();
+        setIsAuthenticated(!!user);
+      } catch (error) {
+        console.error('Authentication check failed:', error);
+        setIsAuthenticated(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Track mouse position for parallax effects
   useEffect(() => {
@@ -60,7 +77,13 @@ const Home = () => {
   ];
 
   const handleJourneyStart = () => {
-    setShowLoginOptions(true);
+    // If already authenticated, navigate to dashboard
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      // Otherwise show login options
+      setShowLoginOptions(true);
+    }
   };
 
   return (
@@ -169,11 +192,11 @@ const Home = () => {
             transition={{ delay: 1.3, duration: 0.6 }}
             onClick={handleJourneyStart}
           >
-            Begin Your Journey
+            {isAuthenticated ? "Go to Dashboard" : "Begin Your Journey"}
           </motion.button>
 
           <AnimatePresence>
-            {showLoginOptions && (
+            {showLoginOptions && !isAuthenticated && (
               <motion.div
                 className="mt-8 flex flex-col md:flex-row gap-4 items-center justify-center"
                 initial={{ opacity: 0, height: 0 }}

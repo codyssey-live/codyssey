@@ -15,6 +15,8 @@ const PublicRoute = ({ children }) => {
         
         // If user is authenticated, replace the history stack to prevent going back
         if (user) {
+          // Clear any existing room info to prevent automatic room creation after login/signup
+          localStorage.removeItem('roomInfo');
           window.history.replaceState(null, '', '/dashboard');
         }
       } catch (error) {
@@ -55,13 +57,12 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  // If user is authenticated and trying to access login, signup, forgot password, or home page,
-  // redirect to dashboard
+  // Only redirect to dashboard if user is authenticated and trying to access login or signup pages
+  // Note: Removed '/' from the list to allow authenticated users to visit the home page
   if (isAuthenticated && 
       (location.pathname === '/login' || 
        location.pathname === '/signup' || 
-       location.pathname === '/forgot-password' ||
-       location.pathname === '/')) {
+       location.pathname === '/forgot-password')) {
     return <Navigate to="/dashboard" replace />;
   }
 
