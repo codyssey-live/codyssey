@@ -1,6 +1,7 @@
 import { HiPencil, HiUpload, HiOutlineCalendar, HiOutlineMail, HiX } from "react-icons/hi";
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
+import { motion } from "framer-motion"; // Add this import for animations
 import { fetchCurrentUser, getUserId } from "../utils/authUtils";
 import { 
   updateUserProfile, 
@@ -11,7 +12,7 @@ import {
   deleteWorkExperience,
   changePassword,
   deleteAccount,
-  removeProfilePicture // Add this import
+  removeProfilePicture
 } from "../utils/profileApiUtils";
 
 // Add this helper function near the top of your component
@@ -50,54 +51,63 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-[#dbeafe] rounded-lg shadow-xl max-w-md w-full p-6 text-gray-800">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <motion.div 
+        className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">Edit Personal Information</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Edit Personal Information</h3>
+          <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
             <HiX className="w-5 h-5" />
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-            <input 
-              type="text" 
-              id="name" 
-              style={{backgroundColor: "white"}}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+            <label htmlFor="name" className="block text-sm font-medium text-[#94C3D2] mb-1.5">
+              Full Name
+            </label>
+            <div className="relative">
+              <input 
+                type="text" 
+                id="name" 
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
           </div>
           
           <div>
-            <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+            <label htmlFor="bio" className="block text-sm font-medium text-[#94C3D2] mb-1.5">
+              Bio
+            </label>
             <div className="relative">
               <textarea 
                 id="bio" 
                 rows={3}
                 maxLength={maxBioLength}
-                style={{backgroundColor: "white"}}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400 resize-none"
                 value={bio}
                 placeholder="Tell us a bit about yourself"
                 onChange={(e) => setBio(e.target.value)}
               ></textarea>
-              <div className="text-xs text-gray-500 text-right mt-1">
+              <div className="text-xs text-white/60 text-right mt-1">
                 {bio.length}/{maxBioLength} characters
               </div>
             </div>
           </div>
           
           {/* Social Links */}
-          <div className="border-t border-gray-200 pt-4 mt-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-3">Social Links</h4>
+          <div className="border-t border-white/20 pt-4 mt-4">
+            <h4 className="text-sm font-medium text-[#94C3D2] mb-3">Social Links</h4>
             
             <div className="space-y-3">
               <div>
-                <label htmlFor="github" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="github" className="block text-sm font-medium text-[#94C3D2] mb-1.5">
                   <div className="flex items-center gap-1">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
@@ -108,8 +118,7 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
                 <input 
                   type="url" 
                   id="github" 
-                  style={{backgroundColor: "white"}}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
                   placeholder="https://github.com/username"
                   value={github}
                   onChange={(e) => setGithub(e.target.value)}
@@ -117,7 +126,7 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
               </div>
               
               <div>
-                <label htmlFor="linkedin" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="linkedin" className="block text-sm font-medium text-[#94C3D2] mb-1.5">
                   <div className="flex items-center gap-1">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
@@ -128,8 +137,7 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
                 <input 
                   type="url" 
                   id="linkedin" 
-                  style={{backgroundColor: "white"}}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
                   placeholder="https://linkedin.com/in/username"
                   value={linkedin}
                   onChange={(e) => setLinkedin(e.target.value)}
@@ -138,23 +146,23 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
             </div>
           </div>
           
-          <div className="mt-6 flex justify-end gap-2">
+          <div className="flex justify-end gap-3 mt-6">
             <button 
               type="button"
               onClick={onClose} 
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-100 transition-colors"
+              className="px-4 py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
             >
               Cancel
             </button>
             <button 
               type="submit"
-              className="px-4 py-2 bg-[#94c3d2] rounded-md text-sm font-medium text-white hover:bg-[#7ba9b8]"
+              className="px-4 py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
             >
               Save
             </button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -523,24 +531,29 @@ const UserProfile = () => {
   // Photo Upload Modal Component
   function PhotoUploadModal({ onClose }) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-[#dbeafe] rounded-lg shadow-xl max-w-md w-full p-6 text-gray-800">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <motion.div 
+          className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Upload Profile Photo</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Upload Profile Photo</h3>
+            <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
               <HiX className="w-5 h-5" />
             </button>
           </div>
-          
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">Upload a profile photo to personalize your account.</p>
             
+          <div className="space-y-4">
+            <p className="text-sm text-white/80">Upload a profile photo to personalize your account.</p>
+              
             <div className="flex items-center justify-center">
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer bg-[#2d3748] hover:bg-[#3d4a5e] transition-colors">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <HiUpload className="w-10 h-10 mb-3 text-gray-400" />
-                  <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                  <p className="text-xs text-gray-500">PNG, JPG or GIF (MAX. 2MB)</p>
+                  <p className="mb-2 text-sm text-white/80"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                  <p className="text-xs text-white/60">PNG, JPG or GIF (MAX. 2MB)</p>
                 </div>
                 <input 
                   type="file" 
@@ -550,29 +563,29 @@ const UserProfile = () => {
                 />
               </label>
             </div>
-            
+              
             {/* Add remove photo button if user has a profile photo */}
             {profilePhoto && (
-              <div className="flex justify-center">
+              <div className="flex justify-center pt-2">
                 <button
                   onClick={handleRemovePhoto}
-                  className="px-4 py-2 text-red-600 border border-red-600 rounded-md text-sm font-medium hover:bg-red-50"
+                  className="px-4 py-2 text-red-300 border border-red-600/30 bg-red-900/30 rounded-lg text-sm font-medium hover:bg-red-900/50 transition-colors"
                 >
                   Remove Current Photo
                 </button>
               </div>
             )}
           </div>
-          
-          <div className="mt-6 flex justify-end gap-2">
+            
+          <div className="flex justify-end gap-3 mt-6">
             <button 
               onClick={onClose} 
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-100 transition-colors"
+              className="px-4 py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
             >
               Cancel
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -583,134 +596,138 @@ const UserProfile = () => {
     const [degree, setDegree] = useState('');
     const [startYear, setStartYear] = useState('');
     const [endYear, setEndYear] = useState('');
-    
+      
     const handleSubmit = async (e) => {
       e.preventDefault();
-      
+        
       if (!school || !degree || !startYear) {
         alert('Please fill in all required fields');
         return;
       }
-      
+        
       const newEducation = {
         school,
         degree,
         startYear,
         endYear: endYear || 'Present'
       };
-      
+        
       try {
         // Save to API
         console.log('Sending education data to API:', newEducation);
         const response = await addEducation(user.id || user._id, newEducation);
-        
+          
         // Check if we got a valid response with data
         if (!response || !response.data) {
           throw new Error('Invalid response from server');
         }
-        
+          
         console.log('Education added successfully:', response);
-        
+          
         // Update user state with the response that includes the generated ID from the server
         const updatedEducation = [...user.education, response.data];
-        
+          
         // Update user state
         setUser(prevUser => ({
           ...prevUser,
           education: updatedEducation
         }));
-        
+          
         // Update progress
         updateProgress('education', true);
-        
+          
         onClose();
       } catch (error) {
         console.error('Error adding education:', error);
         alert(`Failed to add education information: ${error.message || 'Unknown error'}`);
       }
     };
-    
+      
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-[#dbeafe] rounded-lg shadow-xl max-w-md w-full p-6 text-gray-800">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <motion.div 
+          className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Add Education</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Add Education</h3>
+            <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
               <HiX className="w-5 h-5" />
             </button>
           </div>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
+            
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="school" className="block text-sm font-medium text-gray-700 mb-1">School/University</label>
+              <label htmlFor="school" className="block text-sm font-medium text-[#94C3D2] mb-1.5">School/University</label>
               <input 
                 type="text" 
                 id="school" 
-                style={{backgroundColor: "white"}}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
                 value={school}
                 onChange={(e) => setSchool(e.target.value)}
+                placeholder="Enter school or university name"
                 required
               />
             </div>
-            
+              
             <div>
-              <label htmlFor="degree" className="block text-sm font-medium text-gray-700 mb-1">Degree</label>
+              <label htmlFor="degree" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Degree</label>
               <input 
                 type="text" 
                 id="degree" 
-                style={{backgroundColor: "white"}} 
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
                 value={degree}
                 onChange={(e) => setDegree(e.target.value)}
+                placeholder="Enter degree or field of study"
                 required
               />
             </div>
-            
+              
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="startYear" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <label htmlFor="startYear" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Start Date</label>
                 <input 
                   type="month" 
                   id="startYear" 
-                  style={{backgroundColor: "white"}}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
                   value={startYear}
                   onChange={(e) => setStartYear(e.target.value)}
                   required
                 />
               </div>
-              
+                
               <div>
-                <label htmlFor="endYear" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <label htmlFor="endYear" className="block text-sm font-medium text-[#94C3D2] mb-1.5">End Date</label>
                 <input 
                   type="month" 
                   id="endYear" 
-                  style={{backgroundColor: "white"}}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
                   value={endYear}
                   onChange={(e) => setEndYear(e.target.value)}
+                  placeholder="Present if current"
                 />
               </div>
             </div>
-            
-            <div className="mt-6 flex justify-end gap-2">
+              
+            <div className="flex justify-end gap-3 mt-6">
               <button 
                 type="button"
                 onClick={onClose} 
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-100 transition-colors"
+                className="px-4 py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
               >
                 Cancel
               </button>
               <button 
                 type="submit"
-                className="px-4 py-2 bg-[#94c3d2] rounded-md text-sm font-medium text-white hover:bg-[#7ba9b8]"
+                className="px-4 py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
               >
                 Save
               </button>
             </div>
           </form>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -721,15 +738,15 @@ const UserProfile = () => {
     const [position, setPosition] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
-    
+      
     const handleSubmit = async (e) => {
       e.preventDefault();
-      
+        
       if (!company || !position || !startDate) {
         alert('Please fill in all required fields');
         return;
       }
-      
+        
       // Create a new work experience object
       const newWorkExperience = {
         company,
@@ -737,125 +754,129 @@ const UserProfile = () => {
         startDate,
         endDate: endDate || 'Present'
       };
-      
+        
       try {
         // Check if user ID is available
         const userId = user.id || user._id;
-        
+          
         if (!userId) {
           console.error('User ID is missing:', user);
           alert('User ID is missing. Please try refreshing the page or logging in again.');
           return;
         }
-        
+          
         console.log('Adding work experience for user:', userId);
-        
+          
         // Save to API using the user ID
         const response = await addWorkExperience(userId, newWorkExperience);
-        
+          
         if (!response || !response.data) {
           throw new Error('Invalid response from server');
         }
-        
+          
         // Update user state with the new work experience
         const updatedWorkExperience = [...user.workExperience, response.data];
-        
+          
         setUser({
           ...user,
           workExperience: updatedWorkExperience
         });
-        
+          
         // Update progress
         updateProgress('workExperience', true);
-        
+          
         onClose();
       } catch (error) {
         console.error('Error adding work experience:', error);
         alert(`Failed to add work experience: ${error.message}`);
       }
     };
-    
+      
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-[#dbeafe] rounded-lg shadow-xl max-w-md w-full p-6 text-gray-800">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <motion.div 
+          className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Add Work Experience</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Add Work Experience</h3>
+            <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
               <HiX className="w-5 h-5" />
             </button>
           </div>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
+            
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+              <label htmlFor="company" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Company</label>
               <input 
                 type="text" 
                 id="company" 
-                style={{backgroundColor: "white"}}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
+                placeholder="Enter company name"
                 required
               />
             </div>
-            
+              
             <div>
-              <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+              <label htmlFor="position" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Position</label>
               <input 
                 type="text" 
                 id="position" 
-                style={{backgroundColor: "white"}}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
                 value={position}
                 onChange={(e) => setPosition(e.target.value)}
+                placeholder="Enter job title"
                 required
               />
             </div>
-            
+              
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <label htmlFor="startDate" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Start Date</label>
                 <input 
                   type="month" 
                   id="startDate" 
-                  style={{backgroundColor: "white"}}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   required
                 />
               </div>
-              
+                
               <div>
-                <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <label htmlFor="endDate" className="block text-sm font-medium text-[#94C3D2] mb-1.5">End Date</label>
                 <input 
                   type="month" 
                   id="endDate" 
-                  style={{backgroundColor: "white"}}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
+                  placeholder="Leave empty if current"
                 />
               </div>
             </div>
-            
-            <div className="mt-6 flex justify-end gap-2">
+              
+            <div className="flex justify-end gap-3 mt-6">
               <button 
                 type="button"
                 onClick={onClose} 
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-100 transition-colors"
+                className="px-4 py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
               >
                 Cancel
               </button>
               <button 
                 type="submit"
-                className="px-4 py-2 bg-[#94c3d2] rounded-md text-sm font-medium text-white hover:bg-[#7ba9b8]"
+                className="px-4 py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
               >
                 Save
               </button>
             </div>
           </form>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -866,89 +887,91 @@ const UserProfile = () => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
-    
+      
     const handleSubmit = async (e) => {
       e.preventDefault();
-      
+        
       // Reset any previous errors
       setError('');
-      
+        
       // Validate form
       if (!currentPassword || !newPassword || !confirmPassword) {
         setError('All fields are required');
         return;
       }
-      
+        
       if (newPassword !== confirmPassword) {
         setError('New passwords do not match');
         return;
       }
-      
+        
       if (newPassword.length < 8) {
         setError('New password must be at least 8 characters long');
         return;
       }
-      
+        
       // Call the parent handler to change password
       handleChangePassword({
         currentPassword,
         newPassword
       });
     };
-    
+      
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-[#dbeafe] rounded-lg shadow-xl max-w-md w-full p-6 text-gray-800">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <motion.div 
+          className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Change Password</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Change Password</h3>
+            <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
               <HiX className="w-5 h-5" />
             </button>
           </div>
-          
+            
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-              <span className="block sm:inline">{error}</span>
+            <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg relative mb-4">
+              <span className="block">{error}</span>
             </div>
           )}
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
+            
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">Old Password</label>
+              <label htmlFor="currentPassword" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Old Password</label>
               <input 
                 type="password" 
                 id="currentPassword" 
-                style={{backgroundColor: "white"}}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Your old password"
+                placeholder="Enter your current password"
                 required
               />
             </div>
-            
+              
             <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+              <label htmlFor="newPassword" className="block text-sm font-medium text-[#94C3D2] mb-1.5">New Password</label>
               <input 
                 type="password" 
                 id="newPassword" 
-                style={{backgroundColor: "white"}}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Your new password"
+                placeholder="At least 8 characters"
                 minLength="8"
                 required
               />
             </div>
-            
+              
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Confirm Password</label>
               <input 
                 type="password" 
                 id="confirmPassword" 
-                style={{backgroundColor: "white"}}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter your new password"
@@ -956,24 +979,24 @@ const UserProfile = () => {
                 required
               />
             </div>
-            
-            <div className="mt-6 flex justify-end gap-2">
+              
+            <div className="flex justify-end gap-3 mt-6">
               <button 
                 type="button"
                 onClick={onClose} 
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-100 transition-colors"
+                className="px-4 py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
               >
                 Cancel
               </button>
               <button 
                 type="submit"
-                className="px-4 py-2 bg-[#94c3d2] rounded-md text-sm font-medium text-white hover:bg-[#7ba9b8]"
+                className="px-4 py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
               >
                 Change Password
               </button>
             </div>
           </form>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -983,107 +1006,110 @@ const UserProfile = () => {
     const [password, setPassword] = useState('');
     const [confirmText, setConfirmText] = useState('');
     const [error, setError] = useState('');
-    
+      
     const handleSubmit = async (e) => {
       e.preventDefault();
-      
+        
       // Reset any previous errors
       setError('');
-      
+        
       // Validate form
       if (!password) {
         setError('Password is required to confirm deletion');
         return;
       }
-      
+        
       if (confirmText !== 'DELETE') {
         setError('Please type DELETE to confirm');
         return;
       }
-      
+        
       // Call the parent handler to delete account
       handleDeleteAccount({ password });
     };
-    
+      
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-[#dbeafe] rounded-lg shadow-xl max-w-md w-full p-6 text-gray-800">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <motion.div 
+          className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-red-600">Delete Account</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <h3 className="text-2xl font-bold text-red-300">Delete Account</h3>
+            <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
               <HiX className="w-5 h-5" />
             </button>
           </div>
-          
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+            
+          <div className="bg-red-900/30 border-l-4 border-red-500 p-4 mb-4 rounded-lg">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                <svg className="h-5 w-5 text-red-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-4 4a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm text-red-700">
+                <p className="text-sm text-red-200">
                   This action <span className="font-bold">cannot be undone</span>. This will permanently delete your account and all associated data.
                 </p>
               </div>
             </div>
           </div>
-          
+            
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-              <span className="block sm:inline">{error}</span>
+            <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg relative mb-4">
+              <span className="block">{error}</span>
             </div>
           )}
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
+            
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Enter your password to confirm</label>
+              <label htmlFor="password" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Enter your password to confirm</label>
               <input 
                 type="password" 
                 id="password" 
-                style={{backgroundColor: "white"}}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 text-gray-100 placeholder-gray-400"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                placeholder="Your password"
               />
             </div>
-            
+              
             <div>
-              <label htmlFor="confirmText" className="block text-sm font-medium text-gray-700 mb-1">
-                Type <span className="font-bold">DELETE</span> to confirm
+              <label htmlFor="confirmText" className="block text-sm font-medium text-[#94C3D2] mb-1.5">
+                Type <span className="font-bold text-red-300">DELETE</span> to confirm
               </label>
               <input 
                 type="text" 
                 id="confirmText" 
-                style={{backgroundColor: "white"}}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 text-gray-100 placeholder-gray-400"
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
                 required
+                placeholder="DELETE"
               />
             </div>
-            
-            <div className="mt-6 flex justify-end gap-2">
+              
+            <div className="flex justify-end gap-3 mt-6">
               <button 
                 type="button"
                 onClick={onClose} 
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium bg-white hover:bg-gray-100 transition-colors"
-                style={{color: "white"}}
+                className="px-4 py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
               >
                 Cancel
               </button>
               <button 
                 type="submit"
-                className="px-4 py-2 bg-red-600 rounded-md text-sm font-medium hover:bg-red-700"
-                style={{color: "white"}}  
+                className="px-4 py-2.5 bg-red-600 hover:bg-red-700 transition-all rounded-lg text-white/90 font-medium shadow-lg"
               >
                 Delete My Account
               </button>
             </div>
           </form>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -1102,7 +1128,7 @@ const UserProfile = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#E8F1F7] text-gray-800">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
       <Navbar />
       
       {/* Notification toast */}
@@ -1123,12 +1149,12 @@ const UserProfile = () => {
           {/* Side Profile Card */}
           <aside className="mb-6 md:mb-0 md:w-1/3 flex-shrink-0">
             {/* Profile Card */}
-            <div className="bg-[#dbeafe] rounded-lg overflow-hidden shadow-sm">
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg overflow-hidden shadow-sm">
               {/* Gradient Header */}
-              <div className="h-32 bg-gradient-to-r from-[#c2d9f0] via-[#a7c7e7] to-[#8fb6de] relative flex justify-center">
+              <div className="h-32 bg-gradient-to-r from-[#1e293b]/80 via-[#334155]/80 to-[#1e293b]/80 relative flex justify-center">
                 {/* Avatar with Hover Effect */}
                 <div 
-                  className="w-24 h-24 bg-white rounded-full absolute transform -translate-y-1/2 top-[100%] border-4 border-white flex items-center justify-center overflow-hidden group relative cursor-pointer"
+                  className="w-24 h-24 bg-white/10 rounded-full absolute transform -translate-y-1/2 top-[100%] border-4 border-[#0f172a] flex items-center justify-center overflow-hidden group relative cursor-pointer"
                   onClick={() => openModal('photo')}
                 >
                   {profilePhoto ? (
@@ -1160,15 +1186,15 @@ const UserProfile = () => {
               
               {/* Profile Info */}
               <div className="pt-16 pb-8 px-6 text-center">
-                <h2 className="text-2xl font-bold text-gray-800">{user.name}</h2>
-                <p className="text-gray-500 mt-1">{user.email}</p>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">{user.name}</h2>
+                <p className="text-white/70 mt-1">{user.email}</p>
                 
                 {/* Bio */}
-                <p className="text-sm text-gray-600 mt-4 mb-4">{user.bio || "No bio added yet."}</p>
+                <p className="text-sm text-white/80 mt-4 mb-4">{user.bio || "No bio added yet."}</p>
                 
                 {/* Social Links */}
-                <div className="mt-4 border-t border-gray-100 pt-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Social Links</h4>
+                <div className="mt-4 border-t border-white/20 pt-4">
+                  <h4 className="text-sm font-medium text-[#94c3d2] mb-2">My Socials</h4>
                   {user.socials.github || user.socials.linkedin ? (
                     <div className="flex flex-wrap justify-center gap-2">
                       {user.socials.github && (
@@ -1176,7 +1202,7 @@ const UserProfile = () => {
                           href={user.socials.github} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-700 hover:bg-gray-200"
+                          className="flex items-center gap-1 px-3 py-1 bg-white/10 rounded-full text-xs text-white/80 hover:bg-white/20 border border-white/20"
                         >
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
@@ -1190,7 +1216,7 @@ const UserProfile = () => {
                           href={user.socials.linkedin} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-700 hover:bg-gray-200"
+                          className="flex items-center gap-1 px-3 py-1 bg-white/10 rounded-full text-xs text-white/80 hover:bg-white/20 border border-white/20"
                         >
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
@@ -1200,7 +1226,7 @@ const UserProfile = () => {
                       )}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">No social links added yet.</p>
+                    <p className="text-sm text-white/60">No social links added yet.</p>
                   )}
                 </div>
               </div>
@@ -1210,16 +1236,16 @@ const UserProfile = () => {
           {/* Main Content */}
           <div className="md:w-2/3 flex-grow">
             {/* Tabs Navigation */}
-            <div className="bg-[#dbeafe] rounded-lg shadow-sm mb-6 overflow-hidden">
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm mb-6 overflow-hidden">
               <div className="flex w-full">
                 <button 
-                  className={`flex-1 py-4 text-center text-sm font-medium ${activeTab === "About" ? "text-[#94c3d2] border-b-2 border-[#94c3d2]" : "text-gray-500 hover:text-[#94c3d2]"}`}
+                  className={`flex-1 py-4 text-center text-sm font-medium ${activeTab === "About" ? "text-[#94c3d2] border-b-2 border-[#94c3d2]" : "text-white/80 hover:text-[#94c3d2]"}`}
                   onClick={() => setActiveTab("About")}
                 >
                   About
                 </button>
                 <button 
-                  className={`flex-1 py-4 text-center text-sm font-medium ${activeTab === "Account" ? "text-[#94c3d2] border-b-2 border-[#94c3d2]" : "text-gray-500 hover:text-[#94c3d2]"}`}
+                  className={`flex-1 py-4 text-center text-sm font-medium ${activeTab === "Account" ? "text-[#94c3d2] border-b-2 border-[#94c3d2]" : "text-white/80 hover:text-[#94c3d2]"}`}
                   onClick={() => setActiveTab("Account")}
                 >
                   Account
@@ -1231,8 +1257,8 @@ const UserProfile = () => {
             {activeTab === "About" && (
               <div className="space-y-6">
                 {/* Progress Card */}
-                <div className="bg-[#dbeafe] rounded-lg shadow-sm p-6">
-                  <p className="text-sm text-gray-600 mb-2">Complete your profile ({profileProgress}% Complete)</p>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-6">
+                  <p className="text-sm text-white/80 mb-2">Complete your profile ({profileProgress}% Complete)</p>
                   <div className="flex h-2 gap-1 mt-1 mb-4">
                     {[...Array(5)].map((_, index) => {
                       // Calculate if this segment should be filled
@@ -1240,22 +1266,20 @@ const UserProfile = () => {
                       return (
                         <div 
                           key={index}
-                          className={`h-full ${segmentFilled ? 'bg-[#94c3d2]' : 'bg-gray-300'} rounded-full flex-1`}
+                          className={`h-full ${segmentFilled ? 'bg-[#94c3d2]' : 'bg-gray-800/70'} rounded-full flex-1`}
                         ></div>
                       );
                     })}
                   </div>
-                  
-                  {/* Removed text about completing profile */}
                 </div>
 
                 {/* Personal Information Card */}
-                <div className="bg-[#dbeafe] rounded-lg shadow-sm p-6">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-medium text-gray-900">My Personal Information</h3>
+                    <h3 className="font-medium text-[#94C3D2]">My Personal Information</h3>
                     <button 
                       onClick={() => openModal('personalInfo')}
-                      className="text-xs bg-white px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50"
+                      className="text-xs bg-white/10 px-3 py-1 border border-white/20 rounded text-white/80 hover:bg-white/20"
                     >
                       Edit
                     </button>
@@ -1263,13 +1287,13 @@ const UserProfile = () => {
                   
                   <div className="space-y-4">
                     <div>
-                      <p className="text-base text-gray-700">{user.name}</p>
-                      <p className="text-sm text-gray-500 mt-1">{user.bio || "Add a Bio to your profile"}</p>
+                      <p className="text-base bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">{user.name}</p>
+                      <p className="text-sm text-white/70 mt-1">{user.bio || "Add a Bio to your profile"}</p>
                     </div>
                     
                     {/* Social Links */}
-                    <div className="border-t border-gray-100 pt-4">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">My Socials</h4>
+                    <div className="border-t border-white/20 pt-4">
+                      <h4 className="text-sm font-medium text-[#94C3D2] mb-2">My Socials</h4>
                       {user.socials.github || user.socials.linkedin ? (
                         <div className="flex flex-wrap gap-2">
                           {user.socials.github && (
@@ -1277,7 +1301,7 @@ const UserProfile = () => {
                               href={user.socials.github} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-700 hover:bg-gray-200"
+                              className="flex items-center gap-1 px-3 py-1 bg-white/10 rounded-full text-xs text-white/80 hover:bg-white/20 border border-white/20"
                             >
                               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
@@ -1291,7 +1315,7 @@ const UserProfile = () => {
                               href={user.socials.linkedin} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-700 hover:bg-gray-200"
+                              className="flex items-center gap-1 px-3 py-1 bg-white/10 rounded-full text-xs text-white/80 hover:bg-white/20 border border-white/20"
                             >
                               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
@@ -1301,19 +1325,19 @@ const UserProfile = () => {
                           )}
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-500">No social links added yet.</p>
+                        <p className="text-sm text-white/60">No social links added yet.</p>
                       )}
                     </div>
                   </div>
                 </div>
 
                 {/* Work Experience Card */}
-                <div className="bg-[#dbeafe] rounded-lg shadow-sm p-6">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-medium text-gray-900">Work Experience</h3>
+                    <h3 className="font-medium text-[#94c3d2]">Work Experience</h3>
                     <button 
                       onClick={() => openModal('workExperience')}
-                      className="text-xs bg-white px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50"
+                      className="text-xs bg-white/10 px-3 py-1 border border-white/20 rounded text-white/80 hover:bg-white/20"
                     >
                       Add
                     </button>
@@ -1322,16 +1346,16 @@ const UserProfile = () => {
                   {user.workExperience && user.workExperience.length > 0 ? (
                     <div className="space-y-4">
                       {user.workExperience.map((experience) => (
-                        <div key={experience.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                        <div key={experience.id} className="border-b border-white/10 pb-4 last:border-0 last:pb-0">
                           <div className="flex justify-between">
                             <div>
-                              <h4 className="text-sm font-medium text-gray-800">{experience.position}</h4>
-                              <p className="text-xs text-gray-600">{experience.company}</p>
-                              <p className="text-xs text-gray-500 mt-1">{experience.startDate} - {experience.endDate}</p>
+                              <h4 className="text-sm font-medium text-white/90">{experience.position}</h4>
+                              <p className="text-xs text-white/80">{experience.company}</p>
+                              <p className="text-xs text-white/60 mt-1">{experience.startDate} - {experience.endDate}</p>
                             </div>
                             <button 
                               onClick={() => handleDeleteWorkExperience(experience.id)}
-                              className="text-red-500 hover:text-red-700"
+                              className="text-red-400 hover:text-red-300"
                               title="Delete"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1343,17 +1367,17 @@ const UserProfile = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">No work experience added yet.</p>
+                    <p className="text-sm text-white/60">No work experience added yet.</p>
                   )}
                 </div>
 
                 {/* Education Card */}
-                <div className="bg-[#dbeafe] rounded-lg shadow-sm p-6">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-medium text-gray-900">Education</h3>
+                    <h3 className="font-medium text-[#94c3d2]">Education</h3>
                     <button 
                       onClick={() => openModal('education')} 
-                      className="text-xs bg-white px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50"
+                      className="text-xs bg-white/10 px-3 py-1 border border-white/20 rounded text-white/80 hover:bg-white/20"
                     >
                       Add
                     </button>
@@ -1362,16 +1386,16 @@ const UserProfile = () => {
                   {user.education && user.education.length > 0 ? (
                     <div className="space-y-4">
                       {user.education.map((edu) => (
-                        <div key={edu.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                        <div key={edu.id} className="border-b border-white/10 pb-4 last:border-0 last:pb-0">
                           <div className="flex justify-between">
                             <div>
-                              <h4 className="text-sm font-medium text-gray-800">{edu.degree}</h4>
-                              <p className="text-xs text-gray-600">{edu.school}</p>
-                              <p className="text-xs text-gray-500 mt-1">{edu.startYear} - {edu.endYear}</p>
+                              <h4 className="text-sm font-medium text-white/90">{edu.degree}</h4>
+                              <p className="text-xs text-white/80">{edu.school}</p>
+                              <p className="text-xs text-white/60 mt-1">{edu.startYear} - {edu.endYear}</p>
                             </div>
                             <button 
                               onClick={() => handleDeleteEducation(edu.id)}
-                              className="text-red-500 hover:text-red-700"
+                              className="text-red-400 hover:text-red-300"
                               title="Delete"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1383,7 +1407,7 @@ const UserProfile = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">No qualification added yet.</p>
+                    <p className="text-sm text-white/60">No qualification added yet.</p>
                   )}
                 </div>
               </div>
@@ -1392,26 +1416,24 @@ const UserProfile = () => {
             {activeTab === "Account" && (
               <div className="space-y-6">
                 {/* Change Password */}
-                <div className="bg-[#dbeafe] rounded-lg shadow-sm p-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Change Password</h3>
-                  <p className="text-sm text-gray-600 mb-4">Update your account security by changing your password.</p>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-6">
+                  <h3 className="text-lg font-medium text-white/95 mb-2">Change Password</h3>
+                  <p className="text-sm text-white/70 mb-4">Update your account security by changing your password.</p>
                   <button 
                     onClick={() => openModal('password')} 
-                    className="bg-[#94c3d2] px-4 py-2 rounded text-sm font-medium hover:bg-[#7ba9b8]" 
-                    style={{ color: "white" }}
+                    className="bg-[#94c3d2] px-4 py-2 rounded text-sm font-medium hover:bg-[#7ba9b8] text-white" 
                   >
                     Change My Password
                   </button>
                 </div>
 
                 {/* Account Deletion */}
-                <div className="bg-[#dbeafe] rounded-lg shadow-sm p-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Account Deletion</h3>
-                  <p className="text-sm text-gray-600 mb-4">All your profile and learning data will be permanently deleted.</p>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-6">
+                  <h3 className="text-lg font-medium text-white/95 mb-2">Account Deletion</h3>
+                  <p className="text-sm text-white/70 mb-4">All your profile and learning data will be permanently deleted.</p>
                   <button 
                     onClick={() => openModal('deleteAccount')} 
-                    className="bg-red-500 px-4 py-2 rounded text-sm font-medium hover:bg-red-600" 
-                    style={{ color: "white" }}
+                    className="bg-red-600 px-4 py-2 rounded text-sm font-medium hover:bg-red-700 text-white/90" 
                   >
                     Delete My Account
                   </button>

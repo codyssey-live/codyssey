@@ -218,7 +218,7 @@ const Navbar = () => {
             <div className="relative">
               <button 
                 onClick={toggleDropdown}
-                className="flex items-center justify-center p-2 rounded-full bg-[#dbeafe] text-gray-800 shadow-sm hover:shadow-md transition-all transform hover:scale-105 w-10 h-10"
+                className="flex items-center justify-center p-2 rounded-full bg-[#1a2234] text-[#94c3d2] shadow-sm hover:shadow-md transition-all transform hover:scale-105 w-10 h-10"
                 aria-label="User menu"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

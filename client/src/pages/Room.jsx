@@ -634,7 +634,7 @@ const Room = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#E8F1F7]">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
       <Navbar />
       <ToastContainer position="top-right" autoClose={3000} />
       
@@ -652,19 +652,25 @@ const Room = () => {
           </div>
         </div>
       ) : (
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-8 relative z-10">
+          <h1 className="text-3xl font-bold mb-6">
+            <span className="bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
+              Room {roomId}
+            </span>
+          </h1>
+          
           {/* Room Header */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="bg-white/10 rounded-2xl shadow-lg border border-white/20 p-6 backdrop-blur-md hover:bg-white/15 transition-all duration-300 rounded-lg shadow-md p-6 mb-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Codyssey Hub</h1>
-                <p className="text-gray-600 mt-1">Room Code: <span className="font-semibold">{roomId}</span></p>
+                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Codyssey Hub</h1>
+                <p className="text-[#94c3d2] mt-1">Room Code: <span className="font-semibold">{roomId}</span></p>
               </div>
               
               <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto mt-4 md:mt-0">
                 <button
                   onClick={handleCopyInviteLink}
-                  className="px-4 py-2 bg-[#3B82F6] text-white rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center w-full md:w-auto min-w-[140px]"
+                  className="px-4 py-2 bg-white/30  border border-white/20 text-white rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center w-full md:w-auto min-w-[140px]"
                   title="Copy room code to clipboard"
                 >
                   {inviteLinkCopied ? (
@@ -687,7 +693,7 @@ const Room = () => {
                 {/* Leave Room button for ALL users */}
                 <button
                   onClick={handleLeaveRoom}
-                  className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center w-full md:w-auto"
+                  className="px-4 py-2 bg-[#94c3d2] text-white rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center w-full md:w-auto"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -703,7 +709,7 @@ const Room = () => {
                         handleEndRoom();
                       }
                     }}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center w-full md:w-auto"
+                    className="px-4 py-2 bg-red-500/80 text-white/80 rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center w-full md:w-auto"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -755,16 +761,16 @@ const Room = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Instructions and Links Section */}
-            <div ref={instructionsRef} className="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
-              <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Room Instructions</h2>
+            <div ref={instructionsRef} className="bg-white/10 shadow-lg border border-white/20 p-6 backdrop-blur-md hover:bg-white/15 transition-all duration-300 rounded-lg shadow-md p-6 lg:col-span-2">
+              <h2 className="text-xl font-bold mb-4 text-[#94c3d2] border-b pb-2">Room Instructions</h2>
               
               <div className="space-y-6">
-                <div className="bg-[#F0F9FF] rounded-lg p-4 border border-blue-100">
+                <div className="bg-white/30 rounded-2xl shadow-lg border border-white/20 p-6 backdrop-blur-md hover:bg-white/15 transition-all duration-300">
                   <h3 className="font-bold text-gray-800 flex items-center text-lg">
                     <span className="bg-[#94C3D2] text-white w-7 h-7 rounded-full flex items-center justify-center mr-2.5 flex-shrink-0 text-sm">1</span>
                     Go to Syllabus
                   </h3>
-                  <p className="text-gray-700 mt-2">Create or customize your learning path</p>
+                  <p className="text-white/80 mt-2">Create or customize your learning path</p>
                   <Link 
                     to="/syllabus" 
                     className="mt-3 bg-[#94C3D2] text-white px-4 py-2 rounded inline-flex items-center text-sm hover:bg-opacity-90 transition-colors"
@@ -776,13 +782,13 @@ const Room = () => {
                   </Link>
                 </div>
                 
-                <div className="bg-[#F0F9FF] rounded-lg p-4 border border-blue-100">
+                <div className="bg-white/30 rounded-2xl shadow-lg border border-white/20 p-6 backdrop-blur-md hover:bg-white/15 transition-all duration-300">
                   <h3 className="font-bold text-gray-800 flex items-center text-lg">
                     <span className="bg-[#94C3D2] text-white w-7 h-7 rounded-full flex items-center justify-center mr-2.5 flex-shrink-0 text-sm">2</span>
                     Solve Problems Together
                   </h3>
-                  <div className="text-gray-700 mt-2">
-                    <p><strong>Important:</strong> Open the Collab Room directly from the Syllabus page.</p>
+                  <div className="text-white/80 mt-2">
+                    <p><b><strong>Important:</strong></b> Open the Collab Room directly from the Syllabus page.</p>
                     <p className="mt-2">This allows you to properly track problems and mark them as:</p>
                     <div className="flex flex-wrap gap-2 mt-1">
                       <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">Solved</span>
@@ -795,12 +801,12 @@ const Room = () => {
                   </div>
                 </div>
                 
-                <div className="bg-[#F0F9FF] rounded-lg p-4 border border-blue-100">
+                <div className="bg-white/30 rounded-2xl shadow-lg border border-white/20 p-6 backdrop-blur-md hover:bg-white/15 transition-all duration-300">
                   <h3 className="font-bold text-gray-800 flex items-center text-lg">
                     <span className="bg-[#94C3D2] text-white w-7 h-7 rounded-full flex items-center justify-center mr-2.5 flex-shrink-0 text-sm">3</span>
                     Watch Videos Together
                   </h3>
-                  <div className="text-gray-700 mt-2">
+                  <div className="text-white/80 mt-2">
                     <p><strong>Important:</strong> Open the Lecture Room directly from the Syllabus page.</p>
                     <p className="mt-2">This allows you to access specific topic videos and see whether they are:</p>
                     <div className="flex flex-wrap gap-2 mt-1">
@@ -816,11 +822,11 @@ const Room = () => {
             </div>
             
             {/* Chat Section - Now taking full width */}
-            <div ref={chatRef} className="bg-[#dbeafe] rounded-lg shadow-md flex flex-col lg:col-span-3">
+            <div ref={chatRef} className="bg-white/10 border border-white/20 rounded-lg shadow-md flex flex-col lg:col-span-3">
               <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                 <div>
-                  <h2 className="font-bold text-gray-800">Room Chat</h2>
-                  <p className="text-sm text-gray-600">Chat with your friends in real-time</p>
+                  <h2 className="font-bold text-[#94c3d2]">Room Chat</h2>
+                  <p className="text-sm text-white/70">Chat with your friends in real-time</p>
                 </div>
                 <div className={`flex items-center ${loading ? 'text-yellow-500' : 'text-green-500'}`}>
                   <div className={`h-2.5 w-2.5 rounded-full mr-2 ${loading ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
@@ -828,7 +834,7 @@ const Room = () => {
                 </div>
               </div>
               
-              <div className="flex-1 p-4 overflow-y-auto bg-[#E8F1F7]">
+              <div className="flex-1 p-4 overflow-y-auto bg-white/10 shadow-lg border border-white/20 p-6 backdrop-blur-md hover:bg-white/15 transition-all duration-300">
                 {messages.length === 0 ? (
                   <div className="h-full flex items-center justify-center">
                     <p className="text-gray-500">No messages yet. Start the conversation!</p>
