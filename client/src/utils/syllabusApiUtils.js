@@ -103,7 +103,9 @@ export const updateStudyDay = async (dayId, dayData) => {
 // Delete a study day
 export const deleteStudyDay = async (dayId) => {
   try {
+    console.log('Deleting study day with ID:', dayId);
     const response = await apiClient.delete(`/syllabus/day/${dayId}`);
+    console.log('Delete API response:', response.data);
     return {
       success: true,
       data: response.data
