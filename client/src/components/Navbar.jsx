@@ -120,7 +120,7 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="bg-[#94C3D2] text-gray-800 shadow-lg border-b border-gray-200">
+    <nav className="bg-[#0f172a] text-gray-800 shadow-lg border-b border-gray-200">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
@@ -139,7 +139,7 @@ const Navbar = () => {
             {/* Tubelight Navigation Menu */}
             <div className="hidden md:block ml-10">
               <motion.div 
-                className="flex items-center bg-white/30 backdrop-blur-md rounded-full px-2 py-1 shadow-lg border border-white/40"
+                className="bg-[#1a2234] flex items-center backdrop-blur-md rounded-full px-2 py-1 shadow-lg border border-white/5"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
@@ -155,14 +155,14 @@ const Navbar = () => {
                     >
                       <Link 
                         to={item.path} 
-                        className={`px-4 py-2 rounded-full text-sm font-medium inline-block relative z-10 ${isActive ? 'text-[#2a4365]' : 'text-gray-600'}`}
+                        className={`px-4 py-2 rounded-full text-sm font-medium inline-block relative z-10 ${isActive ? 'text-[#94c3d2]' : 'text-white/80 '}`}
                       >
                         {item.name}
                       </Link>
                       {isActive && (
                         <motion.div
                           layoutId="navbar-tube"
-                          className="absolute inset-0 bg-[#bae6fd] rounded-full shadow-sm -z-0"
+                          className="absolute inset-0 Bg-[#1a2234] rounded-full shadow-sm -z-10"
                           initial={false}
                           transition={{
                             type: "spring",
@@ -170,19 +170,41 @@ const Navbar = () => {
                             damping: 30,
                           }}
                         >
+                          {/* Intense top glow bar */}
                           <motion.div 
-                            className="absolute -top-1 left-0 right-0 mx-auto w-10 h-1 bg-[#94C3D2] rounded-full"
+                            className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-[#94C3D2] rounded-full"
                             animate={{ 
-                              opacity: [0.7, 1, 0.7], 
+                              opacity: [0.7, 1, 0.7],
                               boxShadow: [
-                                '0 0 2px 1px rgba(148, 195, 210, 0.3)', 
-                                '0 0 8px 2px rgba(148, 195, 210, 0.6)', 
-                                '0 0 2px 1px rgba(148, 195, 210, 0.3)'
+                                '0 0 8px 1px rgba(148, 195, 210, 0.6)',
+                                '0 0 15px 3px rgba(148, 195, 210, 0.9)',
+                                '0 0 8px 1px rgba(148, 195, 210, 0.6)'
                               ]
                             }}
                             transition={{ repeat: Infinity, duration: 2 }}
                           />
-                          <div className="absolute w-full h-full bg-[#bae6fd]/80 rounded-full" />
+                          
+                          {/* Ambient glow layers */}
+                          <motion.div
+                            className="absolute -top-3 left-1/2 -translate-x-1/2 w-12 h-6 bg-[#94C3D2]/80 rounded-full blur-md"
+                            animate={{
+                              opacity: [0.4, 0.7, 0.4],
+                              scale: [1, 1.1, 1],
+                            }}
+                            transition={{ repeat: Infinity, duration: 2.5, repeatType: "reverse" }}
+                          />
+                          
+                          <motion.div
+                            className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-4 bg-[#94C3D2]/40 rounded-full blur-sm"
+                            animate={{
+                              opacity: [0.5, 0.8, 0.5],
+                              scale: [1, 1.05, 1],
+                            }}
+                            transition={{ repeat: Infinity, duration: 2, repeatType: "reverse" }}
+                          />
+                          
+                          {/* Background fill for the active button */}
+                          <div className="absolute w-full h-full bg-[#94C3D2]/15 rounded-full" />
                         </motion.div>
                       )}
                     </motion.div>
@@ -196,7 +218,7 @@ const Navbar = () => {
             <div className="relative">
               <button 
                 onClick={toggleDropdown}
-                className="flex items-center justify-center p-2 rounded-full bg-[#dbeafe] text-gray-800 shadow-sm hover:shadow-md transition-all transform hover:scale-105 w-10 h-10"
+                className="flex items-center justify-center p-2 rounded-full bg-[#1a2234] text-[#94c3d2] shadow-sm hover:shadow-md transition-all transform hover:scale-105 w-10 h-10"
                 aria-label="User menu"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -243,7 +265,7 @@ const Navbar = () => {
                       
                       <Link to="/profile" className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-[#dbeafe] transition-colors">
                         <svg className="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
                         Your Account

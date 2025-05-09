@@ -83,11 +83,11 @@ const CollabRoom = () => {
     
     // Auto scroll to bottom after new message
     setTimeout(() => {
-      const chatContainer = document.querySelector('.flex-1.overflow-y-auto');
+      const chatContainer = document.querySelector('.chat-messages');
       if (chatContainer) {
         chatContainer.scrollTop = chatContainer.scrollHeight;
       }
-    }, 0);
+    }, 0); // Increased timeout for more reliable scrolling
   };
 
   const handleEditorDidMount = (editor, monaco) => {
@@ -155,24 +155,24 @@ const CollabRoom = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#E8F1F7] text-gray-800">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
       <Navbar />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Code Collaboration Room</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Code Collaboration Room</h1>
         </div>
 
         {problemLink && (
-          <div className="bg-[#dbeafe] rounded-lg p-4 mb-6 border border-gray-200">
-            <div className="flex justify-between items-center">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/20 mb-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center p-4 gap-4">
               <div>
-                <h2 className="text-lg font-medium text-gray-800">Problem Link</h2>
-                <a href={problemLink} target="_blank" rel="noopener noreferrer" className="text-blue-600">{problemLink}</a>
+                <h2 className="text-lg font-medium text-white/95">Problem Link</h2>
+                <a href={problemLink} target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-blue-200 transition-colors">{problemLink}</a>
               </div>
               <div className="flex space-x-3">
                 <button 
                   onClick={toggleSolved} 
-                  className={`px-4 py-2 rounded-lg text-white ${isSolved ? 'bg-green-600' : isSavedForLater ? 'bg-gray-400 cursor-not-allowed opacity-60' : 'bg-[#94C3D2] hover:bg-opacity-90'}`}
+                  className={`px-4 py-2 rounded-lg text-white ${isSolved ? 'bg-green-600 hover:bg-green-700' : isSavedForLater ? 'bg-white/20 cursor-not-allowed opacity-60' : 'bg-[#94C3D2] hover:bg-[#7EB5C3]'} transition-colors shadow-md`}
                   disabled={isSavedForLater}
                   title={isSavedForLater ? "Cannot mark as solved when saved for later" : ""}
                 >
@@ -180,35 +180,35 @@ const CollabRoom = () => {
                 </button>
                 <button 
                   onClick={toggleSaveForLater} 
-                  className={`px-4 py-2 rounded-lg text-white ${isSavedForLater ? 'bg-yellow-600' : isSolved ? 'bg-gray-400 cursor-not-allowed opacity-60' : 'bg-[#94C3D2] hover:bg-opacity-90'}`}
+                  className={`px-4 py-2 rounded-lg text-white ${isSavedForLater ? 'bg-yellow-600 hover:bg-yellow-700' : isSolved ? 'bg-white/20 cursor-not-allowed opacity-60' : 'bg-[#94C3D2] hover:bg-[#7EB5C3]'} transition-colors shadow-md`}
                   disabled={isSolved}
                   title={isSolved ? "Cannot save for later when marked as solved" : ""}
                 >
                   {isSavedForLater ? '★ Saved' : 'Save for Later'}
                 </button>
-                <a href={problemLink} target="_blank" rel="noopener noreferrer" className="bg-[#94C3D2] text-white px-5 py-2 rounded-lg hover:bg-opacity-90">Open Problem</a>
+                <a href={problemLink} target="_blank" rel="noopener noreferrer" className="bg-[#94C3D2] hover:bg-[#7EB5C3] text-white px-5 py-2 rounded-lg transition-colors shadow-md">Open Problem</a>
               </div>
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Code Editor Section */}
-          <div className="lg:col-span-2">
-            <div className="bg-[#dbeafe] rounded-lg overflow-hidden border border-gray-200">
-              <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                <h2 className="font-semibold">Code Editor</h2>
+          <div className="lg:w-2/3">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/20 h-full">
+              <div className="p-4 border-b border-white/20 flex justify-between items-center">
+                <h2 className="font-semibold text-white/95">Code Editor</h2>
                 <select
                   value={language}
                   onChange={(e) => handleLanguageChange(e.target.value)}
-                  className="px-3 py-2 bg-[#E8F1F7] border border-gray-200 rounded-lg text-gray-800"
+                  className="px-3 py-2 bg-[#2d3748] border border-white/20 rounded-lg text-white"
                 >
                   {languages.map(lang => (
                     <option key={lang.id} value={lang.id}>{lang.name}</option>
                   ))}
                 </select>
               </div>
-              <div className="border-t border-gray-200" style={{ height: '500px' }}>
+              <div className="border-t border-white/20" style={{ height: '500px' }}>
                 <Editor
                   height="100%"
                   defaultLanguage={getMonacoLanguage(language)}
@@ -230,40 +230,41 @@ const CollabRoom = () => {
                   }}
                 />
               </div>
-              <div className="p-4 border-t border-gray-200 flex justify-end space-x-2">
+              <div className="p-4 border-t border-white/20 flex justify-end space-x-2">
                 <button 
                   onClick={copyCode}
-                  className="px-3 py-2 bg-[#94C3D2] text-white rounded-lg hover:bg-opacity-90"
+                  className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white/95 border border-white/20 rounded-lg transition-colors shadow-sm"
                   title="Copy code"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                 </button>
                 <button 
-                  onClick={handlePasteCode} // Ensure this button uses handlePasteCode
-                  className="px-3 py-2 bg-[#94C3D2] text-white rounded-lg hover:bg-opacity-90"
+                  onClick={handlePasteCode}
+                  className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white/95 border border-white/20 rounded-lg transition-colors shadow-sm"
                   title="Paste code"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Chat Section - Fixed height to match code editor exactly */}
-          <div className="bg-[#dbeafe] rounded-lg overflow-hidden border border-gray-200 flex flex-col" style={{ height: '643px' }}>
-            <div className="bg-[#dbeafe] p-4 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="font-semibold text-gray-800">Discussion</h2>
-              <div className="flex items-center">
-                <span className="h-3 w-3 rounded-full mr-2 bg-gray-500"></span>
-                <span className="text-sm text-gray-600">Offline</span>
+          {/* Chat Section */}
+          <div className="lg:w-1/3 flex flex-col h-full">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/20 flex flex-col" style={{ height: '100%', minHeight: '650px' }}>
+              <div className="p-4 border-b border-white/20 flex justify-between items-center">
+                <h2 className="font-semibold text-white/95">Discussion</h2>
+                <div className="flex items-center">
+                  <span className="h-3 w-3 rounded-full mr-2 bg-green-500"></span>
+                  <span className="text-sm text-white/80">Connected</span>
+                </div>
               </div>
-            </div>
-            <div className="flex-1 p-4 overflow-y-auto bg-[#E8F1F7]">
-              <div className="space-y-4">
+              
+              <div className="flex-1 p-4 space-y-4 bg-white/5 overflow-y-auto chat-messages" style={{ minHeight: "500px" }}>
                 {chatMessages.length === 0 ? (
                   <div className="text-center text-gray-400 mt-8">
                     <p>No messages yet</p>
@@ -281,15 +282,15 @@ const CollabRoom = () => {
                       )}
                       <div className="flex flex-col">
                         <div className={`flex items-center ${message.user === 'You' ? 'justify-end' : ''}`}>
-                          <span className={`font-medium ${message.user === 'You' ? 'text-gray-700' : 'text-gray-700'}`}>{message.user}</span>
-                          <span className="text-xs text-gray-400 ml-2">{message.timestamp}</span>
+                          <span className={`font-medium ${message.user === 'You' ? 'text-white/90' : 'text-white/90'}`}>{message.user}</span>
+                          <span className="text-xs text-white/60 ml-2">{message.timestamp}</span>
                         </div>
                         {message.isCode ? (
                           <pre className={`p-3 rounded-lg text-sm bg-black font-mono overflow-x-auto whitespace-pre-wrap ${message.user === 'You' ? 'rounded-tr-none' : 'rounded-tl-none'}`} style={{color: '#f8f8f2'}}>
                             <code style={{color: '#f8f8f2'}}>{message.text}</code>
                           </pre>
                         ) : (
-                          <p className={`p-3 rounded-lg text-sm ${message.user === 'You' ? 'bg-[#94C3D2] text-gray-800 rounded-tr-none' : 'bg-[#dbeafe] text-gray-800 rounded-tl-none'}`}>
+                          <p className={`p-3 rounded-lg text-sm ${message.user === 'You' ? 'bg-[#94C3D2] text-white rounded-tr-none' : 'bg-white/10 text-white/90 rounded-tl-none border border-white/20'}`}>
                             {message.text}
                           </p>
                         )}
@@ -305,35 +306,35 @@ const CollabRoom = () => {
                   ))
                 )}
               </div>
-            </div>
-            <div className="bg-[#dbeafe] p-4 border-t border-gray-200">
-              <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <div className="flex-1 flex items-center bg-[#E8F1F7] border border-gray-300 rounded-lg overflow-hidden">
-                  <input
-                    type="text"
-                    className="flex-1 px-4 py-2.5 bg-transparent text-gray-700 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2]"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder={isCodeMessage ? "Type your code here..." : "Type a message..."}
-                  />
+              <div className="p-4 border-t border-white/20">
+                <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                  <div className="flex-1 flex items-center bg-[#2d3748] border border-white/20 rounded-lg overflow-hidden">
+                    <input
+                      type="text"
+                      placeholder={isCodeMessage ? "Type your code here..." : "Type message..."}
+                      className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsCodeMessage(!isCodeMessage)}
+                      className={`px-2 mx-2 ${isCodeMessage ? 'text-[#94C3D2]' : 'text-white/95'} hover:text-[#94C3D2] transition-colors`}
+                      title={isCodeMessage ? "Switch to regular message" : "Switch to code message"}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
+                    </button>
+                  </div>
                   <button
-                    type="button"
-                    onClick={() => setIsCodeMessage(!isCodeMessage)}
-                    className={`px-2 mx-2 ${isCodeMessage ? 'text-[#94C3D2]' : 'text-gray-400'} hover:text-[#94C3D2] transition-colors`}
-                    title={isCodeMessage ? "Switch to regular message" : "Switch to code message"}
+                    type="submit"
+                    className="bg-[#94C3D2] text-white px-6 py-2.5 rounded-lg hover:bg-[#7EB5C3] transition-colors shadow-md font-medium"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                    </svg>
+                    Send
                   </button>
-                </div>
-                <button
-                  type="submit"
-                  className="bg-[#94C3D2] text-white px-6 py-2.5 rounded-lg hover:bg-opacity-90 transition-colors"
-                >
-                  Send
-                </button>
-              </form>
+                </form>
+              </div>
             </div>
           </div>
         </div>
