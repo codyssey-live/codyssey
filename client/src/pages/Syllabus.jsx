@@ -6,7 +6,7 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { motion } from "framer-motion";
 import apiClient from '../utils/apiClient';
-import { fetchSyllabus, saveSyllabus } from '../utils/syllabusApiUtils';
+import { fetchSyllabus, saveSyllabus, deleteStudyDay } from '../utils/syllabusApiUtils';
 
 // Updated calendar styles for dark theme
 const calendarStyles = `
@@ -263,28 +263,50 @@ const Syllabus = () => {
     setShowEditDayModal(true);
   };
 
-  const handleDeleteDay = (dayId) => {
+  const handleDeleteDay = async (dayId) => {
     if (syllabusDays.length <= 1) {
       alert("Cannot delete the only study day. Please add a new day before deleting this one.");
       return;
     }
     
-    const updatedDays = syllabusDays.filter(day => day.id !== dayId);
-    setSyllabusDays(updatedDays);
-    
-    // If the deleted day was selected, select the first available day
-    if (selectedDay && selectedDay.id === dayId) {
-      setSelectedDay(updatedDays[0]);
-      setActiveTabIndex(0);
-    } else {
-      // Adjust activeTabIndex if needed
-      const newIndex = Math.max(0, activeTabIndex - (activeTabIndex >= syllabusDays.findIndex(d => d.id === dayId) ? 1 : 0));
-      setActiveTabIndex(newIndex);
+    try {
+      // First try to delete from the database if it has a MongoDB ID
+      const mongoId = syllabusDays.find(d => d.id === dayId)?._id;
+      
+      if (mongoId) {
+        console.log(`Deleting day with MongoDB ID: ${mongoId}`);
+        const response = await deleteStudyDay(mongoId);
+        
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to delete from database');
+        }
+        
+        console.log('Successfully deleted from database');
+      } else {
+        console.log('Day only exists in local state, no database deletion needed');
+      }
+      
+      // Update the UI state after successful database operation or if no database record exists
+      const updatedDays = syllabusDays.filter(day => day.id !== dayId);
+      setSyllabusDays(updatedDays);
+      
+      // If the deleted day was selected, select the first available day
+      if (selectedDay && selectedDay.id === dayId) {
+        setSelectedDay(updatedDays[0]);
+        setActiveTabIndex(0);
+      } else {
+        // Adjust activeTabIndex if needed
+        const newIndex = Math.max(0, activeTabIndex - (activeTabIndex >= syllabusDays.findIndex(d => d.id === dayId) ? 1 : 0));
+        setActiveTabIndex(newIndex);
+      }
+    } catch (error) {
+      console.error('Error deleting study day:', error);
+      alert(`Failed to delete study day: ${error.message}`);
+    } finally {
+      // Close the confirmation modal regardless of success/failure
+      setShowDeleteConfirmModal(false);
+      setDayToDelete(null);
     }
-
-    // Close the confirmation modal
-    setShowDeleteConfirmModal(false);
-    setDayToDelete(null);
   };
 
   // Show confirmation before deleting
