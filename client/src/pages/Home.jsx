@@ -66,8 +66,8 @@ const Home = () => {
   return (
     // Modified container with tighter overflow control
     <div className="w-full min-h-screen bg-[#0f172a] overflow-hidden">
-      {/* Floating Navigation Indicator */}
-      <div className="fixed right-10 top-1/2 transform -translate-y-1/2 z-50 flex flex-col gap-3">
+      {/* Floating Navigation Indicator - removed z-50 to restore normal scrolling behavior */}
+      <div className="fixed right-10 top-1/2 transform -translate-y-1/2 flex flex-col gap-3">
         {[0, 1, 2].map((index) => (
           <div
             key={index}
@@ -185,8 +185,7 @@ const Home = () => {
                   to="/signup"
                   className="px-8 py-3 bg-[#94C3D2] text-white rounded-full font-medium text-lg relative overflow-hidden"
                   style={{
-                    boxShadow: "0 0 15px rgba(148, 195, 210, 0.6), 0 0 30px rgba(148, 195, 210, 0.4), 0 0 45px rgba(148, 195, 210, 0.2)"
-                  }}
+                    boxShadow:  "0 0 10px rgba(148, 195, 210, 0.4), 0 0 20px rgba(148, 195, 210, 0.2)"}}
                 >
                   <span className="relative z-10">Create Account</span>
                   <motion.div 
@@ -206,8 +205,7 @@ const Home = () => {
                   to="/login"
                   className="px-8 py-3 bg-[#94C3D2] text-white rounded-full font-medium text-lg relative overflow-hidden"
                   style={{
-                    boxShadow: "0 0 15px rgba(148, 195, 210, 0.6), 0 0 30px rgba(148, 195, 210, 0.4), 0 0 45px rgba(148, 195, 210, 0.2)"
-                  }}
+                    boxShadow: "0 0 10px rgba(148, 195, 210, 0.4), 0 0 20px rgba(148, 195, 210, 0.2)"}}
                 >
                   <span className="relative z-10">Sign In</span>
                   <motion.div 
@@ -328,105 +326,204 @@ const Home = () => {
         </motion.div>
       </section>
 
-      {/* Section 3: Immersive Experience */}
-      <section className="h-screen w-full relative overflow-hidden flex items-center justify-center">
+      {/* Section 3: How Codyssey Works */}
+      <section className="min-h-screen w-full relative overflow-hidden flex items-center justify-center py-20">
+        {/* Background with subtle gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a]"></div>
-
-        <motion.div
-          className="absolute inset-0 z-10"
-        >
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 h-full w-full">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <motion.div
-                key={i}
-                className="relative overflow-hidden border-[0.5px] border-[#94C3D2]/10"
-                initial={{ opacity: 0.1 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ delay: i * 0.05, duration: 1 }}
-              >
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-br from-transparent via-[#94C3D2]/5 to-transparent"
-                  animate={{
-                    opacity: [0, 0.2, 0],
-                    scale: [1, 1.2, 1],
-                  }}
-                  transition={{
-                    duration: Math.random() * 5 + 5,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: i * 0.2,
-                  }}
-                />
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="relative z-20 text-center max-w-4xl px-8"
-        >
-          <motion.h2
-            className="text-3xl md:text-5xl font-bold mb-8 text-white tracking-tight"
+        
+        {/* Content Container */}
+        <div className="relative z-10 w-full max-w-6xl mx-auto px-6">
+          {/* Section Title */}
+          <motion.div 
+            className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false }}
+            viewport={{ once: false, margin: "-100px" }}
             transition={{ duration: 0.8 }}
           >
-            <span className="bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
-              Transcend Solo Coding
-            </span>
-          </motion.h2>
-
-          <motion.p
-            className="text-xl text-[#94C3D2]/90 mb-12 max-w-2xl mx-auto"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: false }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-          >
-            Share screens, thoughts, and breakthroughs in real-time. 
-            Move beyond isolation into a world of collaborative creation.
-          </motion.p>
-
-          <div className="flex flex-col md:flex-row gap-6 justify-center">
-            <Link to="/signup">
-              <motion.div
-                className="px-8 py-4 bg-[#94C3D2] text-white rounded-full font-medium relative overflow-hidden group"
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: false }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <span className="relative z-10">Join the Collective</span>
-                <motion.div
-                  className="absolute inset-0 bg-white"
-                  initial={{ x: "-100%", opacity: 0.3 }}
-                  whileHover={{ x: "100%" }}
-                  transition={{ duration: 0.5 }}
-                />
-              </motion.div>
-            </Link>
-
-            <Link to="/login">
-              <motion.div
-                className="px-8 py-4 bg-transparent border-2 border-[#94C3D2] text-[#94C3D2] rounded-full font-medium"
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: false }}
-                transition={{ delay: 0.7, duration: 0.6 }}
-                whileHover={{ 
-                  backgroundColor: "rgba(148, 195, 210, 0.1)", 
-                  boxShadow: "0 0 20px rgba(148, 195, 210, 0.3)" 
-                }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Continue Your Path
-              </motion.div>
-            </Link>
+            <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
+              <span className="bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
+                Learn. Collaborate. Grow.
+              </span>
+            </h2>
+            <p className="mt-4 text-[#94C3D2]/90 text-lg max-w-2xl mx-auto">
+              Your path to mastering DSA concepts — together
+            </p>
+          </motion.div>
+          
+          {/* Cards Container */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Card 1: DSA Learning Syllabus */}
+            <motion.div 
+              className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 shadow-sm overflow-hidden"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              <div className="h-1.5 bg-[#94C3D2]"></div>
+              <div className="p-6">
+                <div className="w-12 h-12 rounded-lg bg-[#94C3D2]/20 flex items-center justify-center mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#94C3D2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent mb-3">DSA Learning Syllabus</h3>
+                <p className="text-white/80 leading-relaxed">
+                  Plan and organize your DSA learning journey with customizable study days and problem tracking.
+                </p>
+                
+                {/* Visual element showing the syllabus interface from screenshots */}
+                <div className="mt-4 bg-white/10 rounded-lg p-3 border border-white/10">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="text-sm text-[#94C3D2]">Getting Started</div>
+                    <div className="text-xs text-white/60">May 9</div>
+                  </div>
+                  <div className="w-full bg-white/10 h-1.5 rounded-full mb-2">
+                    <motion.div 
+                      className="bg-[#94C3D2] h-1.5 rounded-full" 
+                      initial={{ width: "0%" }}
+                      whileInView={{ width: "65%" }}
+                      viewport={{ once: false }}
+                      transition={{ delay: 1, duration: 1.5 }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <div className="text-xs text-white/80 flex justify-between">
+                      <span>Problems</span>
+                      <span>Add Problem</span>
+                    </div>
+                    <div className="text-xs text-white/80 flex justify-between">
+                      <span>Learning Videos</span>
+                      <span>Add Video</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+            
+            {/* Card 2: Collaborative Coding */}
+            <motion.div 
+              className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 shadow-sm overflow-hidden"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <div className="h-1.5 bg-[#94C3D2]"></div>
+              <div className="p-6">
+                <div className="w-12 h-12 rounded-lg bg-[#94C3D2]/20 flex items-center justify-center mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#94C3D2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent mb-3">Code Collaboration Room</h3>
+                <p className="text-white/80 leading-relaxed">
+                  Solve problems together in real-time with shared code editor and live discussion.
+                </p>
+                
+                {/* Visual element showing the code collaboration interface from screenshots */}
+                <div className="mt-4 bg-white/10 rounded-lg p-3 border border-white/10">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center">
+                      <div className="bg-green-500/20 h-2 w-2 rounded-full mr-2"></div>
+                      <span className="text-sm text-white/80">Code Editor</span>
+                    </div>
+                    <span className="text-xs text-white/60">JavaScript</span>
+                  </div>
+                  
+                  <div className="bg-[#1e1e1e]/80 rounded p-2 font-mono text-xs text-white/80 mb-2 overflow-hidden">
+                    <span className="text-[#569cd6]">function</span> <span className="text-[#dcdcaa]">solution</span>() {
+                    <div>
+                      <br />
+                      <span className="pl-4 text-[#6a9955]">// Your code here</span>
+                      <br />
+                    </div>
+                    }
+                  </div>
+                  
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="text-xs text-white/60">Discussion</div>
+                    <div className="flex items-center">
+                      <div className="bg-green-500/20 h-2 w-2 rounded-full mr-1"></div>
+                      <span className="text-xs text-white/60">Connected</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+            
+            {/* Card 3: Watch Together */}
+            <motion.div 
+              className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 shadow-sm overflow-hidden"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <div className="h-1.5 bg-[#94C3D2]"></div>
+              <div className="p-6">
+                <div className="w-12 h-12 rounded-lg bg-[#94C3D2]/20 flex items-center justify-center mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#94C3D2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent mb-3">Watch Together</h3>
+                <p className="text-white/80 leading-relaxed">
+                  Sync YouTube videos, take collaborative notes, and discuss in real-time chat.
+                </p>
+                
+                {/* Visual element showing the Watch Together interface from screenshots */}
+                <div className="mt-4 bg-white/10 rounded-lg p-3 border border-white/10">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="text-sm text-[#94C3D2]">Video Session</div>
+                    <div className="text-xs bg-[#94C3D2]/20 text-[#94C3D2] px-2 py-0.5 rounded">Watch</div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-3">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-white/80">Notes</span>
+                      <div className="flex items-center gap-1">
+                        <span className="bg-white/20 px-2 py-0.5 rounded text-white/70">Paste</span>
+                        <span className="bg-white/20 px-2 py-0.5 rounded text-white/70">View Saved</span>
+                        <span className="bg-[#94C3D2] px-2 py-0.5 rounded text-white/90">Save Note</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-white/80">Live Chat</span>
+                      <div className="flex items-center">
+                        <div className="h-2 w-2 bg-green-500 rounded-full mr-1"></div>
+                        <span className="text-white/70">Connected</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </div>
-        </motion.div>
+          
+          {/* CTA Button */}
+          <div className="mt-16 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false }}
+              transition={{ delay: 0.6 }}
+            >
+              <Link
+                to="/signup"
+                className="px-8 py-4 bg-[#94C3D2] text-white rounded-full font-medium inline-flex items-center hover:bg-opacity-90 transition-colors shadow-lg"
+                style={{ boxShadow: "0 0 15px rgba(148, 195, 210, 0.3)" }}
+              >
+                Start Your Journey
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
       </section>
     </div>
   );
