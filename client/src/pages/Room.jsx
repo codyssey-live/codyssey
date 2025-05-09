@@ -633,6 +633,11 @@ const Room = () => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Function to determine if a message is from the current user
+  const isCurrentUser = (messageUser) => {
+    return messageUser === userName;
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
       <Navbar />
@@ -757,7 +762,7 @@ const Room = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> {/* Missing closing div for Room Header */}
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Instructions and Links Section */}
@@ -821,8 +826,8 @@ const Room = () => {
               </div>
             </div>
             
-            {/* Chat Section - Now taking full width */}
-            <div ref={chatRef} className="bg-white/10 border border-white/20 rounded-lg shadow-md flex flex-col lg:col-span-3">
+            {/* Chat Section - Now taking full width with fixed height */}
+            <div ref={chatRef} className="bg-white/10 border border-white/20 rounded-lg shadow-md flex flex-col lg:col-span-3" style={{ height: '600px' }}>
               <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                 <div>
                   <h2 className="font-bold text-[#94c3d2]">Room Chat</h2>
@@ -834,7 +839,7 @@ const Room = () => {
                 </div>
               </div>
               
-              <div className="flex-1 p-4 overflow-y-auto bg-white/10 shadow-lg border border-white/20 p-6 backdrop-blur-md hover:bg-white/15 transition-all duration-300">
+              <div className="flex-1 p-4 overflow-y-auto bg-white/10 shadow-lg border border-white/20 backdrop-blur-md hover:bg-white/15 transition-all duration-300" style={{ height: 'calc(100% - 130px)' }}>
                 {messages.length === 0 ? (
                   <div className="h-full flex items-center justify-center">
                     <p className="text-gray-500">No messages yet. Start the conversation!</p>
@@ -849,12 +854,23 @@ const Room = () => {
                             <span className="ml-2 text-xs text-gray-400">{formatTime(message.timestamp)}</span>
                           </div>
                         ) : (
-                          <div className={`max-w-[85%] ${message.user === userName ? 'ml-auto' : ''}`}>
-                            <div className={`flex items-center ${message.user === userName ? 'justify-end' : ''} mb-1`}>
-                              <span className="text-xs text-gray-500 mr-2">{formatTime(message.timestamp)}</span>
-                              <span className="font-medium text-sm">{message.user}</span>
+                          <div className={`max-w-[85%] ${isCurrentUser(message.user) ? 'ml-auto' : ''}`}>
+                            <div className={`flex items-center ${isCurrentUser(message.user) ? 'justify-end' : 'justify-start'} mb-1`}>
+                              {!isCurrentUser(message.user) && (
+                                <span className="font-medium text-sm text-white/90 mr-1">{message.user}</span>
+                              )}
+                              <span className={`text-xs ${isCurrentUser(message.user) ? 'text-white/90 mr-2' : 'text-white/90 ml-2'}`}>
+                                {formatTime(message.timestamp)}
+                              </span>
+                              {isCurrentUser(message.user) && (
+                                <span className="font-medium text-sm text-white/90 ml-1">You</span>
+                              )}
                             </div>
-                            <div className={`rounded-lg px-4 py-2 ${message.user === userName ? 'bg-[#94C3D2] text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none'}`}>
+                            <div className={`rounded-lg px-4 py-2 ${
+                              isCurrentUser(message.user) 
+                                ? 'bg-[#94C3D2] text-black rounded-tr-none' 
+                                : 'bg-yellow-50 text-black rounded-tl-none'
+                            }`}>
                               {message.text}
                             </div>
                           </div>
