@@ -6,6 +6,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import socket from '../socket'; // Import socket directly
 import { loadMessages, saveMessages, clearMessages } from '../utils/chatPersistence';
+import { useRoom } from '../context/RoomContext';
 
 const Room = () => {
   const { roomId } = useParams();
@@ -16,6 +17,17 @@ const Room = () => {
   const roomIdRef = useRef(null);
   const socketRef = useRef(null);
   const isRefreshing = useRef(false);
+  const { roomData, setRoomData } = useRoom();
+  const [syllabusUrl, setSyllabusUrl] = useState('/syllabus');
+
+  // Update syllabus URL based on room context
+  useEffect(() => {
+    if (roomData.inRoom && roomData.inviterId) {
+      setSyllabusUrl(`/${roomData.inviterId}`);
+    } else {
+      setSyllabusUrl('/syllabus');
+    }
+  }, [roomData]);
 
   const [messages, setMessages] = useState(() => {
     // Try to load saved messages first
@@ -187,8 +199,23 @@ const Room = () => {
         const wasCreator = creatorHistory[roomId] === true;
         
         // Set isRoomCreator based on current roomInfo OR previous history as creator
-        setIsRoomCreator(!!parsedInfo.isCreator || wasCreator);
-        console.log("User is room creator:", !!parsedInfo.isCreator || wasCreator);
+        const isCreator = !!parsedInfo.isCreator || wasCreator;
+        setIsRoomCreator(isCreator);
+        console.log("User is room creator:", isCreator);
+        
+        // If we have inviterId, update context
+        if (parsedInfo.inviterId) {
+          console.log("Setting room data in context with inviterId:", parsedInfo.inviterId);
+          setRoomData({
+            inRoom: true,
+            roomId: roomId,
+            inviterId: parsedInfo.inviterId,
+            isRoomCreator: isCreator
+          });
+          
+          // Set syllabus URL to point to the inviter's syllabus
+          setSyllabusUrl(`/${parsedInfo.inviterId}`);
+        }
         
         return true;
       } catch (error) {
@@ -216,7 +243,7 @@ const Room = () => {
     
     fetchUserData();
     
-  }, [roomId, navigate]);
+  }, [roomId, navigate, setRoomData]);
 
   // Socket connection and event handling
   useEffect(() => {
@@ -777,7 +804,7 @@ const Room = () => {
                   </h3>
                   <p className="text-white/80 mt-2">Create or customize your learning path</p>
                   <Link 
-                    to="/syllabus" 
+                    to={syllabusUrl} 
                     className="mt-3 bg-[#94C3D2] text-white px-4 py-2 rounded inline-flex items-center text-sm hover:bg-opacity-90 transition-colors"
                   >
                     Open Syllabus

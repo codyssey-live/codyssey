@@ -53,7 +53,8 @@ export const validateRoom = async (req, res) => {
       success: true,
       data: {
         roomId: room.roomId,
-        active: room.active
+        active: room.active,
+        inviterId: room.inviterId // Include the inviterId in response
       }
     });
   } catch (error) {

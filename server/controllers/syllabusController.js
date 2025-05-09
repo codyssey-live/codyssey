@@ -159,37 +159,47 @@ export const saveSyllabus = async (req, res) => {
 export const getSyllabusByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
-    const currentUserId = req.user._id || req.user.id;
     
-    // Authorization check
-    if (currentUserId.toString() !== userId) {
-      return res.status(403).json({
+    console.log(`Fetching syllabus for user: ${userId}`);
+    
+    if (!userId) {
+      return res.status(400).json({
         success: false,
-        message: 'Not authorized to access this syllabus'
+        message: 'User ID is required'
       });
     }
     
-    // Find syllabus and populate study days
-    const syllabus = await Syllabus.findOne({ userId })
+    // Ensure userId is treated as ObjectId if valid
+    let userIdToQuery = userId;
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      userIdToQuery = new mongoose.Types.ObjectId(userId);
+    }
+    
+    // Find syllabus for the requested user
+    const syllabus = await Syllabus.findOne({ userId: userIdToQuery })
       .populate({
         path: 'studyDays',
-        options: { sort: { date: 1 } } // Sort by date ascending
+        populate: [
+          { path: 'problems' },
+          { path: 'videos' }
+        ]
       });
     
     if (!syllabus) {
-      return res.status(200).json({
-        success: true,
-        data: { userId, studyDays: [] } // Return empty syllabus if none exists
+      return res.status(404).json({
+        success: false,
+        message: `No syllabus found for user ${userId}`
       });
     }
     
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: syllabus
     });
+    
   } catch (error) {
-    console.error('Error fetching syllabus:', error);
-    res.status(500).json({
+    console.error('Error fetching syllabus by userId:', error);
+    return res.status(500).json({
       success: false,
       message: 'Server error while fetching syllabus',
       error: error.message

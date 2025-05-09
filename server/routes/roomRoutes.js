@@ -1,19 +1,27 @@
 import express from 'express';
-import { createRoom, validateRoom, endRoom, cleanupOldRooms } from '../controllers/roomController.js';
-import { protect, adminOnly } from '../middleware/authMiddleware.js';
+import { protect } from '../middleware/authMiddleware.js';
+import { 
+  createRoom, 
+  validateRoom, 
+  endRoom, 
+  cleanupOldRooms 
+} from '../controllers/roomController.js';
 
 const router = express.Router();
 
-// Create a new room (requires authentication)
-router.post('/create', protect, createRoom);
+// Apply authentication middleware to all routes
+router.use(protect);
 
-// Validate if a room exists and is active (public)
+// Create a new room 
+router.post('/create', createRoom);
+
+// Validate if a room exists and is active
 router.get('/validate/:roomId', validateRoom);
 
-// End a room (public - anyone can end)
-router.post('/end/:roomId', endRoom);
+// End a room
+router.delete('/:roomId', endRoom);
 
-// Cleanup old rooms (admin only)
-router.post('/cleanup', protect, adminOnly, cleanupOldRooms);
+// Cleanup old rooms - admin only
+router.delete('/cleanup/old', cleanupOldRooms);
 
 export default router;

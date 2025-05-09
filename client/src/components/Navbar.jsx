@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchCurrentUser } from '../utils/authUtils';
 import apiClient from '../utils/apiClient';
+import { useRoom } from '../context/RoomContext';
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -12,6 +13,8 @@ const Navbar = () => {
   const [loading, setLoading] = useState(true);
   const [hasActiveRoom, setHasActiveRoom] = useState(false);
   const [activeRoomId, setActiveRoomId] = useState(null);
+  const { roomData } = useRoom();
+  const [syllabusPath, setSyllabusPath] = useState('/syllabus');
   
   // Fetch user data from the API - run this early and with higher priority
   useEffect(() => {
@@ -92,6 +95,15 @@ const Navbar = () => {
     };
   }, []);
 
+  // Set syllabus path based on room context
+  useEffect(() => {
+    if (roomData.inRoom && roomData.inviterId) {
+      setSyllabusPath(`/${roomData.inviterId}`);
+    } else {
+      setSyllabusPath('/syllabus');
+    }
+  }, [roomData]);
+
   const handleSignOut = async () => {
     try {
       // Call signout endpoint to clear the cookie
@@ -112,7 +124,10 @@ const Navbar = () => {
   // Navigation items
   const navItems = [
     { name: "Dashboard", path: "/dashboard" },
-    { name: "Syllabus", path: "/syllabus" },
+    { 
+      name: "Syllabus", 
+      path: roomData.inRoom && roomData.inviterId ? `/${roomData.inviterId}` : "/syllabus" 
+    },
     { name: "Lecture Room", path: "/lecture-room" },
     { name: "Collab Room", path: "/collab-room" },
     // Only show Room if the user has an active room

@@ -155,12 +155,15 @@ const Dashboard = () => {
           setRoomId(newRoomId);
           setRoomCreated(true);
           
+          const userId = localStorage.getItem('userId');
+          
           // Make sure to include all required room info
           localStorage.setItem('roomInfo', JSON.stringify({ 
             roomId: newRoomId, 
             createdAt: new Date().toISOString(),
-            isCreator: true, // Explicitly mark as creator
-            userId: localStorage.getItem('userId') // Include user ID for verification
+            isCreator: true,
+            inviterId: userId, // Store inviterId (creator's own ID in this case)
+            userId: userId
           }));
           
           // Also add to validated rooms cache
@@ -276,11 +279,15 @@ const Dashboard = () => {
         if (response.data.success) {
           console.log("Room validation successful");
           
-          // Save the joined room info - include isCreator if user was previously creator
+          // Get inviterId from the response
+          const inviterId = response.data.data.inviterId;
+          
+          // Save the joined room info
           localStorage.setItem('roomInfo', JSON.stringify({ 
             roomId: roomIdToJoin, 
             joinedAt: new Date().toISOString(),
-            isCreator: wasRoomCreator // Set this if user was previously creator
+            isCreator: wasRoomCreator,
+            inviterId: inviterId // Store the inviterId (room creator)
           }));
           
           // Track this room as validated

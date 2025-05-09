@@ -60,7 +60,7 @@ export const saveSyllabus = async (syllabusData) => {
   }
 };
 
-// Fetch syllabus for current user
+// Fetch syllabus for specified user
 export const fetchSyllabus = async (userId) => {
   try {
     if (!userId) {
