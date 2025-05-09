@@ -10,6 +10,7 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
+import syllabusRoutes from './routes/syllabusRoutes.js';
 
 // Load environment variables
 dotenv.config({ path: path.resolve('..', '.env') });
@@ -49,6 +50,7 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/syllabus', syllabusRoutes);
 
 // Socket.IO connection handling
 const connectedUsers = new Map(); // Store connected users with their socket IDs

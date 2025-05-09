@@ -12,9 +12,14 @@ const apiClient = axios.create({
   withCredentials: true
 });
 
-// Request interceptor for logging
+// Add request interceptor to include auth token in all requests
 apiClient.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     // Log the request details to console
     console.debug(`API Request [${config.method.toUpperCase()}] ${config.url}`, 
       config.data ? config.data : 'No request body');
