@@ -634,7 +634,56 @@ const Room = () => {
           </div>
         </div>
       ) : (
-        <div className="container mx-auto px-4 py-8 relative z-10">
+        <div className="container mx-auto px-4 py-4 relative z-10">
+          <div className="flex justify-between items-center mb-6">
+            
+           
+            
+            <div className="flex items-c space-x-4">
+              
+                </div>
+             
+
+              <div className="relative">
+                <button 
+                  onClick={() => setParticipantsDropdownOpen(!participantsDropdownOpen)}
+                  className="flex items-center bg-white/10 px-3 py-1.5 rounded-lg hover:bg-white/20 transition-colors border border-white/20"
+                >
+                  <span className="h-3 w-3 rounded-full bg-green-500 mr-2"></span>
+                  <span className="text-white/80 mr-1">{participants.length}</span>
+                  <span className="text-white/80">Online</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ml-1 transition-transform transform ${participantsDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {participantsDropdownOpen && (
+                  <div className="absolute right-0 mt-2 bg-white/10 backdrop-blur-md rounded-xl shadow-lg overflow-hidden z-50 border border-white/20 w-56">
+                    <div className="p-4 border-b border-white/20">
+                      <h3 className="text-lg font-semibold text-white">Participants</h3>
+                    </div>
+                    {/* Added max-height and overflow-y-auto to make the list scrollable when there are many participants */}
+                    <div className="max-h-60 overflow-y-auto">
+                      {participants.map((participant, index) => (
+                        <div key={index} className="px-4 py-3 flex items-center border-b border-white/10 last:border-0 hover:bg-white/5">
+                          <div className="h-8 w-8 rounded-full bg-[#94C3D2] flex items-center justify-center text-white font-bold mr-3">
+                            {participant.charAt(0).toUpperCase()}
+                          </div>
+                          <span className={`${participant === 'You' ? 'text-[#94C3D2]' : 'text-white/90'}`}>
+                            {participant}
+                            {participant === 'You' && " (You)"}
+                          </span>
+                          <span className="h-2 w-2 rounded-full bg-green-500 ml-auto"></span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              
+
+              
+            </div>
+          </div>
           
           {/* Room Header */}
           <div className="bg-white/10 rounded-2xl shadow-lg border border-white/20 p-6 backdrop-blur-md hover:bg-white/15 transition-all duration-300 rounded-lg shadow-md p-6 mb-6">
@@ -694,44 +743,6 @@ const Room = () => {
                     End Room
                   </button>
                 )}
-                
-                <div className="relative w-full md:w-auto">
-                  <button 
-                    onClick={() => setParticipantsDropdownOpen(!participantsDropdownOpen)}
-                    className="flex items-center justify-center bg-green-100 text-green-800 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors w-full min-w-[140px]"
-                  >
-                    <div className="h-2.5 w-2.5 rounded-full bg-green-500 mr-2"></div>
-                    <span>{participants.length} Online</span>
-                    <svg className="w-4 h-4 ml-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {participantsDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg z-10 py-1 border border-gray-100" style={{ backgroundColor: '#ffffff' }}>
-                      <div className="px-3 py-2 border-b border-gray-100">
-                        <h3 className="font-semibold text-sm text-gray-800">Participants</h3>
-                      </div>
-                      <ul className="max-h-48 overflow-y-auto">
-                        {participants.length > 0 ? (
-                          participants.map((participant, index) => (
-                            <li key={index} className="px-3 py-2 hover:bg-gray-50 flex items-center">
-                              <div className="bg-white border border-gray-200 h-6 w-6 rounded-full flex items-center justify-center text-gray-700 font-bold text-xs mr-2">
-                                {participant.charAt(0).toUpperCase()}
-                              </div>
-                              <span className="text-sm text-gray-700">{participant}</span>
-                              <span className="h-2 w-2 bg-green-500 rounded-full ml-auto"></span>
-                            </li>
-                          ))
-                        ) : (
-                          <li className="px-3 py-2 text-sm text-gray-500 text-center">
-                            No participants yet
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
           </div> {/* Missing closing div for Room Header */}
