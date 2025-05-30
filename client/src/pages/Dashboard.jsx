@@ -291,9 +291,7 @@ const Dashboard = () => {
         roomIdToJoin = joinLink;
       }
 
-      console.log("Attempting to join room with ID:", roomIdToJoin);
-
-      // Check if user was previously the creator of this room
+      console.log("Attempting to join room with ID:", roomIdToJoin);      // Check if user was previously the creator of this room
       const roomCreatorHistory = JSON.parse(
         localStorage.getItem("roomCreatorHistory") || "{}"
       );
@@ -308,6 +306,20 @@ const Dashboard = () => {
 
           // Get inviterId from the response
           const inviterId = response.data.data.inviterId;
+          
+          // Check if this user is the original creator by comparing userId with inviterId
+          const currentUserId = localStorage.getItem("userId");
+          const isOriginalCreator = currentUserId && inviterId && currentUserId === inviterId;
+          
+          // If user is the original creator by ID match, update creator history
+          if (isOriginalCreator && !wasRoomCreator) {
+            console.log("User identified as original creator by ID match, updating history");
+            roomCreatorHistory[roomIdToJoin] = true;
+            localStorage.setItem("roomCreatorHistory", JSON.stringify(roomCreatorHistory));
+          }
+          
+          // Use creator status from history or original creator check
+          const finalCreatorStatus = wasRoomCreator || isOriginalCreator;
 
           // Save the joined room info
           localStorage.setItem(
@@ -315,7 +327,7 @@ const Dashboard = () => {
             JSON.stringify({
               roomId: roomIdToJoin,
               joinedAt: new Date().toISOString(),
-              isCreator: wasRoomCreator,
+              isCreator: finalCreatorStatus,
               inviterId: inviterId, // Store the inviterId (room creator)
             })
           );

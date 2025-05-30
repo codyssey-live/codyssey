@@ -74,14 +74,23 @@ const Room = () => {
         isIntentionalLeave: true
       });
     }
-    
-    // If this user is the creator, remember this for when they rejoin
-    if (isRoomCreator) {
-      // Save to a "room creator history" object in localStorage
-      const creatorHistory = JSON.parse(localStorage.getItem('roomCreatorHistory') || '{}');
-      creatorHistory[roomId] = true;
-      localStorage.setItem('roomCreatorHistory', JSON.stringify(creatorHistory));
-      console.log(`Saved creator status for room ${roomId} before leaving`);
+      // If this user is the creator or has ever been the creator, remember this for when they rejoin
+    const roomInfo = localStorage.getItem('roomInfo');
+    if (roomInfo) {
+      try {
+        const parsedInfo = JSON.parse(roomInfo);
+        const isCreatorFromInfo = !!parsedInfo.isCreator;
+        
+        if (isRoomCreator || isCreatorFromInfo) {
+          // Save to a "room creator history" object in localStorage
+          const creatorHistory = JSON.parse(localStorage.getItem('roomCreatorHistory') || '{}');
+          creatorHistory[roomId] = true;
+          localStorage.setItem('roomCreatorHistory', JSON.stringify(creatorHistory));
+          console.log(`Saved creator status for room ${roomId} before leaving`);
+        }
+      } catch (error) {
+        console.error('Error parsing room info in handleLeaveRoom:', error);
+      }
     }
     
     // Clear room information from localStorage
@@ -207,8 +216,7 @@ const Room = () => {
           navigate('/dashboard');
           return false;
         }
-        
-        // Check if user is the creator from roomInfo OR from roomCreatorHistory
+          // Check if user is the creator from roomInfo OR from roomCreatorHistory
         const creatorHistory = JSON.parse(localStorage.getItem('roomCreatorHistory') || '{}');
         const wasCreator = creatorHistory[roomId] === true;
         
@@ -216,6 +224,13 @@ const Room = () => {
         const isCreator = !!parsedInfo.isCreator || wasCreator;
         setIsRoomCreator(isCreator);
         console.log("User is room creator:", isCreator);
+        
+        // If the user is a creator based on history but not reflected in roomInfo, update roomInfo
+        if (wasCreator && !parsedInfo.isCreator) {
+          console.log("Restoring creator status from history to roomInfo");
+          parsedInfo.isCreator = true;
+          localStorage.setItem('roomInfo', JSON.stringify(parsedInfo));
+        }
         
         // If we have inviterId, update context
         if (parsedInfo.inviterId) {
@@ -407,17 +422,22 @@ const Room = () => {
     
     // First time joining flag - use this to differentiate between first join and refreshes
     const firstTimeJoining = !localStorage.getItem(`joined_${roomId}`);
+      // Check if this user is a room creator from history
+    const creatorHistory = JSON.parse(localStorage.getItem('roomCreatorHistory') || '{}');
+    const isCreatorFromHistory = creatorHistory[roomId] === true;
     
-    // Join the room
+    // Join the room - include creator status from history
     socketRef.current.emit('join-room', {
       roomId,
-      username
+      username,
+      isCreator: isRoomCreator || isCreatorFromHistory
     });
 
     // Also emit underscore version for compatibility
     socketRef.current.emit('join_room', {
       roomId,
-      username
+      username,
+      isCreator: isRoomCreator || isCreatorFromHistory
     });
     
     // Mark as joined in localStorage to track refreshes vs new joins

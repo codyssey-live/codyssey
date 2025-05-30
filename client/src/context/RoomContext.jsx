@@ -36,12 +36,25 @@ export const RoomProvider = ({ children }) => {
                 console.error('Error fetching room details:', error);
               }
             }
+              // Check creator history as another source of truth
+            const creatorHistory = JSON.parse(localStorage.getItem('roomCreatorHistory') || '{}');
+            const wasCreator = creatorHistory[parsedInfo.roomId] === true;
+            
+            // Determine final creator status
+            const isCreator = !!parsedInfo.isCreator || wasCreator;
+            
+            // If creator status is only in history but not in roomInfo, update roomInfo
+            if (wasCreator && !parsedInfo.isCreator) {
+              console.log("Restoring creator status from history to roomInfo in context");
+              parsedInfo.isCreator = true;
+              localStorage.setItem('roomInfo', JSON.stringify(parsedInfo));
+            }
             
             setRoomData({
               inRoom: true,
               roomId: parsedInfo.roomId,
               inviterId: parsedInfo.inviterId || null,
-              isRoomCreator: !!parsedInfo.isCreator
+              isRoomCreator: isCreator
             });
           }
         } catch (error) {
