@@ -17,7 +17,12 @@ const PublicRoute = ({ children }) => {
         if (user) {
           // Clear any existing room info to prevent automatic room creation after login/signup
           localStorage.removeItem('roomInfo');
-          window.history.replaceState(null, '', '/dashboard');
+          
+          // Only redirect to dashboard if not forcing login
+          const forceLogin = location?.state?.forceLogin;
+          if (!forceLogin && location.pathname !== '/') {
+            window.history.replaceState(null, '', '/dashboard');
+          }
         }
       } catch (error) {
         console.error('Authentication check failed:', error);
@@ -34,8 +39,14 @@ const PublicRoute = ({ children }) => {
       try {
         const user = await fetchCurrentUser();
         if (user) {
-          // If user is authenticated, always redirect to dashboard when using browser navigation
-          window.history.pushState(null, '', '/dashboard');
+          // Check location state for forceLogin flag
+          const state = window.history.state || {};
+          const forceLogin = state.forceLogin;
+          
+          if (!forceLogin && location.pathname !== '/') {
+            // If user is authenticated, redirect to dashboard when using browser navigation
+            window.history.pushState(null, '', '/dashboard');
+          }
         }
       } catch (error) {
         console.error('Navigation check failed:', error);
@@ -47,7 +58,7 @@ const PublicRoute = ({ children }) => {
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, []);
+  }, [location]);
 
   if (isLoading) {
     return (
@@ -57,9 +68,13 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  // Only redirect to dashboard if user is authenticated and trying to access login or signup pages
-  // Note: Removed '/' from the list to allow authenticated users to visit the home page
+  // Check for forceLogin flag in location state
+  const forceLogin = location?.state?.forceLogin;
+
+  // Only redirect to dashboard if user is authenticated,
+  // trying to access login/signup pages, and not forcing login
   if (isAuthenticated && 
+      !forceLogin &&
       (location.pathname === '/login' || 
        location.pathname === '/signup' || 
        location.pathname === '/forgot-password')) {

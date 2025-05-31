@@ -526,7 +526,7 @@ const Home = () => {
             </motion.div>
           </div>
           
-          {/* CTA Button */}
+          {/* CTA Button - Modified to always go to login regardless of auth state */}
           <div className="mt-16 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -535,7 +535,8 @@ const Home = () => {
               transition={{ delay: 0.6 }}
             >
               <Link
-                to="/signup"
+                to="/login"
+                state={{ forceLogin: true }} // Add this state parameter to force login page
                 className="px-8 py-4 bg-[#94C3D2] text-white rounded-full font-medium inline-flex items-center hover:bg-opacity-90 transition-colors shadow-lg"
                 style={{ boxShadow: "0 0 15px rgba(148, 195, 210, 0.3)" }}
               >
