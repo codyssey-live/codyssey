@@ -687,10 +687,14 @@ const CollabRoom = () => {
                     className={`h-3 w-3 rounded-full mr-2 ${
                       isConnected && roomData.inRoom
                         ? "bg-green-500"
-                        : "bg-gray-500"
+                        : "bg-red-400"
                     }`}
                   ></span>
-                  <span className="text-sm text-white/80">
+                  <span className={`text-sm ${
+                      isConnected && roomData.inRoom
+                        ? "text-white/80"
+                        : "text-red-400"
+                    }`}>
                     {isConnected && roomData.inRoom
                       ? "Connected"
                       : "Disconnected"}

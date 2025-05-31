@@ -43,7 +43,7 @@ const Room = () => {
   });
   const [newMessage, setNewMessage] = useState('');
   const [userName, setUserName] = useState('User');
-  const [participants, setParticipants] = useState(['You']);
+  const [participants, setParticipants] = useState([]);  // Changed initial value from ['You'] to []
   const [copySuccess, setCopySuccess] = useState(false);
   const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -349,7 +349,8 @@ const Room = () => {
       
       // Define setup function
       const setupOnce = () => {
-        console.log(`Socket connected with ID: ${socket.id}, setting up for user: ${username}`);
+        // Changed this line to provide more context about the socket ID
+        console.log(`[Socket] Connected with socket ID: ${socket.id}, setting up for user: ${username}`);
         setupConnection(username);
         socket.off('connect', setupOnce); // Remove listener after first connection
       };
@@ -357,6 +358,16 @@ const Room = () => {
       // Connect socket and set up handler
       socket.connect();
       socket.on('connect', setupOnce);
+
+      // Add handler to log and explain server-side connection messages
+      socket.on('debug', (data) => {
+        // Filter out or explain connection messages that contain socket IDs
+        if (data && typeof data === 'string' && data.includes('User connected:')) {
+          console.log('[Socket Debug] Connection event from server side, can be ignored');
+          return;
+        }
+        console.log('[Socket Debug]', data);
+      });
     };
 
     getUserData();
@@ -419,8 +430,9 @@ const Room = () => {
     socketRef.current.off('user-left');
     socketRef.current.off('user_left');
     socketRef.current.off('room_data');
+    socketRef.current.off('debug'); // Also clear debug listeners
     
-    console.log(`Joining room ${roomId} as ${username} with socket ID: ${socketRef.current.id}`);
+    console.log(`[Socket] Joining room ${roomId} as ${username} with socket ID: ${socketRef.current.id}`);
     
     // First time joining flag - use this to differentiate between first join and refreshes
     const firstTimeJoining = !localStorage.getItem(`joined_${roomId}`);
@@ -445,18 +457,68 @@ const Room = () => {
     // Mark as joined in localStorage to track refreshes vs new joins
     localStorage.setItem(`joined_${roomId}`, 'true');
     
-    // Remove self-join message - no longer needed
-    
-    // Listen for direct room data events to update participants 
-    // (but don't show join messages)
+    // Listen for direct room data events to update participants
     socketRef.current.on('room_data', (data) => {
       console.log('Room data event received:', data);
       if (data.participants) {
         console.log('Setting participants from room_data:', data.participants);
-        setParticipants(data.participants);
+        
+        // Filter out any 'User' entries that aren't the current user's name
+        // And ensure the current user is included properly
+        const filteredParticipants = data.participants.filter(name => 
+          name !== 'User' || name === username
+        );
+        
+        // Remove duplicates by creating a Set and converting back to array
+        const uniqueParticipants = [...new Set(filteredParticipants)];
+        
+        console.log('Filtered participants:', uniqueParticipants);
+        setParticipants(uniqueParticipants);
       }
     });
-      // Listen for messages from other users with deduplication
+
+    // Add listeners for user-joined and user-left events to properly track participants
+    socketRef.current.on('user-joined', (data) => {
+      console.log('User joined event received:', data);
+      if (data.username) {
+        setParticipants(prev => {
+          // Only add if not already in the list
+          if (!prev.includes(data.username)) {
+            return [...prev, data.username];
+          }
+          return prev;
+        });
+      }
+    });
+    
+    socketRef.current.on('user-left', (data) => {
+      console.log('User left event received:', data);
+      if (data.username) {
+        setParticipants(prev => prev.filter(name => name !== data.username));
+      }
+    });
+
+    // For compatibility, also listen to underscore versions
+    socketRef.current.on('user_joined', (data) => {
+      console.log('User joined event (underscore) received:', data);
+      if (data.username) {
+        setParticipants(prev => {
+          if (!prev.includes(data.username)) {
+            return [...prev, data.username];
+          }
+          return prev;
+        });
+      }
+    });
+    
+    socketRef.current.on('user_left', (data) => {
+      console.log('User left event (underscore) received:', data);
+      if (data.username) {
+        setParticipants(prev => prev.filter(name => name !== data.username));
+      }
+    });
+
+    // Listen for messages from other users with deduplication
     socketRef.current.on('receive-message', (data) => {
       console.log('Received message event:', data);
       
@@ -695,16 +757,14 @@ const Room = () => {
                     <div className="p-4 border-b border-white/20">
                       <h3 className="text-lg font-semibold text-white">Participants</h3>
                     </div>
-                    {/* Added max-height and overflow-y-auto to make the list scrollable when there are many participants */}
                     <div className="max-h-60 overflow-y-auto">
                       {participants.map((participant, index) => (
                         <div key={index} className="px-4 py-3 flex items-center border-b border-white/10 last:border-0 hover:bg-white/5">
                           <div className="h-8 w-8 rounded-full bg-[#94C3D2] flex items-center justify-center text-white font-bold mr-3">
                             {participant.charAt(0).toUpperCase()}
                           </div>
-                          <span className={`${participant === 'You' ? 'text-[#94C3D2]' : 'text-white/90'}`}>
+                          <span className="text-white/90">
                             {participant}
-                            {participant === 'You' && " (You)"}
                           </span>
                           <span className="h-2 w-2 rounded-full bg-green-500 ml-auto"></span>
                         </div>
