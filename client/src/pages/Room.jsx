@@ -4,9 +4,9 @@ import Navbar from '../components/Navbar';
 import { fetchCurrentUser } from '../utils/authUtils';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useRoom } from '../context/RoomContext';
 import socket from '../socket'; // Import socket directly
 import { loadMessages, saveMessages, clearMessages } from '../utils/chatPersistence';
-import { useRoom } from '../context/RoomContext';
 
 const Room = () => {
   const { roomId } = useParams();
@@ -364,12 +364,14 @@ const Room = () => {
     return () => {
       // Clean up event listeners
       if (socketRef.current) {
-        console.log('Cleaning up socket event listeners');
-        socketRef.current.off('user-joined');
+        console.log('Cleaning up socket event listeners');        socketRef.current.off('user-joined');
+        socketRef.current.off('user_joined');
         socketRef.current.off('receive-message');
-        socketRef.current.off('user-left');
-        socketRef.current.off('room_data');
         socketRef.current.off('receive_message');
+        socketRef.current.off('user-left');
+        socketRef.current.off('user_left');
+        socketRef.current.off('room_data');
+        socketRef.current.off('room-ended');
         socket.off('connect');
         
         // Only send leave event for actual component unmount, not page refresh or internal navigation
@@ -454,10 +456,15 @@ const Room = () => {
         setParticipants(data.participants);
       }
     });
-    
-    // Listen for messages from other users with deduplication
+      // Listen for messages from other users with deduplication
     socketRef.current.on('receive-message', (data) => {
       console.log('Received message event:', data);
+      
+      // Filter out collab room messages
+      if (data.source === "collab-room") {
+        console.log('Ignoring message from collab room');
+        return;
+      }
       
       // Only process messages from others (our own messages are added locally)
       if (data.username !== username) {
@@ -473,6 +480,12 @@ const Room = () => {
     // Also listen for the underscore version of events
     socketRef.current.on('receive_message', (data) => {
       console.log('Received message (underscore format):', data);
+      
+      // Filter out collab room messages
+      if (data.source === "collab-room") {
+        console.log('Ignoring message from collab room');
+        return;
+      }
       
       // Only process messages from others (our own messages are added locally)
       if (data.username !== username) {
@@ -566,7 +579,6 @@ const Room = () => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !socketRef.current) return;
@@ -578,7 +590,8 @@ const Room = () => {
       roomId,
       message: newMessage,
       username: userName,
-      messageId // Add message ID to allow deduplication
+      messageId, // Add message ID to allow deduplication
+      source: 'room-chat' // Add source to distinguish from collab room messages
     };
 
     console.log('Sending message:', messageData);

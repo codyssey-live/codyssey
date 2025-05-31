@@ -116,9 +116,7 @@ const CollabRoom = () => {
     if (!newMessage.trim() || !socket.connected || !roomData.inRoom) return;
 
     // Generate a unique ID for this message
-    const messageId = `${socket.id}-${Date.now()}`;
-
-    // Create message data with enhanced type information
+    const messageId = `${socket.id}-${Date.now()}`;    // Create message data with enhanced type information
     const messageData = {
       roomId: roomData.roomId,
       message: newMessage,
@@ -128,6 +126,8 @@ const CollabRoom = () => {
       timestamp: new Date(),
       socketId: socket.id,
       type: "collab-chat",
+      // Add source to clearly identify collab room messages
+      source: "collab-room"
     };
 
     console.log("Sending collab message to room:", messageData);
@@ -149,9 +149,7 @@ const CollabRoom = () => {
       }
 
       return updatedMessages;
-    });
-
-    // Send message via socket (if connected to a room)
+    });    // Send message via socket (if connected to a room)
     if (socket.connected && roomData.inRoom) {
       socket.emit("send-message", {
         roomId: roomData.roomId,
@@ -159,15 +157,17 @@ const CollabRoom = () => {
         username: userName,
         messageId,
         isCode: isCodeMessage,
+        source: "collab-room"
       });
-
+      
       // Also emit with underscore format for compatibility
       socket.emit("send_message", {
         roomId: roomData.roomId,
-        text: newMessage,
+        message: newMessage, // Use message instead of text for consistency
         username: userName,
         messageId,
         isCode: isCodeMessage,
+        source: "collab-room"
       });
     }
 
@@ -292,7 +292,13 @@ const CollabRoom = () => {
     const handleReceiveMessage = (data) => {
       console.log("Received message:", data);
 
-      // Normalize data structure from different message formats
+      // Normalize data structure from different message formats      // Check if message is from collab room
+      const source = data.source;
+      if (source && source !== "collab-room") {
+        console.log("Ignoring message from different source:", source);
+        return;
+      }
+
       const messageId =
         data.messageId || data.id || `${data.username}-${Date.now()}`;
       const username = data.username;
