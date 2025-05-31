@@ -23,6 +23,12 @@ const CollabRoom = () => {
   // Process function to avoid duplicates - use a Map for better tracking
   const processedMessages = useRef(new Map());
 
+  // New state for code modal
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [modalCode, setModalCode] = useState("");
+  const [modalLanguage, setModalLanguage] = useState("javascript");
+  const [isModalFromCurrentUser, setIsModalFromCurrentUser] = useState(true); // Track who sent the code
+
   const boilerplates = {
     javascript: `// JavaScript Solution\nfunction solution() {\n  // Your code here\n}`,
     python: `# Python Solution\ndef solution():\n    # Your code here\n    pass`,
@@ -43,6 +49,44 @@ const CollabRoom = () => {
     { id: "java", name: "Java" },
     { id: "cpp", name: "C++" },
   ];
+
+  // Function to detect code language from code content
+  const detectCodeLanguage = (codeText) => {
+    if (codeText.includes("def ") && codeText.includes(":")) return "python";
+    if (codeText.includes("public class") || codeText.includes("public static void")) return "java";
+    if (codeText.includes("#include")) return "cpp";
+    return "javascript"; // Default
+  };
+
+  // Function to open the code modal
+  const openCodeModal = (codeText, lang = null, isFromCurrentUser = true) => {
+    // Normalize line endings for consistency
+    const formattedCode = codeText
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
+    
+    setModalCode(formattedCode);
+    setModalLanguage(lang || detectCodeLanguage(formattedCode));
+    setIsModalFromCurrentUser(isFromCurrentUser);
+    setIsCodeModalOpen(true);
+  };
+
+  // Function to copy code from modal
+  const copyModalCode = () => {
+    navigator.clipboard.writeText(modalCode)
+      .then(() => {
+        // Show brief visual feedback for copy success
+        const copyBtn = document.getElementById("modal-copy-btn");
+        if (copyBtn) {
+          const originalText = copyBtn.innerText;
+          copyBtn.innerText = "Copied!";
+          setTimeout(() => {
+            copyBtn.innerText = originalText;
+          }, 1500);
+        }
+      })
+      .catch(err => console.error("Could not copy code: ", err));
+  };
 
   useEffect(() => {
     if (location.state && location.state.problemLink) {
@@ -116,7 +160,8 @@ const CollabRoom = () => {
     if (!newMessage.trim() || !socket.connected || !roomData.inRoom) return;
 
     // Generate a unique ID for this message
-    const messageId = `${socket.id}-${Date.now()}`;    // Create message data with enhanced type information
+    const messageId = `${socket.id}-${Date.now()}`;
+    // Create message data with enhanced type information
     const messageData = {
       roomId: roomData.roomId,
       message: newMessage,
@@ -149,7 +194,8 @@ const CollabRoom = () => {
       }
 
       return updatedMessages;
-    });    // Send message via socket (if connected to a room)
+    });    
+    // Send message via socket (if connected to a room)
     if (socket.connected && roomData.inRoom) {
       socket.emit("send-message", {
         roomId: roomData.roomId,
@@ -457,6 +503,13 @@ const CollabRoom = () => {
     }
   };
 
+  // Add this helper function to limit lines rather than characters
+  const limitCodeLines = (code, maxLines = 5) => {
+    const lines = code.split('\n');
+    if (lines.length <= maxLines) return code;
+    return lines.slice(0, maxLines).join('\n') + '\n...';
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
       <Navbar />
@@ -627,7 +680,6 @@ const CollabRoom = () => {
               className="bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/20 flex flex-col"
               style={{ height: "650px" }}
             >
-              {" "}
               <div className="p-4 border-b border-white/20 flex justify-between items-center">
                 <h2 className="font-semibold text-white/95">Discussion</h2>
                 <div className="flex items-center">
@@ -713,12 +765,36 @@ const CollabRoom = () => {
                               )}{" "}
                             </div>{" "}
                             {message.isCode ? (
-                              <pre
-                                className="p-3 rounded-lg text-sm bg-black font-mono overflow-x-auto whitespace-pre-wrap border border-gray-700 w-full"
-                                style={{ color: "#ffffff" }}
+                              <div 
+                                className={`rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity ${
+                                  isCurrentUser ? "bg-[#94C3D2]/90 text-white" : "bg-yellow-50 text-gray-900"
+                                }`}
+                                onClick={() => openCodeModal(message.text, null, isCurrentUser)}
                               >
-                                <code>{message.text}</code>
-                              </pre>
+                                <div className={`px-3 py-1 flex items-center justify-between ${
+                                  isCurrentUser ? "bg-black/30" : "bg-amber-200/50"
+                                }`}>
+                                  <span className={`text-xs font-mono ${isCurrentUser ? "" : "text-gray-800"}`}>
+                                    {detectCodeLanguage(message.text).toUpperCase()} Code
+                                  </span>
+                                  <span className="text-xs">Click to view</span>
+                                </div>
+                                <pre
+                                  className="p-3 text-sm font-mono overflow-x-auto overflow-y-hidden w-full scrollbar-hide"
+                                  style={{ 
+                                    maxHeight: "50px", 
+                                    whiteSpace: "pre", 
+                                    overflowX: "auto",
+                                    width: "100%",
+                                    msOverflowStyle: "none", /* IE and Edge */
+                                    scrollbarWidth: "none", /* Firefox */
+                                  }}
+                                >
+                                  <code className="inline-block whitespace-nowrap" style={{ minWidth: "max-content" }}>
+                                    {limitCodeLines(message.text)}
+                                  </code>
+                                </pre>
+                              </div>
                             ) : (
                               <div
                                 className={`rounded-lg px-4 py-2 ${
@@ -736,7 +812,7 @@ const CollabRoom = () => {
                     })}
                     <div ref={messagesEndRef} />
                   </div>
-                )}{" "}
+                )}
               </div>
               <div className="p-4 border-t border-white/20">
                 <form
@@ -744,22 +820,46 @@ const CollabRoom = () => {
                   className="flex items-center gap-2"
                 >
                   <div className="flex-1 flex items-center bg-[#2d3748] border border-white/20 rounded-lg overflow-hidden">
-                    {" "}
-                    <input
-                      type="text"
-                      placeholder={
-                        isCodeMessage
-                          ? "Type your code here..."
-                          : "Type message..."
-                      }
-                      className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyDown={handleMessageKeyDown}
-                    />{" "}
+                    {isCodeMessage ? (
+                      <textarea
+                        placeholder="Type or paste your code here..."
+                        className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none resize-none"
+                        style={{ height: "42px", overflow: "auto" }} 
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyDown={(e) => {
+                          // Allow tab key for indentation in code
+                          if (e.key === 'Tab') {
+                            e.preventDefault();
+                            const start = e.target.selectionStart;
+                            const end = e.target.selectionEnd;
+                            const value = e.target.value;
+                            setNewMessage(value.substring(0, start) + '  ' + value.substring(end));
+                            // Set cursor position after the inserted tab
+                            setTimeout(() => {
+                              e.target.selectionStart = e.target.selectionEnd = start + 2;
+                            }, 0);
+                          } else if (e.key === 'Enter' && !e.shiftKey) {
+                            handleSendMessage(e);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder="Type message..."
+                        className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyDown={handleMessageKeyDown}
+                      />
+                    )}
                     <button
                       type="button"
-                      onClick={() => setIsCodeMessage(!isCodeMessage)}
+                      onClick={() => {
+                        setIsCodeMessage(!isCodeMessage);
+                        setNewMessage(''); // Clear message when switching modes
+                      }}
                       className={`px-2 mx-2 ${
                         isCodeMessage ? "text-[#94C3D2]" : "text-white/95"
                       } hover:text-[#94C3D2] transition-colors`}
@@ -797,6 +897,95 @@ const CollabRoom = () => {
           </div>
         </div>
       </div>
+
+      {/* Code Snippet Modal */}
+      {isCodeModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-auto bg-black/70 flex items-center justify-center p-4">
+          <div className={`${isModalFromCurrentUser ? "bg-gray-900" : "bg-yellow-50"} rounded-xl border ${isModalFromCurrentUser ? "border-gray-700" : "border-amber-200"} w-full max-w-4xl max-h-[95vh] flex flex-col`}>
+            <div className={`border-b ${isModalFromCurrentUser ? "border-gray-700" : "border-amber-300"} px-5 py-3 flex justify-between items-center`}>
+              <h3 className={`text-lg font-medium ${isModalFromCurrentUser ? "text-gray-900" : "text-gray-900"}`}>
+                Code - {modalLanguage.toUpperCase()}
+              </h3>
+              <div className="flex items-center gap-3">
+                <button
+                  id="modal-copy-btn"
+                  onClick={copyModalCode}
+                  className={`px-3 py-1 ${isModalFromCurrentUser ? "bg-[#2d3748] hover:bg-[#3e4c5e] text-white/90" : "bg-amber-200 hover:bg-amber-300 text-gray-900"} text-sm rounded-md transition-colors`}
+                >
+                  Copy Code
+                </button>
+                <button
+                  onClick={() => setIsCodeModalOpen(false)}
+                  className={`${isModalFromCurrentUser ? "text-gray-700 hover:text-gray-900" : "text-gray-700 hover:text-gray-900"}`}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto p-0">
+              <div className={`h-full ${isModalFromCurrentUser ? "bg-[#1e1e1e]" : "bg-[#1e1e1e]"} rounded-b-xl overflow-hidden`}>
+                <div style={{ height: "60vh", minHeight: "400px" }} className="p-1 rounded-b-xl overflow-hidden">
+                  <Editor
+                    key={`monaco-${Date.now()}`} // Force re-render with unique key
+                    value={modalCode}
+                    language={getMonacoLanguage(modalLanguage)}
+                    theme="vs-dark"
+                    beforeMount={(monaco) => {
+                      // Configure editor before mounting
+                      monaco.editor.defineTheme('modal-theme', {
+                        base: 'vs-dark',
+                        inherit: true,
+                        rules: [],
+                        colors: {}
+                      });
+                    }}
+                    options={{
+                      readOnly: true,
+                      minimap: { enabled: true },
+                      scrollBeyondLastLine: false,
+                      lineNumbers: "on",
+                      fontSize: 14,
+                      fontFamily: "JetBrains Mono, monospace",
+                      wordWrap: "on",
+                      automaticLayout: true,
+                      tabSize: 2,
+                      renderWhitespace: "all",
+                      renderControlCharacters: true,
+                    }}
+                    onMount={(editor) => {
+                      // Ensure content is properly loaded
+                      setTimeout(() => {
+                        // Force layout recalculation
+                        editor.layout();
+                        // Ensure line breaks are preserved in model
+                        const model = editor.getModel();
+                        if (model) {
+                          // Force the model to update with properly formatted code
+                          model.setValue(modalCode);
+                          editor.setScrollPosition({ scrollTop: 0 });
+                        }
+                      }, 50);
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
