@@ -403,3 +403,50 @@ export const updateProblemStatus = async (req, res) => {
     });
   }
 };
+
+// @desc    Get a specific study day by ID
+// @route   GET /syllabus/day/:dayId
+// @access  Private
+export const getStudyDayById = async (req, res) => {
+  try {
+    const { dayId } = req.params;
+    const userId = req.user._id || req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(dayId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid study day ID format'
+      });
+    }
+
+    // Find study day
+    const studyDay = await StudyDay.findById(dayId);
+
+    if (!studyDay) {
+      return res.status(404).json({
+        success: false,
+        message: 'Study day not found'
+      });
+    }
+
+    // Check if user has access to this study day
+    if (studyDay.userId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to access this study day'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: studyDay
+    });
+  } catch (error) {
+    console.error('Error fetching study day by ID:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch study day',
+      error: error.message
+    });
+  }
+};

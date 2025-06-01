@@ -124,20 +124,55 @@ export const updateProblemStatus = async (dayId, problemId, status) => {
   try {
     console.log(`Updating status for problem ${problemId} in day ${dayId} to ${status}`);
     
-    // Fix: Use apiClient for consistent credentials and basePath handling
+    // Fix: Use correct API path and apiClient for consistent credentials and basePath handling
     const response = await apiClient.put(`/syllabus/problem/${dayId}/${problemId}/status`, { status });
     
     console.log('Status update response:', response.data);
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Error updating problem status');
+    }
+    
     return {
       success: true,
       data: response.data.data,
-      message: response.data.message
+      message: response.data.message || 'Status updated successfully'
     };
   } catch (error) {
     console.error('Error updating problem status:', error);
     return { 
       success: false, 
       message: error.response?.data?.message || error.message || 'Error updating problem status'
+    };
+  }
+};
+
+// Fetch a single study day by ID
+export const fetchStudyDay = async (dayId) => {
+  try {
+    if (!dayId) {
+      throw new Error('Day ID is required to fetch study day');
+    }
+    
+    console.log('Fetching study day with ID:', dayId);
+    const response = await apiClient.get(`/syllabus/day/${dayId}`);
+    console.log('Study day API response:', response.data);
+    
+    // Validate the data structure
+    if (!response.data.success || !response.data.data) {
+      console.error('Invalid API response structure:', response.data);
+      throw new Error('Invalid API response structure');
+    }
+    
+    return {
+      success: true,
+      data: response.data.data
+    };
+  } catch (error) {
+    console.error('Error fetching study day:', error.response?.data || error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to fetch study day'
     };
   }
 };

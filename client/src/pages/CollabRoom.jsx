@@ -8,45 +8,48 @@ import {
   loadCollabMessages,
   saveCollabMessages,
 } from "../utils/collabRoomChatPersistence";
-import { updateProblemStatus } from '../utils/syllabusApiUtils';
+import { updateProblemStatus } from "../utils/syllabusApiUtils";
 import apiClient from "../utils/apiClient"; // Import apiClient for making API requests
-import axios from 'axios';
+import axios from "axios";
 
 const CollabRoom = () => {
   const location = useLocation();
   const { roomData } = useRoom();
   const editorRef = useRef(null);
   const [problemLink, setProblemLink] = useState("");
-  const [problemId, setProblemId] = useState(null);  // Add this state
-  const [dayId, setDayId] = useState(null);          // Add this state
+  const [problemId, setProblemId] = useState(null); // Add this state
+  const [dayId, setDayId] = useState(null); // Add this state
   const [language, setLanguage] = useState("javascript");
   const [isConnected, setIsConnected] = useState(false);
   const [userName, setUserName] = useState("User");
-  const [problemStatus, setProblemStatus] = useState('unsolved');
+  const [problemStatus, setProblemStatus] = useState("unsolved");
   const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
   const [statusUpdateError, setStatusUpdateError] = useState(null);
-  const [statusUpdateSuccess, setStatusUpdateSuccess] = useState(false);
-  const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
+  // Removed statusUpdateSuccess state as requested
+  const [statusMessage, setStatusMessage] = useState({ type: "", text: "" });
   const [showStatusMessage, setShowStatusMessage] = useState(true);
   useEffect(() => {
-  if (problemStatus === 'solved' || problemStatus === 'solveLater') {
-    setShowStatusMessage(true);
-    const timer = setTimeout(() => {
-      setShowStatusMessage(false);
-    }, 2500); // 2.5 seconds
-    return () => clearTimeout(timer);
-  }
-}, [problemStatus]);
-
+    if (problemStatus === "solved" || problemStatus === "solveLater") {
+      setShowStatusMessage(true);
+      const timer = setTimeout(() => {
+        setShowStatusMessage(false);
+      }, 2500); // 2.5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [problemStatus]);
   const [problemDetails, setProblemDetails] = useState({
-    title: "Loading...",
-    difficulty: "Medium",
-    platform: "LeetCode",
-    url: ""
+    title: "Loading Problem...",
+    difficulty: "Unknown",
+    platform: "Unknown",
+    url: "",
+    status: "unsolved",
   });
   const [isLoadingProblem, setIsLoadingProblem] = useState(true);
   const [problemFetchError, setProblemFetchError] = useState(null);
   const [problemExists, setProblemExists] = useState(false);
+
+  // Add a recovery mechanism if initial fetch fails
+  const [fetchRetryCount, setFetchRetryCount] = useState(0);
   // Reference for scrolling to bottom
   const messagesEndRef = useRef(null);
 
@@ -87,7 +90,11 @@ const CollabRoom = () => {
   // Function to detect code language from code content
   const detectCodeLanguage = (codeText) => {
     if (codeText.includes("def ") && codeText.includes(":")) return "python";
-    if (codeText.includes("public class") || codeText.includes("public static void")) return "java";
+    if (
+      codeText.includes("public class") ||
+      codeText.includes("public static void")
+    )
+      return "java";
     if (codeText.includes("#include")) return "cpp";
     return "javascript"; // Default
   };
@@ -95,10 +102,8 @@ const CollabRoom = () => {
   // Function to open the code modal
   const openCodeModal = (codeText, lang = null, isFromCurrentUser = true) => {
     // Normalize line endings for consistency
-    const formattedCode = codeText
-      .replace(/\r\n/g, '\n')
-      .replace(/\r/g, '\n');
-    
+    const formattedCode = codeText.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
     setModalCode(formattedCode);
     setModalLanguage(lang || detectCodeLanguage(formattedCode));
     setIsModalFromCurrentUser(isFromCurrentUser);
@@ -107,7 +112,8 @@ const CollabRoom = () => {
 
   // Function to copy code from modal
   const copyModalCode = () => {
-    navigator.clipboard.writeText(modalCode)
+    navigator.clipboard
+      .writeText(modalCode)
       .then(() => {
         // Show brief visual feedback for copy success
         const copyBtn = document.getElementById("modal-copy-btn");
@@ -119,27 +125,57 @@ const CollabRoom = () => {
           }, 1500);
         }
       })
-      .catch(err => console.error("Could not copy code: ", err));
+      .catch((err) => console.error("Could not copy code: ", err));
   };
-
   useEffect(() => {
-    if (location.state && location.state.problemLink) {
-      setProblemLink(location.state.problemLink);
-      
-      // Also store problem ID and day ID if available
+    // Initialize problem information from location state
+    if (location.state) {
+      if (location.state.problemLink) {
+        setProblemLink(location.state.problemLink);
+      }
+
+      // Store problem ID and day ID if available
       if (location.state.problemId) {
         setProblemId(location.state.problemId);
+        console.log(
+          "Setting problem ID from location state:",
+          location.state.problemId
+        );
       }
+
       if (location.state.dayId) {
         setDayId(location.state.dayId);
+        console.log(
+          "Setting day ID from location state:",
+          location.state.dayId
+        );
       }
-      
+
+      // Initialize problem details if provided directly in state
+      if (
+        location.state.problemTitle ||
+        location.state.difficulty ||
+        location.state.platform
+      ) {
+        console.log("Initial problem details from state:", {
+          title: location.state.problemTitle,
+          difficulty: location.state.difficulty,
+          platform: location.state.platform,
+        });
+      }
+
       // Initialize status based on passed state
       if (location.state.status) {
-        if (location.state.status === 'solved') {
+        console.log(
+          "Setting initial status from location state:",
+          location.state.status
+        );
+        setProblemStatus(location.state.status);
+
+        if (location.state.status === "solved") {
           setIsSolved(true);
           setIsSavedForLater(false);
-        } else if (location.state.status === 'solveLater') {
+        } else if (location.state.status === "solveLater") {
           setIsSavedForLater(true);
           setIsSolved(false);
         }
@@ -171,89 +207,180 @@ const CollabRoom = () => {
 
   // Update problem status based on dayId and problemId
   useEffect(() => {
-    const initialStatus = location.state?.status || 'unsolved';
+    const initialStatus = location.state?.status || "unsolved";
     setProblemStatus(initialStatus);
-  }, [location.state]);
-
-  // Enhanced function to fetch problem details from the study day schema
+  }, [location.state]); // Enhanced function to fetch problem details from the study day schema
   const fetchProblemDetails = async () => {
     try {
       setIsLoadingProblem(true);
       setProblemFetchError(null);
-      
       // If we have both dayId and problemId, fetch problem details
       if (dayId && problemId) {
-        console.log(`Fetching problem details for day: ${dayId}, problem: ${problemId}`);
-        
-        // Make a request to get the study day with the problem
-        const response = await fetch(`/api/syllabus/day/${dayId}`, {
-          credentials: 'include' // Include credentials for authentication
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch problem details: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-         console.log("Available problems:", data.data.problems);
-console.log("Looking for problemId:", problemId);
+        console.log(
+          `Fetching problem details for day: ${dayId}, problem: ${problemId}`
+        );
 
-        if (data.success && data.data) {
+        // Use the syllabusApiUtils to get the study day
+        const { fetchStudyDay } = await import("../utils/syllabusApiUtils");
+        const studyDayResponse = await fetchStudyDay(dayId);
+
+        if (!studyDayResponse.success) {
+          throw new Error(
+            `Failed to fetch study day: ${studyDayResponse.message}`
+          );
+        }
+
+        // Parse response data
+        const data = studyDayResponse.data;
+        console.log("Study day data:", data);
+        console.log("Available problems:", data?.problems || []);
+        console.log("Looking for problemId:", problemId);
+        if (data && Array.isArray(data.problems)) {
           // Find the specific problem in the study day's problems array
-          const problem = data.data.problems.find(p => 
-  String(p._id) === String(problemId) || String(p.id) === String(problemId)
-);
+          const problem = data.problems.find(
+            (p) =>
+              String(p._id) === String(problemId) ||
+              String(p.id) === String(problemId)
+          );
 
           if (problem) {
             console.log("Problem data found:", problem);
-            setProblemDetails({
-              title: problem.title || 'Untitled Problem',
-              difficulty: problem.difficulty || 'Medium',
-              platform: problem.platform || 'LeetCode',
-              url: problem.url || problemLink || '',
-              status: problem.status || 'unsolved'
+
+            // Validate the problem data
+            const isValid = validateProblemData(problem);
+            console.log("Problem data validation result:", isValid);
+
+            if (!isValid) {
+              console.warn("Problem data is incomplete or invalid:", problem);
+              // Set a flag to indicate incomplete data
+              setProblemFetchError("Problem data is incomplete");
+            }
+
+            // Log the actual problem values to debug
+            console.log("Setting problem details with values:", {
+              title: problem.title,
+              difficulty: problem.difficulty,
+              platform: problem.platform,
+              url: problem.url,
+              status: problem.status,
             });
-            
+
+            // Detect platform from URL if not provided
+            const detectedPlatform = detectPlatformFromUrl(
+              problem.url || problemLink
+            );
+
+            setProblemDetails({
+              title:
+                problem.title ||
+                extractTitleFromUrl(problemLink) ||
+                "Untitled Problem",
+              difficulty:
+                problem.difficulty || location.state?.difficulty || "Unknown",
+              platform:
+                problem.platform ||
+                location.state?.platform ||
+                detectedPlatform ||
+                "Unknown",
+              url: problem.url || problemLink || "",
+              status: problem.status || "unsolved",
+            });
+
             // Also set the status state for tracking changes
-            setProblemStatus(problem.status || 'unsolved');
+            setProblemStatus(problem.status || "unsolved");
             setProblemExists(true);
           } else {
-            throw new Error('Problem not found in study day');
+            console.error(
+              `Problem not found in study day. Problem ID: ${problemId} was not found in ${
+                data.problems?.length || 0
+              } problems`
+            );
+            // Fallback to available state data
+            setProblemDetails({
+              title:
+                location.state?.problemTitle ||
+                extractTitleFromUrl(problemLink) ||
+                "Problem",
+              difficulty: location.state?.difficulty || "Unknown",
+              platform: location.state?.platform || "Unknown",
+              url: problemLink || "",
+              status: location.state?.status || "unsolved",
+            });
+            setProblemFetchError("Problem not found in study day");
+            setProblemExists(false);
           }
         } else {
-          throw new Error('Study day data not found in response');
+          console.error("Invalid API response structure:", data);
+          // Try to extract meaningful error information
+          const errorMsg =
+            "Study day data structure is invalid or missing problems array";
+          setProblemFetchError(errorMsg);
+
+          // Fallback to available state data
+          setProblemDetails({
+            title:
+              location.state?.problemTitle ||
+              extractTitleFromUrl(problemLink) ||
+              "Problem",
+            difficulty: location.state?.difficulty || "Unknown",
+            platform: location.state?.platform || "Unknown",
+            url: problemLink || "",
+            status: location.state?.status || "unsolved",
+          });
+          setProblemExists(false);
         }
       } else if (problemLink) {
-        // If we only have the problem link but no details, use placeholder data
+        console.log("Using problem link only:", problemLink);
+        // Try to detect platform from the URL
+        const detectedPlatform = detectPlatformFromUrl(problemLink);
+
+        // If we only have the problem link but no details, use best-effort data
         setProblemDetails({
-          title: location.state?.problemTitle || 'Problem',
-          difficulty: location.state?.difficulty || 'Medium',
-          platform: location.state?.platform || 'LeetCode',
-          url: problemLink,
-          status: location.state?.status || 'unsolved'
+          title:
+            location.state?.problemTitle ||
+            extractTitleFromUrl(problemLink) ||
+            "Problem",
+          difficulty: location.state?.difficulty || "Unknown",
+          platform: location.state?.platform || detectedPlatform || "Unknown",
+          url: problemLink || "",
+          status: location.state?.status || "unsolved",
         });
-        setProblemStatus(location.state?.status || 'unsolved');
-        setProblemExists(true);
+
+        // If we at least have a problem link, consider it as existing
+        setProblemExists(!!problemLink);
+        setProblemStatus(location.state?.status || "unsolved");
       } else {
-        // No problem data available
+        console.log("No problem ID or link available");
+        // No problem ID or link, set default values
+        setProblemDetails({
+          title: "No Problem Selected",
+          difficulty: "N/A",
+          platform: "N/A",
+          url: "",
+          status: "unsolved",
+        });
         setProblemExists(false);
       }
     } catch (error) {
-      console.error('Error fetching problem details:', error);
-      setProblemFetchError(error.message || 'Failed to load problem details');
-      
-      // Set fallback data if fetch fails
+      console.error("Error fetching problem details:", error);
+      setProblemFetchError(error.message || "Failed to load problem details");
+
+      // Fallback to available state data with actual "Unknown" indicators
+      // rather than hardcoded default values
       setProblemDetails({
-        title: location.state?.problemTitle || 'Problem',
-        difficulty: location.state?.difficulty || 'Medium',
-        platform: location.state?.platform || 'LeetCode',
-        url: problemLink || '',
-        status: location.state?.status || 'unsolved'
+        title:
+          location.state?.problemTitle ||
+          extractTitleFromUrl(problemLink) ||
+          "Problem",
+        difficulty: location.state?.difficulty || "Unknown",
+        platform: location.state?.platform || "Unknown",
+        url: problemLink || "",
+        status: location.state?.status || "unsolved",
       });
-      
+
       // If we at least have a problem link, consider it as existing
       setProblemExists(!!problemLink);
-      setProblemStatus(location.state?.status || 'unsolved');
+      setProblemStatus(location.state?.status || "unsolved");
     } finally {
       setIsLoadingProblem(false);
     }
@@ -264,72 +391,132 @@ console.log("Looking for problemId:", problemId);
     fetchProblemDetails();
   }, [dayId, problemId, problemLink]);
 
-  // Simple function to extract title from URL (could be improved)
+  // Add a retry mechanism for fetching problem details if there's an error
+  useEffect(() => {
+    if (problemFetchError && fetchRetryCount < 3) {
+      console.log(
+        `Retrying problem details fetch (attempt ${
+          fetchRetryCount + 1
+        } of 3)...`
+      );
+      const retryTimer = setTimeout(() => {
+        setFetchRetryCount((prev) => prev + 1);
+        fetchProblemDetails();
+      }, 1500 * (fetchRetryCount + 1)); // Exponential backoff
+
+      return () => clearTimeout(retryTimer);
+    }
+  }, [problemFetchError, fetchRetryCount]);
+  // Enhanced function to extract title from URL
   const extractTitleFromUrl = (url) => {
+    if (!url) return null;
+
     try {
       const path = new URL(url).pathname;
-      const segments = path.split('/').filter(Boolean);
+      const segments = path.split("/").filter(Boolean);
+
       if (segments.length > 0) {
+        // Get the last segment which typically contains the problem name
         const lastSegment = segments[segments.length - 1];
-        return lastSegment.split('-').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' ');
+
+        // Remove any trailing numbers or special characters
+        const cleanedSegment = lastSegment
+          .replace(/[-_]/g, " ")
+          .replace(/\.html?$/i, "")
+          .replace(/[0-9]+$/g, "")
+          .trim();
+
+        // Capitalize words
+        return cleanedSegment
+          .split(" ")
+          .map(
+            (word) =>
+              word && word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          )
+          .filter(Boolean)
+          .join(" ");
+      }
+
+      // If we couldn't extract from pathname, try the hostname for platform name
+      const hostname = new URL(url).hostname;
+      if (hostname) {
+        if (hostname.includes("leetcode")) return "LeetCode Problem";
+        if (hostname.includes("hackerrank")) return "HackerRank Problem";
+        if (hostname.includes("codewars")) return "Codewars Problem";
+        if (hostname.includes("hackerearth")) return "HackerEarth Problem";
+        if (hostname.includes("codeforces")) return "Codeforces Problem";
+        return "Coding Problem";
       }
     } catch (err) {
-      console.error('Error parsing URL:', err);
+      console.error("Error parsing URL:", err);
     }
-    return null;
+
+    return "Coding Problem";
   };
 
-  // Modified handleStatusChange to use apiClient and handle errors correctly
+  // Helper function to detect platform from URL
+  const detectPlatformFromUrl = (url) => {
+    if (!url) return null;
+
+    try {
+      const hostname = new URL(url).hostname;
+
+      if (hostname.includes("leetcode")) return "LeetCode";
+      if (hostname.includes("hackerrank")) return "HackerRank";
+      if (hostname.includes("codechef")) return "CodeChef";
+      if (hostname.includes("codeforces")) return "CodeForces";
+      if (hostname.includes("hackerearth")) return "HackerEarth";
+      if (hostname.includes("geeksforgeeks") || hostname.includes("gfg"))
+        return "GeeksForGeeks";
+      if (hostname.includes("topcoder")) return "TopCoder";
+      if (hostname.includes("spoj")) return "SPOJ";
+      if (hostname.includes("atcoder")) return "AtCoder";
+      if (hostname.includes("codewars")) return "CodeWars";
+      if (hostname.includes("projecteuler")) return "Project Euler";
+
+      // Try to extract from pathname for GitHub repos containing problems
+      if (hostname.includes("github")) {
+        return "GitHub";
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error detecting platform from URL:", error);
+      return null;
+    }
+  }; // Modified handleStatusChange to use our handleUpdateProblemStatus function
   const handleStatusChange = async (newStatus) => {
     try {
       // If the current status is the same as the new one, toggle it to unsolved (reset)
-      const statusToApply = problemStatus === newStatus ? 'unsolved' : newStatus;
-      
+      const statusToApply =
+        problemStatus === newStatus ? "unsolved" : newStatus;
+
       // Validate required parameters
       if (!dayId || !problemId) {
-        console.error('Missing required parameters for status update', { dayId, problemId });
-        setStatusUpdateError('Missing problem information. Please try again from the syllabus page.');
+        console.error("Missing required parameters for status update", {
+          dayId,
+          problemId,
+        });
+        setStatusUpdateError(
+          "Missing problem information. Please try again from the syllabus page."
+        );
         setTimeout(() => setStatusUpdateError(null), 3000);
         return;
       }
-      
-      console.log(`Updating problem status: dayId=${dayId}, problemId=${problemId}, status=${statusToApply}`);
-      
-      setStatusUpdateLoading(true);
-      setStatusUpdateError(null);
-      setStatusUpdateSuccess(false);
-      
-      // Use the correct API endpoint and provide parameters properly
-      const response = await apiClient.put(`/syllabus/problem/${dayId}/${problemId}/status`, {
-        status: statusToApply
-      });
-      
-      // Successfully updated
-      console.log('Status update successful:', response.data);
-      setProblemStatus(statusToApply);
-      
+
+      console.log(
+        `Updating problem status: dayId=${dayId}, problemId=${problemId}, status=${statusToApply}`
+      );
+      // Use the handleUpdateProblemStatus function which includes all the necessary logic
+      await handleUpdateProblemStatus(statusToApply);
+
       // Store the status in localStorage to persist after refresh
       if (problemId) {
         localStorage.setItem(`problem_status_${problemId}`, statusToApply);
       }
-      
-      setStatusUpdateSuccess(true);
-      // Show success message
-      setTimeout(() => setStatusUpdateSuccess(false), 2500);
-      
     } catch (error) {
-      console.error('Error updating problem status:', error);
-      
-      // Extract error message from response if available
-      const errorMessage = error.response?.data?.message || 
-                          'Failed to update problem status. Please try again.';
-                          
-      setStatusUpdateError(errorMessage);
-      setTimeout(() => setStatusUpdateError(null), 4000);
-    } finally {
-      setStatusUpdateLoading(false);
+      console.error("Error in handleStatusChange:", error);
+      // Error handling is already done in handleUpdateProblemStatus
     }
   };
 
@@ -343,55 +530,68 @@ console.log("Looking for problemId:", problemId);
         }
       }
     };
-    
+
     // First load from localStorage for immediate UI update
     loadStatusFromStorage();
-    
+
     // Then try to get the latest status from API if we have both dayId and problemId
     const fetchProblemStatus = async () => {
       if (dayId && problemId) {
         try {
           // Get the study day to find the problem and its status
-          const response = await apiClient.get(`/syllabus/${localStorage.getItem('userId')}`);
+          const response = await apiClient.get(
+            `/syllabus/${localStorage.getItem("userId")}`
+          );
           if (response.data.success && response.data.data) {
             const syllabus = response.data.data;
-            const studyDay = syllabus.studyDays.find(day => day._id === dayId);
-            
+            const studyDay = syllabus.studyDays.find(
+              (day) => day._id === dayId
+            );
+
             if (studyDay) {
-              const problem = studyDay.problems.find(p => p._id === problemId);
+              const problem = studyDay.problems.find(
+                (p) => p._id === problemId
+              );
               if (problem && problem.status) {
                 setProblemStatus(problem.status);
                 // Update localStorage with latest status from server
-                localStorage.setItem(`problem_status_${problemId}`, problem.status);
+                localStorage.setItem(
+                  `problem_status_${problemId}`,
+                  problem.status
+                );
               }
             }
           }
         } catch (error) {
-          console.error('Error fetching problem status:', error);
+          console.error("Error fetching problem status:", error);
           // Don't show error to user, just use localStorage value if available
         }
       }
     };
-    
+
     fetchProblemStatus();
   }, [problemId, dayId]);
 
   const toggleSolved = async () => {
     const newState = !isSolved;
     setIsSolved(newState);
-    
+
     // Update isSavedForLater to false if isSolved is true
     if (newState) {
       setIsSavedForLater(false);
     }
-    
+
     // If both dayId and problemId exist, update the status in the database
     if (dayId && problemId) {
-      const response = await updateProblemStatus(dayId, problemId, newState ? 'solved' : 'unsolved');
+      const response = await updateProblemStatus(
+        dayId,
+        problemId,
+        newState ? "solved" : "unsolved"
+      );
       if (response.success) {
-        console.log('Problem status updated successfully:', response.data);
+        console.log("Problem status updated successfully:", response.data);
       } else {
-        console.error('Failed to update problem status:', response.message);
+        console.error("Failed to update problem status:", response.message);
       }
     }
   };
@@ -399,19 +599,23 @@ console.log("Looking for problemId:", problemId);
   const toggleSaveForLater = async () => {
     const newState = !isSavedForLater;
     setIsSavedForLater(newState);
-    
+
     // Update isSolved to false if isSavedForLater is true
     if (newState) {
       setIsSolved(false);
     }
-    
+
     // If both dayId and problemId exist, update the status in the database
     if (dayId && problemId) {
-      const response = await updateProblemStatus(dayId, problemId, newState ? 'solveLater' : 'unsolved');
+      const response = await updateProblemStatus(
+        dayId,
+        problemId,
+        newState ? "solveLater" : "unsolved"
+      );
       if (response.success) {
-        console.log('Problem status updated successfully:', response.data);
+        console.log("Problem status updated successfully:", response.data);
       } else {
-        console.error('Failed to update problem status:', response.message);
+        console.error("Failed to update problem status:", response.message);
       }
     }
   };
@@ -442,7 +646,7 @@ console.log("Looking for problemId:", problemId);
       socketId: socket.id,
       type: "collab-chat",
       // Add source to clearly identify collab room messages
-      source: "collab-room"
+      source: "collab-room",
     };
 
     console.log("Sending collab message to room:", messageData);
@@ -464,7 +668,7 @@ console.log("Looking for problemId:", problemId);
       }
 
       return updatedMessages;
-    });    
+    });
     // Send message via socket (if connected to a room)
     if (socket.connected && roomData.inRoom) {
       socket.emit("send-message", {
@@ -473,9 +677,9 @@ console.log("Looking for problemId:", problemId);
         username: userName,
         messageId,
         isCode: isCodeMessage,
-        source: "collab-room"
+        source: "collab-room",
       });
-      
+
       // Also emit with underscore format for compatibility
       socket.emit("send_message", {
         roomId: roomData.roomId,
@@ -483,7 +687,7 @@ console.log("Looking for problemId:", problemId);
         username: userName,
         messageId,
         isCode: isCodeMessage,
-        source: "collab-room"
+        source: "collab-room",
       });
     }
 
@@ -773,39 +977,168 @@ console.log("Looking for problemId:", problemId);
     }
   };
 
-
   // Handle updating problem status
   const handleUpdateProblemStatus = async (newStatus) => {
-    if (!location.state || !location.state.problemId || !location.state.dayId) {
-      console.error('Cannot update status: Problem details not available');
+    if (!problemId || !dayId) {
+      console.error("Cannot update status: Problem details not available");
       return;
     }
-    
+
     try {
-      const { problemId, dayId } = location.state;
-      const response = await axios.put(`/api/syllabus/day/${dayId}/problem/${problemId}/status`, {
-        status: newStatus
-      });
-      
-      if (response.data && response.data.success) {
-        setProblemDetails(prev => ({...prev, status: newStatus}));
-        
-        if (newStatus === 'solved') {
+      setStatusUpdateLoading(true);
+      setStatusUpdateError(null);
+
+      // Import and use the utility function
+      const { updateProblemStatus } = await import("../utils/syllabusApiUtils");
+      const result = await updateProblemStatus(dayId, problemId, newStatus);
+
+      if (result.success) {
+        setProblemDetails((prev) => ({ ...prev, status: newStatus }));
+        setProblemStatus(newStatus);
+        if (newStatus === "solved") {
           showSolvedSuccessMessage();
-        } else if (newStatus === 'solveLater') {
+        } else if (newStatus === "solveLater") {
           showBookmarkedSuccessMessage();
         }
+
+        // Status update success handling removed as requested
+      } else {
+        console.error("Failed to update problem status:", result.message);
+        setStatusUpdateError(result.message);
+        setTimeout(() => setStatusUpdateError(null), 3000);
       }
     } catch (error) {
-      console.error('Error updating problem status:', error);
+      console.error("Error updating problem status:", error);
+      setStatusUpdateError("An error occurred while updating status");
+      setTimeout(() => setStatusUpdateError(null), 3000);
+    } finally {
+      setStatusUpdateLoading(false);
     }
   };
 
-  // Add this helper function to limit lines rather than characters
+  // Helper function to show solved success message
+  const showSolvedSuccessMessage = () => {
+    setIsSolved(true);
+    setIsSavedForLater(false);
+    setSolvedSuccess(true);
+    setBookmarkedSuccess(false);
+    setStatusMessage({
+      type: "success",
+      text: "Problem marked as solved!",
+    });
+
+    // Auto hide the message after some time
+    setTimeout(() => {
+      setSolvedSuccess(false);
+      setStatusMessage({ type: "", text: "" });
+    }, 3000);
+  };
+
+  // Helper function to show bookmarked success message
+  const showBookmarkedSuccessMessage = () => {
+    setIsSolved(false);
+    setIsSavedForLater(true);
+    setSolvedSuccess(false);
+    setBookmarkedSuccess(true);
+    setStatusMessage({
+      type: "info",
+      text: "Problem saved for later!",
+    });
+
+    // Auto hide the message after some time
+    setTimeout(() => {
+      setBookmarkedSuccess(false);
+      setStatusMessage({ type: "", text: "" });
+    }, 3000);
+  };
+
+  // Helper function to validate problem details
+  const validateProblemData = (problem) => {
+    if (!problem) return false;
+
+    // Check if required fields exist and are not empty strings
+    const hasTitle = problem.title && problem.title.trim() !== "";
+    const hasDifficulty =
+      problem.difficulty &&
+      problem.difficulty.trim() !== "" &&
+      problem.difficulty !== "Unknown";
+    const hasPlatform =
+      problem.platform &&
+      problem.platform.trim() !== "" &&
+      problem.platform !== "Unknown";
+
+    console.log(
+      `Problem validation: title=${hasTitle}, difficulty=${hasDifficulty}, platform=${hasPlatform}`
+    );
+
+    // Return true if all required fields are present
+    return hasTitle && (hasDifficulty || hasPlatform);
+  };
+  // Helper function to limit code lines rather than characters
   const limitCodeLines = (code, maxLines = 5) => {
-    const lines = code.split('\n');
+    const lines = code.split("\n");
     if (lines.length <= maxLines) return code;
-    return lines.slice(0, maxLines).join('\n') + '\n...';
+    return lines.slice(0, maxLines).join("\n") + "\n...";
+  };
+
+  // Add debugging log when problem details change
+  useEffect(() => {
+    console.log("Problem details updated:", problemDetails);
+
+    // If difficulty or platform are Unknown but we have URL, try to infer them
+    if (
+      (problemDetails.difficulty === "Unknown" ||
+        problemDetails.platform === "Unknown") &&
+      problemDetails.url
+    ) {
+      const detectedPlatform = detectPlatformFromUrl(problemDetails.url);
+      if (detectedPlatform && problemDetails.platform === "Unknown") {
+        console.log("Auto-detected platform from URL:", detectedPlatform);
+        setProblemDetails((prev) => ({ ...prev, platform: detectedPlatform }));
+      }
+    }
+  }, [problemDetails.url, problemDetails.title]);
+  // Function to handle error display in problem details
+  const renderProblemDetails = () => {
+    if (isLoadingProblem) {
+      // Show loading state
+      return <div className="animate-pulse bg-white/20 h-6 w-48 rounded"></div>;
+    } else if (problemFetchError) {
+      // Show warning with best data available when we have error
+      return (
+        <>
+          <h2 className="text-lg font-medium text-white/95 flex items-center">
+            {problemDetails.title || "Problem Details"}
+            <span className="ml-2 text-xs text-amber-400 bg-amber-900/30 px-2 py-0.5 rounded-full border border-amber-500/30">
+              Limited Data
+            </span>
+          </h2>
+          {fetchRetryCount >= 3 && (
+            <p className="text-sm text-red-300 mt-1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 inline-block mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Error loading complete problem details. Using available
+              information.
+            </p>
+          )}
+        </>
+      );
+    } else {
+      // Normal display when we have data and no errors
+      return problemDetails.title || "Untitled Problem";
+    }
   };
 
   return (
@@ -822,155 +1155,309 @@ console.log("Looking for problemId:", problemId);
         <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6 mb-6">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
-              {/* Display actual problem title, not "Problem" */}
-              <h2 className="text-lg font-medium text-white/95">
-                {isLoadingProblem ? (
-                  <div className="animate-pulse bg-white/20 h-6 w-48 rounded"></div>
-                ) : (
-                  problemDetails.title
-                )}
+              {/* Display actual problem title, not "Problem" */}{" "}
+              <h2 className="text-xl font-medium text-white/95">
+                {renderProblemDetails()}
               </h2>
               <div className="mt-3 flex flex-wrap gap-3">
-                <span className="bg-white/10 text-white/80 px-3 py-1 rounded-full text-sm border border-white/20">
+                {" "}
+                <span
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    problemDetails.difficulty === "Unknown"
+                      ? "bg-gray-700/50 text-gray-300 border border-gray-500/30"
+                      : "bg-white/10 text-white/80 border border-white/20"
+                  }`}
+                >
                   {isLoadingProblem ? (
                     <div className="animate-pulse bg-white/20 h-4 w-16 rounded-full"></div>
+                  ) : problemDetails.difficulty === "Unknown" ? (
+                    <span className="flex items-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-3 w-3 mr-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      Difficulty Unknown
+                    </span>
                   ) : (
                     problemDetails.difficulty
                   )}
                 </span>
-                <span className="bg-white/10 text-white/80 px-3 py-1 rounded-full text-sm border border-white/20">
+                <span
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    problemDetails.platform === "Unknown"
+                      ? "bg-gray-700/50 text-gray-300 border border-gray-500/30"
+                      : "bg-white/10 text-white/80 border border-white/20"
+                  }`}
+                >
                   {isLoadingProblem ? (
                     <div className="animate-pulse bg-white/20 h-4 w-20 rounded-full"></div>
+                  ) : problemDetails.platform === "Unknown" ? (
+                    <span className="flex items-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-3 w-3 mr-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      Platform Unknown
+                    </span>
                   ) : (
                     problemDetails.platform
                   )}
                 </span>
-                <a 
-                  href={problemDetails.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-white bg-[#94C3D2] hover:bg-[#7EB5C3] px-3 py-1 rounded-lg flex items-center transition-colors text-sm"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  Open Problem
-                </a>
+                {problemDetails.url && problemDetails.url !== "" ? (
+                  <a
+                    href={problemDetails.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white bg-[#94C3D2] hover:bg-[#7EB5C3] px-3 py-1 rounded-lg flex items-center transition-colors text-sm"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 mr-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                    Open Problem
+                  </a>
+                ) : (
+                  <span className="text-white/50 bg-white/10 px-3 py-1 rounded-lg flex items-center text-sm border border-white/20">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 mr-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M14.828 14.828a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"
+                      />
+                    </svg>
+                    No Link Available
+                  </span>
+                )}
               </div>
             </div>
-            
             {/* Status buttons moved inside the card */}
             <div className="flex space-x-3">
-              <button 
-                onClick={() => handleStatusChange('solved')} 
+              <button
+                onClick={() => handleStatusChange("solved")}
                 disabled={statusUpdateLoading}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center ${
-                  problemStatus === 'solved' 
-                    ? 'bg-green-600 text-white' 
-                    : 'bg-green-900/50 text-green-200 border border-green-600/30 hover:bg-green-900/70'
+                className={`px-5 py-2 rounded-md text-md font-medium transition-colors flex items-center ${
+                  problemStatus === "solved"
+                    ? "bg-green-600 text-white/95"
+                    : "bg-green-900/50 text-green-200 border border-green-600/30 hover:bg-green-900/70"
                 }`}
-                title={problemStatus === 'solved' ? "Click to reset status" : "Mark as solved"}
+                title={
+                  problemStatus === "solved"
+                    ? "Click to reset status"
+                    : "Mark as solved"
+                }
               >
-                {statusUpdateLoading && problemStatus !== 'solved' ? (
+                {statusUpdateLoading && problemStatus !== "solved" ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     {/* Show actual problem name instead of "Problem" */}
                     {problemDetails.title}
                   </>
                 ) : (
                   <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 mr-1.5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
                     </svg>
-                    {problemStatus === 'solved' ? 'Solved' : 'Mark as Solved'}
+                    {problemStatus === "solved" ? "Solved" : "Mark as Solved"}
                   </>
                 )}
               </button>
-              
-              
-              
+
               {/* Save for Later button */}
-              <button 
-                onClick={() => handleStatusChange('solveLater')} 
+              <button
+                onClick={() => handleStatusChange("solveLater")}
                 disabled={statusUpdateLoading}
                 className={`px-4 py-2 rounded-md text-sm font-medium flex items-center ${
-                  problemStatus === 'solveLater' 
-                    ? 'bg-yellow-600 text-white' 
-                    : 'bg-yellow-900/50 text-yellow-200 border border-yellow-600/30 hover:bg-yellow-900/70'
+                  problemStatus === "solveLater"
+                    ? "bg-yellow-600 text-white/95"
+                    : "bg-yellow-900/50 text-yellow-200 border border-yellow-600/30 hover:bg-yellow-900/70"
                 } transition-colors`}
-                title={problemStatus === 'solveLater' ? "Click to reset status" : "Mark to solve later"}
+                title={
+                  problemStatus === "solveLater"
+                    ? "Click to reset status"
+                    : "Mark to solve later"
+                }
               >
-                {statusUpdateLoading && problemStatus !== 'solveLater' ? (
+                {statusUpdateLoading && problemStatus !== "solveLater" ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     {/* Show actual problem name instead of "Problem" */}
                     {problemDetails.title}
                   </>
                 ) : (
                   <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 mr-1.5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                        clipRule="evenodd"
+                      />
                     </svg>
-                    {problemStatus === 'solveLater' ? 'Saved for Later' : 'Solve Later'}
+                    {problemStatus === "solveLater"
+                      ? "Saved for Later"
+                      : "Solve Later"}
                   </>
                 )}
               </button>
-            </div>
+            </div>{" "}
           </div>
-          
-          <div className="mt-6">
+
+          <div className="mt-2">
             {/* Remove the "Problem Status" text */}
-            
             {statusUpdateError && (
               <div className="mb-4 bg-red-900/30 text-red-300 border border-red-500/30 rounded-md p-3">
                 {statusUpdateError}
               </div>
             )}
-            
-            {statusUpdateSuccess && (
-              <div className="mb-4 bg-green-900/30 text-green-300 border border-green-500/30 rounded-md p-3">
-                Status updated successfully!
+            {/* Status condition messages */}
+            {problemStatus === "solved" && showStatusMessage && (
+              <div className="mt-4 text-sm bg-green-900/20 text-green-400 border border-green-600/20 p-3 rounded-lg">
+                <div className="flex items-start">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-2 mt-0.5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <div>
+                    <p className="font-medium">Great job!</p>
+                    <p>
+                      You've marked this problem as solved. Keep up the good
+                      work!
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
-            
 
-            {/* Status condition messages */}
-            {problemStatus === 'solved' && showStatusMessage && (
-  <div className="mt-4 text-sm bg-green-900/20 text-green-400 border border-green-600/20 p-3 rounded-lg">
-    <div className="flex items-start">
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-      </svg>
-      <div>
-        <p className="font-medium">Great job!</p>
-        <p>You've marked this problem as solved. Keep up the good work!</p>
-      </div>
-    </div>
-  </div>
-)}
-
-{problemStatus === 'solveLater' && showStatusMessage && (
-  <div className="mt-4 text-sm bg-yellow-900/20 text-yellow-400 border border-yellow-600/20 p-3 rounded-lg">
-    <div className="flex items-start">
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-      </svg>
-      <div>
-        <p className="font-medium">Bookmarked for later!</p>
-        <p>You'll find this problem in your "Solve Later" collection when you're ready to tackle it.</p>
-      </div>
-    </div>
-  </div>
-)}
-</div>
+            {problemStatus === "solveLater" && showStatusMessage && (
+              <div className="mt-4 text-sm bg-yellow-900/20 text-yellow-400 border border-yellow-600/20 p-3 rounded-lg">
+                <div className="flex items-start">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-2 mt-0.5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <div>
+                    <p className="font-medium">Bookmarked for later!</p>
+                    <p>
+                      You'll find this problem in your "Solve Later" collection
+                      when you're ready to tackle it.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        
+
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Code Editor Section */}
           <div className="lg:w-2/3">
@@ -1075,11 +1562,13 @@ console.log("Looking for problemId:", problemId);
                         : "bg-red-400"
                     }`}
                   ></span>
-                  <span className={`text-sm ${
+                  <span
+                    className={`text-sm ${
                       isConnected && roomData.inRoom
                         ? "text-white/80"
                         : "text-red-400"
-                    }`}>
+                    }`}
+                  >
                     {isConnected && roomData.inRoom
                       ? "Connected"
                       : "Disconnected"}
@@ -1154,32 +1643,54 @@ console.log("Looking for problemId:", problemId);
                               )}{" "}
                             </div>{" "}
                             {message.isCode ? (
-                              <div 
+                              <div
                                 className={`rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity ${
-                                  isCurrentUser ? "bg-[#94C3D2]/90 text-white" : "bg-yellow-50 text-gray-900"
+                                  isCurrentUser
+                                    ? "bg-[#94C3D2]/90 text-white"
+                                    : "bg-yellow-50 text-gray-900"
                                 }`}
-                                onClick={() => openCodeModal(message.text, null, isCurrentUser)}
+                                onClick={() =>
+                                  openCodeModal(
+                                    message.text,
+                                    null,
+                                    isCurrentUser
+                                  )
+                                }
                               >
-                                <div className={`px-3 py-1 flex items-center justify-between ${
-                                  isCurrentUser ? "bg-black/30" : "bg-amber-200/50"
-                                }`}>
-                                  <span className={`text-xs font-mono ${isCurrentUser ? "" : "text-gray-800"}`}>
-                                    {detectCodeLanguage(message.text).toUpperCase()} Code
+                                <div
+                                  className={`px-3 py-1 flex items-center justify-between ${
+                                    isCurrentUser
+                                      ? "bg-black/30"
+                                      : "bg-amber-200/50"
+                                  }`}
+                                >
+                                  <span
+                                    className={`text-xs font-mono ${
+                                      isCurrentUser ? "" : "text-gray-800"
+                                    }`}
+                                  >
+                                    {detectCodeLanguage(
+                                      message.text
+                                    ).toUpperCase()}{" "}
+                                    Code
                                   </span>
                                   <span className="text-xs">Click to view</span>
                                 </div>
                                 <pre
                                   className="p-3 text-sm font-mono overflow-x-auto overflow-y-hidden w-full scrollbar-hide"
-                                  style={{ 
-                                    maxHeight: "50px", 
-                                    whiteSpace: "pre", 
+                                  style={{
+                                    maxHeight: "50px",
+                                    whiteSpace: "pre",
                                     overflowX: "auto",
                                     width: "100%",
-                                    msOverflowStyle: "none", /* IE and Edge */
-                                    scrollbarWidth: "none", /* Firefox */
+                                    msOverflowStyle: "none" /* IE and Edge */,
+                                    scrollbarWidth: "none" /* Firefox */,
                                   }}
                                 >
-                                  <code className="inline-block whitespace-nowrap" style={{ minWidth: "max-content" }}>
+                                  <code
+                                    className="inline-block whitespace-nowrap"
+                                    style={{ minWidth: "max-content" }}
+                                  >
                                     {limitCodeLines(message.text)}
                                   </code>
                                 </pre>
@@ -1213,22 +1724,27 @@ console.log("Looking for problemId:", problemId);
                       <textarea
                         placeholder="Type or paste your code here..."
                         className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none resize-none"
-                        style={{ height: "42px", overflow: "auto" }} 
+                        style={{ height: "42px", overflow: "auto" }}
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={(e) => {
                           // Allow tab key for indentation in code
-                          if (e.key === 'Tab') {
+                          if (e.key === "Tab") {
                             e.preventDefault();
                             const start = e.target.selectionStart;
                             const end = e.target.selectionEnd;
                             const value = e.target.value;
-                            setNewMessage(value.substring(0, start) + '  ' + value.substring(end));
+                            setNewMessage(
+                              value.substring(0, start) +
+                                "  " +
+                                value.substring(end)
+                            );
                             // Set cursor position after the inserted tab
                             setTimeout(() => {
-                              e.target.selectionStart = e.target.selectionEnd = start + 2;
+                              e.target.selectionStart = e.target.selectionEnd =
+                                start + 2;
                             }, 0);
-                          } else if (e.key === 'Enter' && !e.shiftKey) {
+                          } else if (e.key === "Enter" && !e.shiftKey) {
                             handleSendMessage(e);
                           }
                         }}
@@ -1247,7 +1763,7 @@ console.log("Looking for problemId:", problemId);
                       type="button"
                       onClick={() => {
                         setIsCodeMessage(!isCodeMessage);
-                        setNewMessage(''); // Clear message when switching modes
+                        setNewMessage(""); // Clear message when switching modes
                       }}
                       className={`px-2 mx-2 ${
                         isCodeMessage ? "text-[#94C3D2]" : "text-white/95"
@@ -1290,22 +1806,44 @@ console.log("Looking for problemId:", problemId);
       {/* Code Snippet Modal */}
       {isCodeModalOpen && (
         <div className="fixed inset-0 z-50 overflow-auto bg-black/70 flex items-center justify-center p-4">
-          <div className={`${isModalFromCurrentUser ? "bg-gray-900" : "bg-yellow-50"} rounded-xl border ${isModalFromCurrentUser ? "border-gray-700" : "border-amber-200"} w-full max-w-4xl max-h-[95vh] flex flex-col`}>
-            <div className={`border-b ${isModalFromCurrentUser ? "border-gray-700" : "border-amber-300"} px-5 py-3 flex justify-between items-center`}>
-              <h3 className={`text-lg font-medium ${isModalFromCurrentUser ? "text-gray-900" : "text-gray-900"}`}>
+          <div
+            className={`${
+              isModalFromCurrentUser ? "bg-gray-900" : "bg-yellow-50"
+            } rounded-xl border ${
+              isModalFromCurrentUser ? "border-gray-700" : "border-amber-200"
+            } w-full max-w-4xl max-h-[95vh] flex flex-col`}
+          >
+            <div
+              className={`border-b ${
+                isModalFromCurrentUser ? "border-gray-700" : "border-amber-300"
+              } px-5 py-3 flex justify-between items-center`}
+            >
+              <h3
+                className={`text-lg font-medium ${
+                  isModalFromCurrentUser ? "text-gray-900" : "text-gray-900"
+                }`}
+              >
                 Code - {modalLanguage.toUpperCase()}
               </h3>
               <div className="flex items-center gap-3">
                 <button
                   id="modal-copy-btn"
                   onClick={copyModalCode}
-                  className={`px-3 py-1 ${isModalFromCurrentUser ? "bg-[#2d3748] hover:bg-[#3e4c5e] text-white/90" : "bg-amber-200 hover:bg-amber-300 text-gray-900"} text-sm rounded-md transition-colors`}
+                  className={`px-3 py-1 ${
+                    isModalFromCurrentUser
+                      ? "bg-[#2d3748] hover:bg-[#3e4c5e] text-white/90"
+                      : "bg-amber-200 hover:bg-amber-300 text-gray-900"
+                  } text-sm rounded-md transition-colors`}
                 >
                   Copy Code
                 </button>
                 <button
                   onClick={() => setIsCodeModalOpen(false)}
-                  className={`${isModalFromCurrentUser ? "text-gray-700 hover:text-gray-900" : "text-gray-700 hover:text-gray-900"}`}
+                  className={`${
+                    isModalFromCurrentUser
+                      ? "text-gray-700 hover:text-gray-900"
+                      : "text-gray-700 hover:text-gray-900"
+                  }`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1325,8 +1863,15 @@ console.log("Looking for problemId:", problemId);
               </div>
             </div>
             <div className="flex-1 overflow-auto p-0">
-              <div className={`h-full ${isModalFromCurrentUser ? "bg-[#1e1e1e]" : "bg-[#1e1e1e]"} rounded-b-xl overflow-hidden`}>
-                <div style={{ height: "60vh", minHeight: "400px" }} className="p-1 rounded-b-xl overflow-hidden">
+              <div
+                className={`h-full ${
+                  isModalFromCurrentUser ? "bg-[#1e1e1e]" : "bg-[#1e1e1e]"
+                } rounded-b-xl overflow-hidden`}
+              >
+                <div
+                  style={{ height: "60vh", minHeight: "400px" }}
+                  className="p-1 rounded-b-xl overflow-hidden"
+                >
                   <Editor
                     key={`monaco-${Date.now()}`} // Force re-render with unique key
                     value={modalCode}
@@ -1334,11 +1879,11 @@ console.log("Looking for problemId:", problemId);
                     theme="vs-dark"
                     beforeMount={(monaco) => {
                       // Configure editor before mounting
-                      monaco.editor.defineTheme('modal-theme', {
-                        base: 'vs-dark',
+                      monaco.editor.defineTheme("modal-theme", {
+                        base: "vs-dark",
                         inherit: true,
                         rules: [],
-                        colors: {}
+                        colors: {},
                       });
                     }}
                     options={{
