@@ -4,7 +4,8 @@ import {
   saveSyllabus,
   getSyllabusByUserId,
   updateStudyDay,
-  deleteStudyDay
+  deleteStudyDay,
+  updateProblemStatus 
 } from '../controllers/syllabusController.js';
 
 const router = express.Router();
@@ -23,5 +24,8 @@ router.put('/day/:dayId', updateStudyDay);
 
 // Delete specific study day
 router.delete('/day/:dayId', deleteStudyDay);
+
+// Update problem status - This route should handle status updates
+router.put('/problem/:dayId/:problemId/status', updateProblemStatus);
 
 export default router;

@@ -118,3 +118,26 @@ export const deleteStudyDay = async (dayId) => {
     };
   }
 };
+
+// Update problem status
+export const updateProblemStatus = async (dayId, problemId, status) => {
+  try {
+    console.log(`Updating status for problem ${problemId} in day ${dayId} to ${status}`);
+    
+    // Fix: Use apiClient for consistent credentials and basePath handling
+    const response = await apiClient.put(`/syllabus/problem/${dayId}/${problemId}/status`, { status });
+    
+    console.log('Status update response:', response.data);
+    return {
+      success: true,
+      data: response.data.data,
+      message: response.data.message
+    };
+  } catch (error) {
+    console.error('Error updating problem status:', error);
+    return { 
+      success: false, 
+      message: error.response?.data?.message || error.message || 'Error updating problem status'
+    };
+  }
+};

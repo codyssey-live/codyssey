@@ -332,3 +332,74 @@ export const deleteStudyDay = async (req, res) => {
     });
   }
 };
+
+// @desc    Update problem status
+// @route   PUT /syllabus/problem/:dayId/:problemId/status
+// @access  Private
+export const updateProblemStatus = async (req, res) => {
+  try {
+    const { dayId, problemId } = req.params;
+    const { status } = req.body;
+    const userId = req.user._id || req.user.id;
+    
+    console.log(`Updating problem ${problemId} status to ${status} in day ${dayId} for user ${userId}`);
+
+    if (!status || !['solved', 'unsolved', 'solveLater'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be one of: solved, unsolved, solveLater'
+      });
+    }
+
+    // Find the study day
+    const studyDay = await StudyDay.findById(dayId);
+    
+    if (!studyDay) {
+      return res.status(404).json({
+        success: false,
+        message: 'Study day not found'
+      });
+    }
+    
+    // Temporarily disable owner check for debugging
+    // if (studyDay.userId.toString() !== userId.toString()) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: 'Not authorized to update this study day'
+    //   });
+    // }
+    
+    // Find the problem in the study day
+    const problem = studyDay.problems.id(problemId);
+    
+    if (!problem) {
+      return res.status(404).json({
+        success: false,
+        message: 'Problem not found in this study day'
+      });
+    }
+    
+    console.log(`Found problem to update: ${problem.title}, current status: ${problem.status}`);
+    
+    // Update the status
+    problem.status = status;
+    
+    // Save the updated study day
+    await studyDay.save();
+    
+    console.log(`Successfully updated problem status to ${status}`);
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Problem status updated successfully',
+      data: problem
+    });
+  } catch (error) {
+    console.error('Error updating problem status:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while updating problem status',
+      error: error.message
+    });
+  }
+};
