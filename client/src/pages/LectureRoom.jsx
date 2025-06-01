@@ -1485,9 +1485,9 @@ const LectureRoom = () => {
                   <h2 className="font-bold text-[#94c3d2]">Room Chat</h2>
                   <p className="text-sm text-white/70">Chat with your friends while watching</p>
                 </div>
-                <div className={`flex items-center ${isConnected ? 'text-green-500' : 'text-red-500'}`}>
-                  <div className={`h-2.5 w-2.5 rounded-full mr-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                  <span className="text-sm">{isConnected ? 'Connected' : 'Disconnected'}</span>
+                <div className={`flex items-center ${(isConnected && videoUrl) ? 'text-green-500' : 'text-red-400'}`}>
+                  <div className={`h-2.5 w-2.5 rounded-full mr-2 ${(isConnected && videoUrl) ? 'bg-green-500' : 'bg-red-400'}`}></div>
+                  <span className="text-sm">{(isConnected && videoUrl) ? 'Connected' : 'Disconnected'}</span>
                 </div>
               </div>
                 <div className="flex-1 p-4 space-y-3 bg-white/5 overflow-y-auto chat-messages" style={{ height: "calc(100% - 140px)" }}>

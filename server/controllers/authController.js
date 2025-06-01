@@ -117,17 +117,46 @@ export const signout = async (req, res) => {
 
 export const getCurrentUser = async (req, res) => {
   try {
-    // The user is already attached to the request by the protect middleware
-    const user = req.user;
+    // Get the full user data with populated education and work experience
+    const user = await User.findById(req.user._id)
+      .select('-password')
+      .populate('education')
+      .populate('workExperience');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Map the education and work experience to match frontend expectations
+    const mappedEducation = user.education ? user.education.map(edu => ({
+      id: edu._id,
+      _id: edu._id,
+      school: edu.school,
+      degree: edu.degree,
+      startYear: edu.startYear,
+      endYear: edu.endYear
+    })) : [];
+
+    const mappedWorkExperience = user.workExperience ? user.workExperience.map(exp => ({
+      id: exp._id,
+      _id: exp._id,
+      company: exp.company,
+      position: exp.position,
+      startDate: exp.startDate,
+      endDate: exp.endDate
+    })) : [];
     
     // Return user data (excluding password)
     res.status(200).json({
       id: user._id,
+      _id: user._id,
       name: user.name,
       email: user.email,
       profilePicture: user.profilePicture || '',
       bio: user.bio || '',
-      socials: user.socials || { github: '', linkedin: '' }
+      socials: user.socials || { github: '', linkedin: '' },
+      education: mappedEducation,
+      workExperience: mappedWorkExperience
     });
   } catch (error) {
     console.error('Error getting current user:', error);

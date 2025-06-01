@@ -307,7 +307,7 @@ const Dashboard = () => {
           // Get inviterId from the response
           const inviterId = response.data.data.inviterId;
           
-          // Check if this user is the original creator by comparing userId with inviterId
+          // Check if this user is the original creator by ID match
           const currentUserId = localStorage.getItem("userId");
           const isOriginalCreator = currentUserId && inviterId && currentUserId === inviterId;
           
@@ -1181,11 +1181,11 @@ const Dashboard = () => {
                         id="invite-link"
                         readOnly
                         value={generateInviteCode()}
-                        className="w-full pl-4 pr-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100"
+                        className="w-full pl-4 pr-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-l-lg focus:outline-none text-gray-100"
                       />
                       <button
                         onClick={handleCopyLink}
-                        className="px-4 py-2.5 bg-[#94C3D2] text-white rounded-r-lg hover:bg-[#7EB5C3] transition-colors"
+                        className="px-4 py-2.5 bg-[#94C3D2] text-white rounded-r-lg hover:bg-[#7EB5C3] transition-colors focus:outline-none"
                       >
                         {copySuccess ? (
                           <svg
@@ -1203,18 +1203,18 @@ const Dashboard = () => {
                             />
                           </svg>
                         ) : (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
                             className="h-5 w-5"
                             fill="none"
-                            viewBox="0 0 24 24"
+                            viewBox="0 0 24 24" 
                             stroke="currentColor"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"
+                            <path 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              strokeWidth={2} 
+                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                             />
                           </svg>
                         )}

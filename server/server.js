@@ -90,15 +90,16 @@ io.on('connection', (socket) => {
     
     // Always send the updated participant list to everyone without join messages
     io.to(roomId).emit('room_data', { participants });
-  });
-
-  // Handle sending messages
+  });  // Handle sending messages
   socket.on('send_message', (messageData) => {
-    const { roomId } = messageData;
-    console.log(`Message in room ${roomId}: ${messageData.text}`);
+    const { roomId, message, source } = messageData;
+    console.log(`Message in room ${roomId}: ${message}, source: ${source}`);
     
     // Broadcast to everyone in the room except sender
-    socket.to(roomId).emit('receive_message', messageData);
+    socket.to(roomId).emit('receive_message', {
+      ...messageData,
+      time: new Date()
+    });
   });
 
   // Handle disconnection

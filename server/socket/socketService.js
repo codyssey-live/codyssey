@@ -139,20 +139,23 @@ export const initSocket = (server) => {
           message: 'Server error while joining room'
         });
       }
-    });
-    
-    // Handle send-message event
-    socket.on('send-message', ({ roomId, message, username, messageId }) => {
-      console.log(`Message in room ${roomId} from ${username}: ${message}`);
+    });      // Handle send-message event    
+    socket.on('send-message', ({ roomId, message, username, messageId, source, isCode }) => {
+      console.log(`Message in room ${roomId} from ${username}: ${message}, source: ${source}`);
       
-      // Broadcast to all users in the room EXCEPT the sender
-      socket.to(roomId).emit('receive-message', {
+      // Create message object
+      const messageData = {
         message,
         username,
         userId: socket.id,
         time: new Date(),
-        messageId
-      });
+        messageId,
+        source,
+        isCode
+      };
+      
+      // Broadcast to others in the room
+      socket.to(roomId).emit('receive-message', messageData);
     });
     
     // Handle lecture room specific message event
@@ -210,15 +213,13 @@ export const initSocket = (server) => {
       };
       
       // Broadcast to ALL users including sender using io.in
-      io.in(roomId).emit('lecture-receive-message', messageObject);
-      
-      // Also emit with underscore format for compatibility
+      io.in(roomId).emit('lecture-receive-message', messageObject);      // Also emit with underscore format for compatibility
       io.in(roomId).emit('lecture_receive_message', messageObject);
     });
     
     // Handle message with type parameter for more flexibility
-    socket.on('send-message-with-type', ({ roomId, message, username, messageId, isCode, type, socketId }) => {
-      console.log(`Typed message (${type}) in room ${roomId} from ${username}`);
+    socket.on('send-message-with-type', ({ roomId, message, username, messageId, isCode, type, socketId, source }) => {
+      console.log(`Typed message (${type}) in room ${roomId} from ${username}, source: ${source}`);
       
       // Make sure the socket joins the room
       socket.join(roomId);
@@ -231,7 +232,8 @@ export const initSocket = (server) => {
         time: new Date(),
         messageId,
         isCode,
-        type
+        type,
+        source
       };
       
       // Broadcast appropriate event based on message type

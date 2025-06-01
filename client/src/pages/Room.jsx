@@ -4,9 +4,9 @@ import Navbar from '../components/Navbar';
 import { fetchCurrentUser } from '../utils/authUtils';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useRoom } from '../context/RoomContext';
 import socket from '../socket'; // Import socket directly
 import { loadMessages, saveMessages, clearMessages } from '../utils/chatPersistence';
-import { useRoom } from '../context/RoomContext';
 
 const Room = () => {
   const { roomId } = useParams();
@@ -43,7 +43,7 @@ const Room = () => {
   });
   const [newMessage, setNewMessage] = useState('');
   const [userName, setUserName] = useState('User');
-  const [participants, setParticipants] = useState(['You']);
+  const [participants, setParticipants] = useState([]);  // Changed initial value from ['You'] to []
   const [copySuccess, setCopySuccess] = useState(false);
   const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -349,7 +349,8 @@ const Room = () => {
       
       // Define setup function
       const setupOnce = () => {
-        console.log(`Socket connected with ID: ${socket.id}, setting up for user: ${username}`);
+        // Changed this line to provide more context about the socket ID
+        console.log(`[Socket] Connected with socket ID: ${socket.id}, setting up for user: ${username}`);
         setupConnection(username);
         socket.off('connect', setupOnce); // Remove listener after first connection
       };
@@ -357,6 +358,16 @@ const Room = () => {
       // Connect socket and set up handler
       socket.connect();
       socket.on('connect', setupOnce);
+
+      // Add handler to log and explain server-side connection messages
+      socket.on('debug', (data) => {
+        // Filter out or explain connection messages that contain socket IDs
+        if (data && typeof data === 'string' && data.includes('User connected:')) {
+          console.log('[Socket Debug] Connection event from server side, can be ignored');
+          return;
+        }
+        console.log('[Socket Debug]', data);
+      });
     };
 
     getUserData();
@@ -364,12 +375,14 @@ const Room = () => {
     return () => {
       // Clean up event listeners
       if (socketRef.current) {
-        console.log('Cleaning up socket event listeners');
-        socketRef.current.off('user-joined');
+        console.log('Cleaning up socket event listeners');        socketRef.current.off('user-joined');
+        socketRef.current.off('user_joined');
         socketRef.current.off('receive-message');
-        socketRef.current.off('user-left');
-        socketRef.current.off('room_data');
         socketRef.current.off('receive_message');
+        socketRef.current.off('user-left');
+        socketRef.current.off('user_left');
+        socketRef.current.off('room_data');
+        socketRef.current.off('room-ended');
         socket.off('connect');
         
         // Only send leave event for actual component unmount, not page refresh or internal navigation
@@ -417,8 +430,9 @@ const Room = () => {
     socketRef.current.off('user-left');
     socketRef.current.off('user_left');
     socketRef.current.off('room_data');
+    socketRef.current.off('debug'); // Also clear debug listeners
     
-    console.log(`Joining room ${roomId} as ${username} with socket ID: ${socketRef.current.id}`);
+    console.log(`[Socket] Joining room ${roomId} as ${username} with socket ID: ${socketRef.current.id}`);
     
     // First time joining flag - use this to differentiate between first join and refreshes
     const firstTimeJoining = !localStorage.getItem(`joined_${roomId}`);
@@ -443,21 +457,76 @@ const Room = () => {
     // Mark as joined in localStorage to track refreshes vs new joins
     localStorage.setItem(`joined_${roomId}`, 'true');
     
-    // Remove self-join message - no longer needed
-    
-    // Listen for direct room data events to update participants 
-    // (but don't show join messages)
+    // Listen for direct room data events to update participants
     socketRef.current.on('room_data', (data) => {
       console.log('Room data event received:', data);
       if (data.participants) {
         console.log('Setting participants from room_data:', data.participants);
-        setParticipants(data.participants);
+        
+        // Filter out any 'User' entries that aren't the current user's name
+        // And ensure the current user is included properly
+        const filteredParticipants = data.participants.filter(name => 
+          name !== 'User' || name === username
+        );
+        
+        // Remove duplicates by creating a Set and converting back to array
+        const uniqueParticipants = [...new Set(filteredParticipants)];
+        
+        console.log('Filtered participants:', uniqueParticipants);
+        setParticipants(uniqueParticipants);
+      }
+    });
+
+    // Add listeners for user-joined and user-left events to properly track participants
+    socketRef.current.on('user-joined', (data) => {
+      console.log('User joined event received:', data);
+      if (data.username) {
+        setParticipants(prev => {
+          // Only add if not already in the list
+          if (!prev.includes(data.username)) {
+            return [...prev, data.username];
+          }
+          return prev;
+        });
       }
     });
     
+    socketRef.current.on('user-left', (data) => {
+      console.log('User left event received:', data);
+      if (data.username) {
+        setParticipants(prev => prev.filter(name => name !== data.username));
+      }
+    });
+
+    // For compatibility, also listen to underscore versions
+    socketRef.current.on('user_joined', (data) => {
+      console.log('User joined event (underscore) received:', data);
+      if (data.username) {
+        setParticipants(prev => {
+          if (!prev.includes(data.username)) {
+            return [...prev, data.username];
+          }
+          return prev;
+        });
+      }
+    });
+    
+    socketRef.current.on('user_left', (data) => {
+      console.log('User left event (underscore) received:', data);
+      if (data.username) {
+        setParticipants(prev => prev.filter(name => name !== data.username));
+      }
+    });
+
     // Listen for messages from other users with deduplication
     socketRef.current.on('receive-message', (data) => {
       console.log('Received message event:', data);
+      
+      // Filter out collab room messages
+      if (data.source === "collab-room") {
+        console.log('Ignoring message from collab room');
+        return;
+      }
       
       // Only process messages from others (our own messages are added locally)
       if (data.username !== username) {
@@ -473,6 +542,12 @@ const Room = () => {
     // Also listen for the underscore version of events
     socketRef.current.on('receive_message', (data) => {
       console.log('Received message (underscore format):', data);
+      
+      // Filter out collab room messages
+      if (data.source === "collab-room") {
+        console.log('Ignoring message from collab room');
+        return;
+      }
       
       // Only process messages from others (our own messages are added locally)
       if (data.username !== username) {
@@ -566,7 +641,6 @@ const Room = () => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !socketRef.current) return;
@@ -578,7 +652,8 @@ const Room = () => {
       roomId,
       message: newMessage,
       username: userName,
-      messageId // Add message ID to allow deduplication
+      messageId, // Add message ID to allow deduplication
+      source: 'room-chat' // Add source to distinguish from collab room messages
     };
 
     console.log('Sending message:', messageData);
@@ -682,16 +757,14 @@ const Room = () => {
                     <div className="p-4 border-b border-white/20">
                       <h3 className="text-lg font-semibold text-white">Participants</h3>
                     </div>
-                    {/* Added max-height and overflow-y-auto to make the list scrollable when there are many participants */}
                     <div className="max-h-60 overflow-y-auto">
                       {participants.map((participant, index) => (
                         <div key={index} className="px-4 py-3 flex items-center border-b border-white/10 last:border-0 hover:bg-white/5">
                           <div className="h-8 w-8 rounded-full bg-[#94C3D2] flex items-center justify-center text-white font-bold mr-3">
                             {participant.charAt(0).toUpperCase()}
                           </div>
-                          <span className={`${participant === 'You' ? 'text-[#94C3D2]' : 'text-white/90'}`}>
+                          <span className="text-white/90">
                             {participant}
-                            {participant === 'You' && " (You)"}
                           </span>
                           <span className="h-2 w-2 rounded-full bg-green-500 ml-auto"></span>
                         </div>
@@ -729,7 +802,7 @@ const Room = () => {
                   ) : (
                     <>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{color: 'white'}}>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                       <span style={{color: 'white'}}>Copy Room Code</span>
                     </>
