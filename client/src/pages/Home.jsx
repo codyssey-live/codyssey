@@ -105,32 +105,7 @@ const Home = () => {
       <section className="h-screen w-full relative overflow-hidden flex items-center justify-center">
         {/* Animated Gradient Background - Modified to ensure it stays within bounds */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155]">
-          {/* Particle effect - Modified to ensure boundaries are respected */}
-          {Array.from({ length: 50 }).map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute rounded-full bg-white"
-              initial={{
-                opacity: Math.random() * 0.5 + 0.1,
-                scale: Math.random() * 0.5 + 0.5,
-                x: `${Math.random() * 90 + 5}%`, // Ensuring particles start within safe bounds
-                y: `${Math.random() * 90 + 5}%`, // Ensuring particles start within safe bounds
-              }}
-              animate={{
-                opacity: [Math.random() * 0.5 + 0.1, Math.random() * 0.5 + 0.3, Math.random() * 0.5 + 0.1],
-                scale: [Math.random() * 0.5 + 0.5, Math.random() * 0.5 + 1, Math.random() * 0.5 + 0.5],
-              }}
-              transition={{
-                duration: Math.random() * 5 + 5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              style={{
-                width: `${Math.random() * 4 + 1}px`,
-                height: `${Math.random() * 4 + 1}px`,
-              }}
-            />
-          ))}
+          {/* Particle effect removed */}
         </div>
 
         {/* Content Container - Centered with no absolute positioning */}
