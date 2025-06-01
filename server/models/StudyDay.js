@@ -18,6 +18,11 @@ const problemSchema = new mongoose.Schema({
   url: { 
     type: String, 
     required: true 
+  },
+  status: {
+    type: String,
+    enum: ['unsolved', 'solved', 'solveLater'],
+    default: 'unsolved'
   }
 });
 
