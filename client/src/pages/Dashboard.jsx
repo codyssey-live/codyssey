@@ -9,6 +9,7 @@ import DistributionCard from "../components/dashboard/DistributionCard";
 import PlatformCard from "../components/dashboard/PlatformCard";
 import ProblemList from "../components/dashboard/ProblemList";
 import { fetchCurrentUser } from "../utils/authUtils";
+import { fetchUserSyllabusProblems } from "../utils/syllabusApiUtils";
 import axios from "axios";
 import { motion } from "framer-motion";
 
@@ -27,19 +28,20 @@ const Dashboard = () => {
   const [userData, setUserData] = useState({
     name: localStorage.getItem("userName") || "User",
     stats: {
-      solved: 78,
-      unsolved: 45,
-      solveLater: 23,
+      solved: 0,
+      unsolved: 0,
+      solveLater: 0,
     },
     distribution: {
-      easy: 42,
-      medium: 29,
-      hard: 7,
+      easy: 0,
+      medium: 0,
+      hard: 0,
     },
     platforms: {
-      leetcode: 58,
-      codeforces: 12,
-      hackerrank: 8,
+      leetcode: 0,
+      codeforces: 0,
+      hackerrank: 0,
+      other: 0,
     },
   });
 
@@ -47,91 +49,127 @@ const Dashboard = () => {
   if (localStorage.getItem("autoCreateRoom") === "true") {
     localStorage.removeItem("autoCreateRoom");
   }
-  // Fetch user data from the API
+
+  // State for active tab and problems
+  const [activeTab, setActiveTab] = useState("recent");
+  const [problems, setProblems] = useState([]);
+  const [allProblems, setAllProblems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch user data and problems from the API
   useEffect(() => {
     const getUserData = async () => {
       try {
+        setIsLoading(true);
+        
+        // Fetch user profile
         const user = await fetchCurrentUser();
-        if (user && user.name) {
-          localStorage.setItem("userName", user.name);
-
-          setUserData((prevData) => ({
-            ...prevData,
-            name: user.name,
-          }));
+        let userId = null;
+        
+        if (user) {
+          userId = user._id || user.id;
+          localStorage.setItem("userName", user.name || "User");
+          localStorage.setItem("userId", userId);
+        
+          // Fetch all syllabus problems for this user
+          const result = await fetchUserSyllabusProblems(userId);
+          
+          if (result.success && result.data) {
+            const userProblems = result.data;
+            setAllProblems(userProblems);
+            
+            // Process problem statistics
+            const stats = {
+              solved: userProblems.filter(p => p.status === "solved").length,
+              unsolved: userProblems.filter(p => p.status === "unsolved").length,
+              solveLater: userProblems.filter(p => p.status === "solveLater").length,
+            };
+            
+            // Process difficulty distribution
+            const distribution = {
+              easy: userProblems.filter(p => p.difficulty?.toLowerCase() === "easy").length,
+              medium: userProblems.filter(p => p.difficulty?.toLowerCase() === "medium").length,
+              hard: userProblems.filter(p => p.difficulty?.toLowerCase() === "hard").length,
+            };
+            
+            // Process platform distribution
+            const platformCounts = {};
+            userProblems.forEach(problem => {
+              const platform = problem.platform;
+              if (!platform) return;
+              
+              const normalizedPlatform = platform.toLowerCase();
+              if (['leetcode', 'codeforces', 'hackerrank'].includes(normalizedPlatform)) {
+                platformCounts[normalizedPlatform] = (platformCounts[normalizedPlatform] || 0) + 1;
+              } else {
+                platformCounts.other = (platformCounts.other || 0) + 1;
+              }
+            });
+            
+            // Update user data with real statistics
+            setUserData({
+              name: user.name || "User",
+              stats,
+              distribution,
+              platforms: {
+                leetcode: platformCounts.leetcode || 0,
+                codeforces: platformCounts.codeforces || 0,
+                hackerrank: platformCounts.hackerrank || 0,
+                other: platformCounts.other || 0,
+              },
+            });
+            
+            // Format problems for display
+            const formattedProblems = userProblems.map(p => ({
+              id: p._id,
+              title: p.title,
+              link: p.url,
+              platform: p.platform,
+              dateAdded: new Date(p.dateAdded).toISOString().split('T')[0],
+              status: p.status || "unsolved",
+              difficulty: p.difficulty
+            }));
+            
+            setAllProblems(formattedProblems);
+          }
         }
       } catch (err) {
         console.error("Error fetching user data:", err);
+        toast.error("Failed to load your problem data");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     getUserData();
+    
     // Clean up any accidental room creation flags
     return () => {
       localStorage.removeItem('autoCreateRoom');
     };
   }, []);
 
-  // Mock problem data
-  const mockProblems = [
-    {
-      id: 1,
-      title: "Two Sum",
-      link: "https://leetcode.com/problems/two-sum/",
-      platform: "LeetCode",
-      dateAdded: "2023-10-18",
-      status: "solved",
-    },
-    {
-      id: 2,
-      title: "Valid Parentheses",
-      link: "https://leetcode.com/problems/valid-parentheses/",
-      platform: "LeetCode",
-      dateAdded: "2023-10-19",
-      status: "unsolved",
-    },
-    {
-      id: 3,
-      title: "Reverse Linked List",
-      link: "https://leetcode.com/problems/reverse-linked-list/",
-      platform: "LeetCode",
-      dateAdded: "2023-10-20",
-      status: "solved",
-    },
-    {
-      id: 4,
-      title: "Maximum Subarray",
-      link: "https://leetcode.com/problems/maximum-subarray/",
-      platform: "LeetCode",
-      dateAdded: "2023-10-22",
-      status: "solveLater",
-    },
-    {
-      id: 5,
-      title: "Watermelon",
-      link: "https://codeforces.com/problemset/problem/4/A",
-      platform: "Codeforces",
-      dateAdded: "2023-10-25",
-      status: "unsolved",
-    },
-  ];
-
-  // State for active tab
-  const [activeTab, setActiveTab] = useState("recent");
-  const [problems, setProblems] = useState(mockProblems);
-
   // Filter problems based on active tab
   useEffect(() => {
-    if (activeTab === "recent") {
-      setProblems(mockProblems.slice(0, 5));
-    } else if (activeTab === "solved") {
-      setProblems(mockProblems.filter((p) => p.status === "solved"));
-    } else if (activeTab === "unsolved") {
-      setProblems(mockProblems.filter((p) => p.status === "unsolved"));
-    } else if (activeTab === "solveLater") {
-      setProblems(mockProblems.filter((p) => p.status === "solveLater"));
+    if (allProblems.length === 0) {
+      setProblems([]);
+      return;
     }
-  }, [activeTab]);
+    
+    if (activeTab === "recent") {
+      // Sort by date added (newest first) and take the top 5
+      const recentProblems = [...allProblems]
+        .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded))
+        .slice(0, 5);
+      setProblems(recentProblems);
+    } else if (activeTab === "solved") {
+      setProblems(allProblems.filter((p) => p.status === "solved"));
+    } else if (activeTab === "unsolved") {
+      setProblems(allProblems.filter((p) => p.status === "unsolved"));
+    } else if (activeTab === "solveLater") {
+      setProblems(allProblems.filter((p) => p.status === "solveLater"));
+    }
+  }, [activeTab, allProblems]);
 
   // Generate a mock userId for demo
   const mockUserId = "user123";
@@ -467,43 +505,47 @@ const Dashboard = () => {
               Problem Status
             </h3>
 
-            <div className="space-y-5 flex-grow">
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm text-green-400 flex items-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 mr-1 text-green-400"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Solved
-                  </span>
-                  <span className="text-sm text-green-400">
-                    {userData.stats.solved}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-600/30 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-green-400 h-2 rounded-full transition-all duration-500 ease-in-out"
-                    style={{
-                      width: `${
-                        (userData.stats.solved /
+            <div className="space-y-5 flex-grow">          <div>
+            <div className="flex justify-between mb-1">
+              <span className="text-sm text-green-400 flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 mr-1 text-green-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Solved
+              </span>
+              <span className="text-sm text-green-400">
+                {isLoading ? "..." : userData.stats.solved}
+              </span>
+            </div>
+            <div className="w-full bg-gray-600/30 rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-green-400 h-2 rounded-full transition-all duration-500 ease-in-out"
+                style={{
+                  width: `${
+                    isLoading || 
+                    (userData.stats.solved +
+                      userData.stats.unsolved +
+                      userData.stats.solveLater) === 0
+                      ? "0"
+                      : (userData.stats.solved /
                           (userData.stats.solved +
                             userData.stats.unsolved +
                             userData.stats.solveLater)) *
                         100
-                      }%`,
-                    }}
-                  ></div>
-                </div>
-              </div>
+                  }%`,
+                }}
+              ></div>
+            </div>
+          </div>
 
               <div>
                 <div className="flex justify-between mb-1">
@@ -523,7 +565,7 @@ const Dashboard = () => {
                     Unsolved
                   </span>
                   <span className="text-sm text-red-400">
-                    {userData.stats.unsolved}
+                    {isLoading ? "..." : userData.stats.unsolved}
                   </span>
                 </div>
                 <div className="w-full bg-gray-600/30 rounded-full h-2 overflow-hidden">
@@ -531,11 +573,16 @@ const Dashboard = () => {
                     className="bg-red-400 h-2 rounded-full transition-all duration-500 ease-in-out"
                     style={{
                       width: `${
-                        (userData.stats.unsolved /
-                          (userData.stats.solved +
-                            userData.stats.unsolved +
-                            userData.stats.solveLater)) *
-                        100
+                        isLoading || 
+                        (userData.stats.solved +
+                          userData.stats.unsolved +
+                          userData.stats.solveLater) === 0
+                          ? "0"
+                          : (userData.stats.unsolved /
+                              (userData.stats.solved +
+                                userData.stats.unsolved +
+                                userData.stats.solveLater)) *
+                            100
                       }%`,
                     }}
                   ></div>
@@ -560,7 +607,7 @@ const Dashboard = () => {
                     Solve Later
                   </span>
                   <span className="text-sm text-yellow-400">
-                    {userData.stats.solveLater}
+                    {isLoading ? "..." : userData.stats.solveLater}
                   </span>
                 </div>
                 <div className="w-full bg-gray-600/30 rounded-full h-2 overflow-hidden">
@@ -568,11 +615,16 @@ const Dashboard = () => {
                     className="bg-yellow-400 h-2 rounded-full transition-all duration-500 ease-in-out"
                     style={{
                       width: `${
-                        (userData.stats.solveLater /
-                          (userData.stats.solved +
-                            userData.stats.unsolved +
-                            userData.stats.solveLater)) *
-                        100
+                        isLoading || 
+                        (userData.stats.solved +
+                          userData.stats.unsolved +
+                          userData.stats.solveLater) === 0
+                          ? "0"
+                          : (userData.stats.solveLater /
+                              (userData.stats.solved +
+                                userData.stats.unsolved +
+                                userData.stats.solveLater)) *
+                            100
                       }%`,
                     }}
                   ></div>
@@ -583,9 +635,13 @@ const Dashboard = () => {
             <div className="mt-4 flex justify-between items-center">
               <span className="text-sm text-white/80">Total</span>
               <span className="text-xl font-semibold text-white/95">
-                {userData.stats.solved +
+                {isLoading ? (
+                  <span className="text-base opacity-70">Loading...</span>
+                ) : (
+                  userData.stats.solved +
                   userData.stats.unsolved +
-                  userData.stats.solveLater}
+                  userData.stats.solveLater
+                )}
               </span>
             </div>
           </div>
@@ -614,17 +670,22 @@ const Dashboard = () => {
                 <div className="flex justify-between mb-1">
                   <span className="text-sm font-medium text-green-400 flex items-center">
                     <span className="w-2 h-2 rounded-full bg-green-400 mr-1.5"></span>
-                    Easy ({userData.distribution.easy})
+                    Easy ({isLoading ? "..." : userData.distribution.easy})
                   </span>
                   <span className="text-sm font-medium text-green-400">
-                    {Math.round(
-                      (userData.distribution.easy /
-                        (userData.distribution.easy +
-                          userData.distribution.medium +
-                          userData.distribution.hard)) *
-                        100
-                    )}
-                    %
+                    {isLoading || 
+                    (userData.distribution.easy +
+                      userData.distribution.medium +
+                      userData.distribution.hard) === 0
+                      ? "-"
+                      : `${Math.round(
+                          (userData.distribution.easy /
+                            (userData.distribution.easy +
+                              userData.distribution.medium +
+                              userData.distribution.hard)) *
+                            100
+                        )}%`
+                    }
                   </span>
                 </div>
                 <div className="w-full bg-gray-600/30 rounded-full h-2 overflow-hidden">
@@ -632,11 +693,16 @@ const Dashboard = () => {
                     className="bg-green-400 h-2 rounded-full transition-all duration-500 ease-in-out"
                     style={{
                       width: `${
-                        (userData.distribution.easy /
-                          (userData.distribution.easy +
-                            userData.distribution.medium +
-                            userData.distribution.hard)) *
-                        100
+                        isLoading || 
+                        (userData.distribution.easy +
+                          userData.distribution.medium +
+                          userData.distribution.hard) === 0
+                          ? "0"
+                          : (userData.distribution.easy /
+                              (userData.distribution.easy +
+                                userData.distribution.medium +
+                                userData.distribution.hard)) *
+                            100
                       }%`,
                     }}
                   ></div>
@@ -647,17 +713,22 @@ const Dashboard = () => {
                 <div className="flex justify-between mb-1">
                   <span className="text-sm font-medium text-yellow-400 flex items-center">
                     <span className="w-2 h-2 rounded-full bg-yellow-400 mr-1.5"></span>
-                    Medium ({userData.distribution.medium})
+                    Medium ({isLoading ? "..." : userData.distribution.medium})
                   </span>
                   <span className="text-sm font-medium text-yellow-400">
-                    {Math.round(
-                      (userData.distribution.medium /
-                        (userData.distribution.easy +
-                          userData.distribution.medium +
-                          userData.distribution.hard)) *
-                        100
-                    )}
-                    %
+                    {isLoading || 
+                    (userData.distribution.easy +
+                      userData.distribution.medium +
+                      userData.distribution.hard) === 0
+                      ? "-"
+                      : `${Math.round(
+                          (userData.distribution.medium /
+                            (userData.distribution.easy +
+                              userData.distribution.medium +
+                              userData.distribution.hard)) *
+                            100
+                        )}%`
+                    }
                   </span>
                 </div>
                 <div className="w-full bg-gray-600/30 rounded-full h-2 overflow-hidden">
@@ -665,11 +736,16 @@ const Dashboard = () => {
                     className="bg-yellow-400 h-2 rounded-full transition-all duration-500 ease-in-out"
                     style={{
                       width: `${
-                        (userData.distribution.medium /
-                          (userData.distribution.easy +
-                            userData.distribution.medium +
-                            userData.distribution.hard)) *
-                        100
+                        isLoading || 
+                        (userData.distribution.easy +
+                          userData.distribution.medium +
+                          userData.distribution.hard) === 0
+                          ? "0"
+                          : (userData.distribution.medium /
+                              (userData.distribution.easy +
+                                userData.distribution.medium +
+                                userData.distribution.hard)) *
+                            100
                       }%`,
                     }}
                   ></div>
@@ -680,17 +756,22 @@ const Dashboard = () => {
                 <div className="flex justify-between mb-1">
                   <span className="text-sm font-medium text-red-400 flex items-center">
                     <span className="w-2 h-2 rounded-full bg-red-400 mr-1.5"></span>
-                    Hard ({userData.distribution.hard})
+                    Hard ({isLoading ? "..." : userData.distribution.hard})
                   </span>
                   <span className="text-sm font-medium text-red-400">
-                    {Math.round(
-                      (userData.distribution.hard /
-                        (userData.distribution.easy +
-                          userData.distribution.medium +
-                          userData.distribution.hard)) *
-                        100
-                    )}
-                    %
+                    {isLoading || 
+                    (userData.distribution.easy +
+                      userData.distribution.medium +
+                      userData.distribution.hard) === 0
+                      ? "-"
+                      : `${Math.round(
+                          (userData.distribution.hard /
+                            (userData.distribution.easy +
+                              userData.distribution.medium +
+                              userData.distribution.hard)) *
+                            100
+                        )}%`
+                    }
                   </span>
                 </div>
                 <div className="w-full bg-gray-600/30 rounded-full h-2 overflow-hidden">
@@ -698,11 +779,16 @@ const Dashboard = () => {
                     className="bg-red-400 h-2 rounded-full transition-all duration-500 ease-in-out"
                     style={{
                       width: `${
-                        (userData.distribution.hard /
-                          (userData.distribution.easy +
-                            userData.distribution.medium +
-                            userData.distribution.hard)) *
-                        100
+                        isLoading || 
+                        (userData.distribution.easy +
+                          userData.distribution.medium +
+                          userData.distribution.hard) === 0
+                          ? "0"
+                          : (userData.distribution.hard /
+                              (userData.distribution.easy +
+                                userData.distribution.medium +
+                                userData.distribution.hard)) *
+                            100
                       }%`,
                     }}
                   ></div>
@@ -713,9 +799,13 @@ const Dashboard = () => {
             <div className="mt-4 flex justify-between items-center">
               <span className="text-sm text-white/80">Total Problems</span>
               <span className="text-xl font-semibold text-white/95">
-                {userData.distribution.easy +
+                {isLoading ? (
+                  <span className="text-base opacity-70">Loading...</span>
+                ) : (
+                  userData.distribution.easy +
                   userData.distribution.medium +
-                  userData.distribution.hard}
+                  userData.distribution.hard
+                )}
               </span>
             </div>
           </div>
@@ -744,17 +834,24 @@ const Dashboard = () => {
                 <div className="flex justify-between mb-1">
                   <span className="text-sm font-medium text-yellow-400 flex items-center">
                     <span className="w-2 h-2 rounded-full bg-yellow-400 mr-1.5"></span>
-                    LeetCode ({userData.platforms.leetcode})
+                    LeetCode ({isLoading ? "..." : userData.platforms.leetcode})
                   </span>
                   <span className="text-sm font-medium text-yellow-400">
-                    {Math.round(
-                      (userData.platforms.leetcode /
-                        (userData.platforms.leetcode +
-                          userData.platforms.codeforces +
-                          userData.platforms.hackerrank)) *
-                        100
-                    )}
-                    %
+                    {isLoading || 
+                    (userData.platforms.leetcode +
+                      userData.platforms.codeforces +
+                      userData.platforms.hackerrank +
+                      userData.platforms.other) === 0
+                      ? "-"
+                      : `${Math.round(
+                          (userData.platforms.leetcode /
+                            (userData.platforms.leetcode +
+                              userData.platforms.codeforces +
+                              userData.platforms.hackerrank +
+                              userData.platforms.other)) *
+                            100
+                        )}%`
+                    }
                   </span>
                 </div>
                 <div className="w-full bg-gray-600/30 rounded-full h-2 overflow-hidden">
@@ -762,11 +859,18 @@ const Dashboard = () => {
                     className="bg-yellow-400 h-2 rounded-full transition-all duration-500 ease-in-out"
                     style={{
                       width: `${
-                        (userData.platforms.leetcode /
-                          (userData.platforms.leetcode +
-                            userData.platforms.codeforces +
-                            userData.platforms.hackerrank)) *
-                        100
+                        isLoading || 
+                        (userData.platforms.leetcode +
+                          userData.platforms.codeforces +
+                          userData.platforms.hackerrank +
+                          userData.platforms.other) === 0
+                          ? "0"
+                          : (userData.platforms.leetcode /
+                              (userData.platforms.leetcode +
+                                userData.platforms.codeforces +
+                                userData.platforms.hackerrank +
+                                userData.platforms.other)) *
+                            100
                       }%`,
                     }}
                   ></div>
@@ -777,17 +881,24 @@ const Dashboard = () => {
                 <div className="flex justify-between mb-1">
                   <span className="text-sm font-medium text-red-400 flex items-center">
                     <span className="w-2 h-2 rounded-full bg-red-400 mr-1.5"></span>
-                    Codeforces ({userData.platforms.codeforces})
+                    Codeforces ({isLoading ? "..." : userData.platforms.codeforces})
                   </span>
                   <span className="text-sm font-medium text-red-400">
-                    {Math.round(
-                      (userData.platforms.codeforces /
-                        (userData.platforms.leetcode +
-                          userData.platforms.codeforces +
-                          userData.platforms.hackerrank)) *
-                        100
-                    )}
-                    %
+                    {isLoading || 
+                    (userData.platforms.leetcode +
+                      userData.platforms.codeforces +
+                      userData.platforms.hackerrank +
+                      userData.platforms.other) === 0
+                      ? "-"
+                      : `${Math.round(
+                          (userData.platforms.codeforces /
+                            (userData.platforms.leetcode +
+                              userData.platforms.codeforces +
+                              userData.platforms.hackerrank +
+                              userData.platforms.other)) *
+                            100
+                        )}%`
+                    }
                   </span>
                 </div>
                 <div className="w-full bg-gray-600/30 rounded-full h-2 overflow-hidden">
@@ -795,11 +906,18 @@ const Dashboard = () => {
                     className="bg-red-400 h-2 rounded-full transition-all duration-500 ease-in-out"
                     style={{
                       width: `${
-                        (userData.platforms.codeforces /
-                          (userData.platforms.leetcode +
-                            userData.platforms.codeforces +
-                            userData.platforms.hackerrank)) *
-                        100
+                        isLoading || 
+                        (userData.platforms.leetcode +
+                          userData.platforms.codeforces +
+                          userData.platforms.hackerrank +
+                          userData.platforms.other) === 0
+                          ? "0"
+                          : (userData.platforms.codeforces /
+                              (userData.platforms.leetcode +
+                                userData.platforms.codeforces +
+                                userData.platforms.hackerrank +
+                                userData.platforms.other)) *
+                            100
                       }%`,
                     }}
                   ></div>
@@ -810,17 +928,24 @@ const Dashboard = () => {
                 <div className="flex justify-between mb-1">
                   <span className="text-sm font-medium text-green-400 flex items-center">
                     <span className="w-2 h-2 rounded-full bg-green-400 mr-1.5"></span>
-                    HackerRank ({userData.platforms.hackerrank})
+                    HackerRank ({isLoading ? "..." : userData.platforms.hackerrank})
                   </span>
                   <span className="text-sm font-medium text-green-400">
-                    {Math.round(
-                      (userData.platforms.hackerrank /
-                        (userData.platforms.leetcode +
-                          userData.platforms.codeforces +
-                          userData.platforms.hackerrank)) *
-                        100
-                    )}
-                    %
+                    {isLoading || 
+                    (userData.platforms.leetcode +
+                      userData.platforms.codeforces +
+                      userData.platforms.hackerrank +
+                      userData.platforms.other) === 0
+                      ? "-"
+                      : `${Math.round(
+                          (userData.platforms.hackerrank /
+                            (userData.platforms.leetcode +
+                              userData.platforms.codeforces +
+                              userData.platforms.hackerrank +
+                              userData.platforms.other)) *
+                            100
+                        )}%`
+                    }
                   </span>
                 </div>
                 <div className="w-full bg-gray-600/30 rounded-full h-2 overflow-hidden">
@@ -828,24 +953,72 @@ const Dashboard = () => {
                     className="bg-green-400 h-2 rounded-full transition-all duration-500 ease-in-out"
                     style={{
                       width: `${
-                        (userData.platforms.hackerrank /
-                          (userData.platforms.leetcode +
-                            userData.platforms.codeforces +
-                            userData.platforms.hackerrank)) *
-                        100
+                        isLoading || 
+                        (userData.platforms.leetcode +
+                          userData.platforms.codeforces +
+                          userData.platforms.hackerrank +
+                          userData.platforms.other) === 0
+                          ? "0"
+                          : (userData.platforms.hackerrank /
+                              (userData.platforms.leetcode +
+                                userData.platforms.codeforces +
+                                userData.platforms.hackerrank +
+                                userData.platforms.other)) *
+                            100
                       }%`,
                     }}
                   ></div>
                 </div>
               </div>
+              
+              {userData.platforms.other > 0 && (
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm font-medium text-blue-400 flex items-center">
+                      <span className="w-2 h-2 rounded-full bg-blue-400 mr-1.5"></span>
+                      Other ({userData.platforms.other})
+                    </span>
+                    <span className="text-sm font-medium text-blue-400">
+                      {`${Math.round(
+                        (userData.platforms.other /
+                          (userData.platforms.leetcode +
+                            userData.platforms.codeforces +
+                            userData.platforms.hackerrank +
+                            userData.platforms.other)) *
+                          100
+                      )}%`}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-600/30 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-blue-400 h-2 rounded-full transition-all duration-500 ease-in-out"
+                      style={{
+                        width: `${
+                          (userData.platforms.other /
+                            (userData.platforms.leetcode +
+                              userData.platforms.codeforces +
+                              userData.platforms.hackerrank +
+                              userData.platforms.other)) *
+                          100
+                        }%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-4 flex justify-between items-center">
               <span className="text-sm text-white/80">Total Submissions</span>
               <span className="text-xl font-semibold text-white/95">
-                {userData.platforms.leetcode +
+                {isLoading ? (
+                  <span className="text-base opacity-70">Loading...</span>
+                ) : (
+                  userData.platforms.leetcode +
                   userData.platforms.codeforces +
-                  userData.platforms.hackerrank}
+                  userData.platforms.hackerrank +
+                  userData.platforms.other
+                )}
               </span>
             </div>
           </div>
@@ -904,7 +1077,15 @@ const Dashboard = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.6 }}
         >
-          {problems.length === 0 ? (
+          {isLoading ? (
+            <div className="bg-white/10 rounded-xl p-10 text-center backdrop-blur-md border border-white/20">
+              <div className="animate-pulse flex flex-col items-center">
+                <div className="h-12 w-12 rounded-full bg-white/30 mb-4"></div>
+                <div className="h-4 w-48 bg-white/30 rounded mb-3"></div>
+                <div className="h-3 w-32 bg-white/20 rounded"></div>
+              </div>
+            </div>
+          ) : problems.length === 0 ? (
             <div className="bg-white/10 rounded-xl p-10 text-center backdrop-blur-md border border-white/20">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -924,7 +1105,10 @@ const Dashboard = () => {
                 No problems found in this category.
               </p>
               <p className="text-white/70 text-sm mt-1">
-                Try adding some problems or changing your filter.
+                {allProblems.length === 0 
+                  ? "Add problems in the Syllabus page to see them here."
+                  : "Try changing your filter."
+                }
               </p>
             </div>
           ) : (
@@ -941,19 +1125,28 @@ const Dashboard = () => {
 
               {problems.map((problem) => (
                 <div
-                  key={problem.id}
+                  key={problem.id || problem._id}
                   className="bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4 transition-all duration-300"
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
                     <div className="col-span-4 md:col-span-5">
                       <a
-                        href={problem.link}
+                        href={problem.link || problem.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-medium text-white/95 hover:text-[#94C3D2] hover:underline transition-colors"
                       >
                         {problem.title}
                       </a>
+                      {problem.difficulty && (
+                        <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${
+                          problem.difficulty.toLowerCase() === 'easy' ? 'bg-green-900/40 text-green-200' :
+                          problem.difficulty.toLowerCase() === 'medium' ? 'bg-yellow-900/40 text-yellow-200' :
+                          'bg-red-900/40 text-red-200'
+                        }`}>
+                          {problem.difficulty}
+                        </span>
+                      )}
                     </div>
 
                     <div className="col-span-3 md:col-span-2">
@@ -987,6 +1180,10 @@ const Dashboard = () => {
                       <button
                         className="text-blue-400 hover:text-blue-300 transition-colors p-1.5 hover:bg-white/10 rounded-full"
                         title="Copy Link"
+                        onClick={() => {
+                          navigator.clipboard.writeText(problem.link || problem.url);
+                          toast.success("Problem link copied to clipboard!");
+                        }}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -1006,6 +1203,18 @@ const Dashboard = () => {
                       <button
                         className="text-green-400 hover:text-green-300 transition-colors p-1.5 hover:bg-white/10 rounded-full"
                         title="Share"
+                        onClick={() => {
+                          if (navigator.share) {
+                            navigator.share({
+                              title: problem.title,
+                              text: `Check out this problem: ${problem.title}`,
+                              url: problem.link || problem.url
+                            });
+                          } else {
+                            navigator.clipboard.writeText(problem.link || problem.url);
+                            toast.success("Problem link copied to clipboard!");
+                          }
+                        }}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -1029,6 +1238,10 @@ const Dashboard = () => {
                       <button
                         className="text-blue-400 hover:text-blue-300 transition-colors flex items-center"
                         title="Copy Link"
+                        onClick={() => {
+                          navigator.clipboard.writeText(problem.link || problem.url);
+                          toast.success("Problem link copied to clipboard!");
+                        }}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -1049,6 +1262,18 @@ const Dashboard = () => {
                       <button
                         className="text-green-400 hover:text-green-300 transition-colors flex items-center"
                         title="Share"
+                        onClick={() => {
+                          if (navigator.share) {
+                            navigator.share({
+                              title: problem.title,
+                              text: `Check out this problem: ${problem.title}`,
+                              url: problem.link || problem.url
+                            });
+                          } else {
+                            navigator.clipboard.writeText(problem.link || problem.url);
+                            toast.success("Problem link copied to clipboard!");
+                          }
+                        }}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"

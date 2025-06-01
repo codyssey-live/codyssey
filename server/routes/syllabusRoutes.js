@@ -6,7 +6,8 @@ import {
   updateStudyDay,
   deleteStudyDay,
   updateProblemStatus,
-  getStudyDayById
+  getStudyDayById,
+  getUserSyllabusProblems
 } from '../controllers/syllabusController.js';
 
 const router = express.Router();
@@ -19,6 +20,9 @@ router.post('/', saveSyllabus);
 
 // Get syllabus by user ID
 router.get('/:userId', getSyllabusByUserId);
+
+// Get all problems for a specific user
+router.get('/user/:userId/problems', getUserSyllabusProblems);
 
 // Update specific study day
 router.put('/day/:dayId', updateStudyDay);

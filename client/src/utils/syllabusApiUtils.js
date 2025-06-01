@@ -176,3 +176,26 @@ export const fetchStudyDay = async (dayId) => {
     };
   }
 };
+
+// Fetch all problems for a specific user
+export const fetchUserSyllabusProblems = async (userId) => {
+  try {
+    if (!userId) {
+      throw new Error('User ID is required to fetch user problems');
+    }
+    
+    console.log('Fetching all problems for user:', userId);
+    const response = await apiClient.get(`/syllabus/user/${userId}/problems`);
+    console.log('User problems API response:', response.data);
+    return {
+      success: true,
+      data: response.data.data
+    };
+  } catch (error) {
+    console.error('Error fetching user problems:', error.response?.data || error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to fetch user problems'
+    };
+  }
+};

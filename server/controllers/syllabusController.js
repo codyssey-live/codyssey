@@ -450,3 +450,65 @@ export const getStudyDayById = async (req, res) => {
     });
   }
 };
+
+// @desc    Get all problems for a specific user
+// @route   GET /syllabus/user/:userId/problems
+// @access  Private
+export const getUserSyllabusProblems = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    console.log(`Fetching all problems for user: ${userId}`);
+    
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+    
+    // Ensure userId is treated as ObjectId if valid
+    let userIdToQuery = userId;
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      userIdToQuery = new mongoose.Types.ObjectId(userId);
+    }
+    
+    // Find syllabus for the requested user
+    const syllabus = await Syllabus.findOne({ userId: userIdToQuery })
+      .populate({
+        path: 'studyDays',
+        select: 'problems'
+      });
+    
+    if (!syllabus) {
+      return res.status(404).json({
+        success: false,
+        message: `No syllabus found for user ${userId}`
+      });
+    }
+    
+    // Extract all problems from all study days
+    const problems = [];
+    syllabus.studyDays.forEach(day => {
+      if (day.problems && day.problems.length > 0) {
+        problems.push(...day.problems.map(problem => ({
+          ...problem.toObject(),
+          dateAdded: problem._id ? problem._id.getTimestamp() : new Date()
+        })));
+      }
+    });
+    
+    return res.status(200).json({
+      success: true,
+      data: problems
+    });
+    
+  } catch (error) {
+    console.error('Error fetching user problems:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching user problems',
+      error: error.message
+    });
+  }
+};
