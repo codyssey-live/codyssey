@@ -15,7 +15,6 @@ const LectureRoom = () => {
   const [videoUrl, setVideoUrl] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [isCodeMessage, setIsCodeMessage] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [userName, setUserName] = useState('User');
   
@@ -605,7 +604,6 @@ const LectureRoom = () => {
       message: newMessage,
       username: userName,
       messageId,
-      isCode: isCodeMessage,
       timestamp: new Date(), // Ensure we have timestamp
       socketId: socket.id,   // Include socket ID for better tracking
       type: 'lecture-chat'   // Mark as lecture chat specifically
@@ -627,7 +625,6 @@ const LectureRoom = () => {
     // This prevents duplicate messages for the sender
     
     setNewMessage('');
-    setIsCodeMessage(false); // Reset after sending
   };
   // Notes related functions
   const saveNote = () => {
@@ -1525,11 +1522,6 @@ const LectureRoom = () => {
                                 <span className="font-medium text-sm text-white/90 ml-1">You</span>
                               )}
                             </div>
-                              {message.isCode ? (
-                              <pre className={`p-3 rounded-lg text-sm bg-gray-900 font-mono overflow-x-auto whitespace-pre-wrap border border-gray-700 w-full`} style={{color: '#f8f8f2'}}>
-                                <code>{message.text}</code>
-                              </pre>
-                            ) : (
                               <div className={`rounded-lg px-4 py-2 ${
                                 isCurrentUser 
                                   ? 'bg-[#94C3D2] text-white rounded-tr-none' 
@@ -1537,8 +1529,7 @@ const LectureRoom = () => {
                               }`}>
                                 {message.text}
                               </div>
-                            )}
-                          </div>
+                            </div>
                         </div>
                       );
                     })}
@@ -1552,21 +1543,11 @@ const LectureRoom = () => {
                   <div className="flex-1 flex items-center bg-[#2d3748] border border-white/20 rounded-lg overflow-hidden">
                     <input
                       type="text"
-                      placeholder={isCodeMessage ? "Type your code here..." : "Type message..."}
+                      placeholder="Type message..."
                       className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none"
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setIsCodeMessage(!isCodeMessage)}
-                      className={`px-2 mx-2 ${isCodeMessage ? 'text-[#94C3D2]' : 'text-white/95'} hover:text-[#94C3D2] transition-colors`}
-                      title={isCodeMessage ? "Switch to regular message" : "Switch to code message"}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                      </svg>
-                    </button>
                   </div>
                   <button
                     type="submit"
