@@ -78,6 +78,11 @@ const Syllabus = () => {
   const [isViewingOtherUserSyllabus, setIsViewingOtherUserSyllabus] = useState(false);
   const [syllabusOwnerId, setSyllabusOwnerId] = useState(null);
   
+  // Pagination states
+  const [problemsPage, setProblemsPage] = useState(1);
+  const [resourcesPage, setResourcesPage] = useState(1);
+  const itemsPerPage = 5;
+  
   // Modal states
   const [showAddDayModal, setShowAddDayModal] = useState(false);
   const [showAddProblemModal, setShowAddProblemModal] = useState(false);
@@ -523,6 +528,72 @@ const Syllabus = () => {
     return null; // Don't show any special notice when viewing your own syllabus
   };
   
+  // Reset pagination when selected day changes
+  useEffect(() => {
+    setProblemsPage(1);
+    setResourcesPage(1);
+  }, [selectedDay]);
+
+  // Pagination helper functions
+  const getPaginatedItems = (items, page, perPage) => {
+    const startIndex = (page - 1) * perPage;
+    return items?.slice(startIndex, startIndex + perPage) || [];
+  };
+  
+  const getTotalPages = (items, perPage) => {
+    return Math.ceil((items?.length || 0) / perPage);
+  };
+  
+  // Handle page changes
+  const handleProblemPageChange = (newPage) => {
+    setProblemsPage(newPage);
+  };
+  
+  const handleResourcePageChange = (newPage) => {
+    setResourcesPage(newPage);
+  };
+
+  // Pagination UI component
+  const PaginationControls = ({ currentPage, totalPages, onPageChange }) => {
+    if (totalPages <= 1) return null;
+    
+    return (
+      <div className="flex justify-center mt-4 gap-1">
+        <button 
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+          className={`px-2 py-1 rounded-md ${
+            currentPage === 1 
+              ? 'bg-white/5 text-white/40 cursor-not-allowed' 
+              : 'bg-white/10 text-white/80 hover:bg-white/20'
+          }`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        </button>
+        
+        <span className="px-3 py-1 bg-white/10 rounded-md text-white/80 text-sm">
+          {currentPage} / {totalPages}
+        </span>
+        
+        <button 
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage === totalPages}
+          className={`px-2 py-1 rounded-md ${
+            currentPage === totalPages 
+              ? 'bg-white/5 text-white/40 cursor-not-allowed' 
+              : 'bg-white/10 text-white/80 hover:bg-white/20'
+          }`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    );
+  };
+
   return (
     <>
       <style>{calendarStyles}</style>
@@ -685,64 +756,75 @@ const Syllabus = () => {
                       
                       <div className="bg-white/5 rounded-xl p-1 backdrop-blur-sm">
                         {selectedDay.problems.length > 0 ? (
-                          <div className="space-y-2">
-                            {selectedDay.problems.map((problem) => (
-                              <div 
-                                key={problem.id || problem._id}
-                                className="flex items-center justify-between p-4 bg-white/10 rounded-lg border border-white/20 hover:bg-white/15 transition-all"
-                              >
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <h4 className="font-medium text-white/95">{problem.title}</h4>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${difficultyColors[problem.difficulty]}`}>
-                                      {problem.difficulty}
-                                    </span>
-                                    <span className="text-xs bg-white/10 text-white/75 px-2 py-0.5 rounded-full border border-white/20">
-                                      {problem.platform}
-                                    </span>
+                          <>
+                            <div className="space-y-2">
+                              {getPaginatedItems(selectedDay.problems, problemsPage, itemsPerPage).map((problem) => (
+                                <div 
+                                  key={problem.id || problem._id}
+                                  className="flex items-center justify-between p-4 bg-white/10 rounded-lg border border-white/20 hover:bg-white/15 transition-all"
+                                >
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <h4 className="font-medium text-white/95">{problem.title}</h4>
+                                      <span className={`text-xs px-2 py-0.5 rounded-full ${difficultyColors[problem.difficulty]}`}>
+                                        {problem.difficulty}
+                                      </span>
+                                      <span className="text-xs bg-white/10 text-white/75 px-2 py-0.5 rounded-full border border-white/20">
+                                        {problem.platform}
+                                      </span>
+                                    </div>
+                                    <div className="mt-2 flex items-center gap-3">                                    <Link 
+                                        to="/collab-room" 
+                                        state={{ 
+                                          problemLink: problem.url,
+                                          problemId: problem.id || problem._id,
+                                          dayId: selectedDay.id || selectedDay._id,
+                                          status: problem.status || 'unsolved',
+                                          updateTimestamp: true // Flag to indicate dateAdded should be updated
+                                        }}
+                                        className="text-sm text-white bg-[#94C3D2] hover:bg-[#7EB5C3] px-3 py-1.5 rounded-lg flex items-center transition-colors shadow-sm"
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        Collaborate
+                                      </Link>
+                                      <a 
+                                        href={problem.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-white/80 hover:text-white flex items-center gap-1"
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                        View Problem
+                                      </a>
+                                    </div>
                                   </div>
-                                  <div className="mt-2 flex items-center gap-3">                                    <Link 
-                                      to="/collab-room" 
-                                      state={{ 
-                                        problemLink: problem.url,
-                                        problemId: problem.id || problem._id,
-                                        dayId: selectedDay.id || selectedDay._id,
-                                        status: problem.status || 'unsolved',
-                                        updateTimestamp: true // Flag to indicate dateAdded should be updated
-                                      }}
-                                      className="text-sm text-white bg-[#94C3D2] hover:bg-[#7EB5C3] px-3 py-1.5 rounded-lg flex items-center transition-colors shadow-sm"
+                                  {!isViewingOtherUserSyllabus && (
+                                    <button 
+                                      onClick={() => handleDeleteProblem(problem.id || problem._id)}
+                                      className="p-1.5 text-red-400 hover:text-red-600 transition-colors"
                                     >
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                      </svg>
-                                      Collaborate
-                                    </Link>
-                                    <a 
-                                      href={problem.url} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="text-sm text-white/80 hover:text-white flex items-center gap-1"
-                                    >
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                      </svg>
-                                      View Problem
-                                    </a>
-                                  </div>
-                                </div>
-                                {!isViewingOtherUserSyllabus && (
-                                  <button 
-                                    onClick={() => handleDeleteProblem(problem.id || problem._id)}
-                                    className="p-1.5 text-red-400 hover:text-red-600 transition-colors"
-                                  >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                                     </svg>
-                                  </button>
-                                )}
-                              </div>
-                            ))}
-                          </div>
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {/* Problem Pagination Controls */}
+                            {selectedDay.problems.length > itemsPerPage && (
+                              <PaginationControls 
+                                currentPage={problemsPage}
+                                totalPages={getTotalPages(selectedDay.problems, itemsPerPage)}
+                                onPageChange={handleProblemPageChange}
+                              />
+                            )}
+                          </>
                         ) : (
                           <div className="text-center py-8 text-white/70 bg-white/5 rounded-lg">
                             <p>No problems added yet. Click "Add Problem" to get started.</p>
@@ -771,11 +853,16 @@ const Syllabus = () => {
                       
                       <div className="bg-white/5 rounded-xl p-1 backdrop-blur-sm">
                         {selectedDay.resources && selectedDay.resources.length > 0 ? (
-                          <div className="space-y-2">
-                            {selectedDay.resources
-                              // Filter videos - check both type properties for compatibility with existing data
-                              .filter(resource => resource.type === 'video' || resource.type === 'single' || resource.type === 'playlist' || resource.displayType === 'video')
-                              .map((video) => (
+                          <>
+                            <div className="space-y-2">
+                              {getPaginatedItems(
+                                selectedDay.resources.filter(resource => 
+                                  resource.type === 'video' || resource.type === 'single' || 
+                                  resource.type === 'playlist' || resource.displayType === 'video'
+                                ),
+                                resourcesPage, 
+                                itemsPerPage
+                              ).map((video) => (
                                 <div 
                                   key={video.id || video._id}
                                   className="flex items-center justify-between p-4 bg-white/10 rounded-lg border border-white/20 hover:bg-white/15 transition-all"
@@ -823,7 +910,26 @@ const Syllabus = () => {
                                   )}
                                 </div>
                               ))}
-                          </div>
+                            </div>
+                            
+                            {/* Videos Pagination Controls */}
+                            {selectedDay.resources.filter(resource => 
+                              resource.type === 'video' || resource.type === 'single' || 
+                              resource.type === 'playlist' || resource.displayType === 'video'
+                            ).length > itemsPerPage && (
+                              <PaginationControls 
+                                currentPage={resourcesPage}
+                                totalPages={getTotalPages(
+                                  selectedDay.resources.filter(resource => 
+                                    resource.type === 'video' || resource.type === 'single' || 
+                                    resource.type === 'playlist' || resource.displayType === 'video'
+                                  ),
+                                  itemsPerPage
+                                )}
+                                onPageChange={handleResourcePageChange}
+                              />
+                            )}
+                          </>
                         ) : (
                           <div className="text-center py-8 text-white/75 bg-white/5 rounded-lg">
                             <p>No videos added yet. Click "Add Video" to get started.</p>
