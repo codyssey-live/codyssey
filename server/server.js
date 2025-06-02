@@ -13,7 +13,7 @@ import roomRoutes from './routes/roomRoutes.js';
 import syllabusRoutes from './routes/syllabusRoutes.js';
 
 // Load environment variables
-dotenv.config({ path: path.resolve('..', '.env') });
+dotenv.config({ path: path.resolve('.', '.env') });
 
 const app = express();
 
