@@ -293,7 +293,7 @@ const Navbar = () => {
                                 setIsDropdownOpen(false);
                               }}
                             >
-                              <div className="flex items-center text-red-400">
+                              <div className="flex items-center text-red-600">
                                 {item.icon}
                                 {item.name}
                               </div>
