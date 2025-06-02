@@ -76,14 +76,16 @@ const Home = () => {
     }
   ];
 
+  // This function toggles the login options in the hero section
   const handleJourneyStart = () => {
-    // If already authenticated, navigate to dashboard
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    } else {
-      // Otherwise show login options
-      setShowLoginOptions(true);
-    }
+    // Toggle login options
+    setShowLoginOptions(prev => !prev);
+  };
+  
+  // This function directly navigates to signup page
+  const navigateToSignup = () => {
+    // Direct navigation to signup page
+    navigate('/signup');
   };
 
   return (
@@ -165,7 +167,7 @@ const Home = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.3, duration: 0.6 }}
-            onClick={handleJourneyStart}
+            onClick={isAuthenticated ? () => navigate('/dashboard') : handleJourneyStart}
           >
             {isAuthenticated ? "Go to Dashboard" : "Begin Your Journey"}
           </motion.button>
@@ -314,12 +316,15 @@ const Home = () => {
               Join our community of developers who learn, collaborate and solve challenges together.
               Unlock your potential through shared knowledge and collective problem-solving.
             </p>
-            <Link to="/signup" className="px-6 py-3 bg-[#94C3D2] text-white rounded-lg font-medium hover:bg-opacity-90 inline-flex items-center">
+            <button 
+              onClick={navigateToSignup}
+              className="px-6 py-3 bg-[#94C3D2] text-white rounded-lg font-medium hover:bg-opacity-90 inline-flex items-center"
+            >
               Join Today
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
-            </Link>
+            </button>
           </motion.div>
         </motion.div>
       </section>
@@ -501,7 +506,7 @@ const Home = () => {
             </motion.div>
           </div>
           
-          {/* CTA Button - Modified to always go to login regardless of auth state */}
+          {/* CTA Button - Modified to direct to signup page */}
           <div className="mt-16 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -509,9 +514,8 @@ const Home = () => {
               viewport={{ once: false }}
               transition={{ delay: 0.6 }}
             >
-              <Link
-                to="/login"
-                state={{ forceLogin: true }} // Add this state parameter to force login page
+              <button
+                onClick={navigateToSignup}
                 className="px-8 py-4 bg-[#94C3D2] text-white rounded-full font-medium inline-flex items-center hover:bg-opacity-90 transition-colors shadow-lg"
                 style={{ boxShadow: "0 0 15px rgba(148, 195, 210, 0.3)" }}
               >
@@ -519,7 +523,7 @@ const Home = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
-              </Link>
+              </button>
             </motion.div>
           </div>
         </div>

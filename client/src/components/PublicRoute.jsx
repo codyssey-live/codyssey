@@ -68,19 +68,8 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  // Check for forceLogin flag in location state
-  const forceLogin = location?.state?.forceLogin;
-
-  // Only redirect to dashboard if user is authenticated,
-  // trying to access login/signup pages, and not forcing login
-  if (isAuthenticated && 
-      !forceLogin &&
-      (location.pathname === '/login' || 
-       location.pathname === '/signup' || 
-       location.pathname === '/forgot-password')) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
+  // We want to allow all users to access signup/login/forgot-password pages
+  // regardless of authentication status, so we'll simply return the children
   return children;
 };
 

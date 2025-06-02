@@ -269,42 +269,15 @@ const Navbar = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="origin-top-right absolute right-0 mt-2 w-64 rounded-2xl shadow-xl bg-white/20 backdrop-blur-md ring-1 ring-black/5 z-50 overflow-hidden border border-white/40"
+                    className="origin-top-right absolute right-0 mt-2 w-48 rounded-2xl shadow-xl bg-white/20 backdrop-blur-md ring-1 ring-black/5 z-50 overflow-hidden border border-white/40"
                   >
                     <div className="py-1">
-                      <div className="px-4 py-3 border-b border-gray-100">
-                        <div className="flex items-center">
-                          <div className="bg-[#94C3D2] rounded-full p-2 mr-3">
-                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                          </div>
-                          <div>
-                            {/* Enhanced loading state with skeleton */}
-                            {loading ? (
-                              <div>
-                                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-1"></div>
-                                <div className="h-3 w-32 bg-gray-100 rounded animate-pulse"></div>
-                              </div>
-                            ) : (
-                              <>
-                                <p className="text-xl font-medium text-[#1a2234]">
-                                  {userData.name}
-                                </p>
-                                
-                                
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      
                       {userMenuItems.map((item, index) => (
-                        <div key={index}>
+                        <div key={index} className={index === 0 ? "border-b border-white/10" : ""}>
                           {item.path ? (
                             <Link
                               to={item.path}
-                              className="block px-4 py-2 text-sm text-white/90 hover:bg-white/20"
+                              className="block px-4 py-3 text-sm text-white/90 hover:bg-white/20"
                               onClick={() => setIsDropdownOpen(false)}
                             >
                               <div className="flex items-center">
@@ -314,7 +287,7 @@ const Navbar = () => {
                             </Link>
                           ) : (
                             <button
-                              className="block w-full text-left px-4 py-2 text-sm text-white/90 hover:bg-white/20"
+                              className="block w-full text-left px-4 py-3 text-sm hover:bg-white/20"
                               onClick={() => {
                                 item.action();
                                 setIsDropdownOpen(false);
