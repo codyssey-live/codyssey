@@ -74,7 +74,7 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
               <input 
                 type="text" 
                 id="name" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -90,7 +90,7 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
                 id="bio" 
                 rows={3}
                 maxLength={maxBioLength}
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400 resize-none"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400 resize-none"
                 value={bio}
                 placeholder="Tell us a bit about yourself"
                 onChange={(e) => setBio(e.target.value)}
@@ -118,7 +118,7 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
                 <input 
                   type="url" 
                   id="github" 
-                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                   placeholder="https://github.com/username"
                   value={github}
                   onChange={(e) => setGithub(e.target.value)}
@@ -137,7 +137,7 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
                 <input 
                   type="url" 
                   id="linkedin" 
-                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                   placeholder="https://linkedin.com/in/username"
                   value={linkedin}
                   onChange={(e) => setLinkedin(e.target.value)}
@@ -664,7 +664,7 @@ const UserProfile = () => {
               <input 
                 type="text" 
                 id="school" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={school}
                 onChange={(e) => setSchool(e.target.value)}
                 placeholder="Enter school or university name"
@@ -677,7 +677,7 @@ const UserProfile = () => {
               <input 
                 type="text" 
                 id="degree" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={degree}
                 onChange={(e) => setDegree(e.target.value)}
                 placeholder="Enter degree or field of study"
@@ -691,7 +691,7 @@ const UserProfile = () => {
                 <input 
                   type="month" 
                   id="startYear" 
-                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                   value={startYear}
                   onChange={(e) => setStartYear(e.target.value)}
                   required
@@ -703,7 +703,7 @@ const UserProfile = () => {
                 <input 
                   type="month" 
                   id="endYear" 
-                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                   value={endYear}
                   onChange={(e) => setEndYear(e.target.value)}
                   placeholder="Present if current"
@@ -813,7 +813,7 @@ const UserProfile = () => {
               <input 
                 type="text" 
                 id="company" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
                 placeholder="Enter company name"
@@ -826,7 +826,7 @@ const UserProfile = () => {
               <input 
                 type="text" 
                 id="position" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={position}
                 onChange={(e) => setPosition(e.target.value)}
                 placeholder="Enter job title"
@@ -840,7 +840,7 @@ const UserProfile = () => {
                 <input 
                   type="month" 
                   id="startDate" 
-                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   required
@@ -852,7 +852,7 @@ const UserProfile = () => {
                 <input 
                   type="month" 
                   id="endDate" 
-                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   placeholder="Leave empty if current"
@@ -944,7 +944,7 @@ const UserProfile = () => {
               <input 
                 type="password" 
                 id="currentPassword" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter your current password"
@@ -957,7 +957,7 @@ const UserProfile = () => {
               <input 
                 type="password" 
                 id="newPassword" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="At least 8 characters"
@@ -971,7 +971,7 @@ const UserProfile = () => {
               <input 
                 type="password" 
                 id="confirmPassword" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter your new password"
@@ -1047,7 +1047,7 @@ const UserProfile = () => {
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-red-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-4 4a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="ml-3">
@@ -1070,7 +1070,7 @@ const UserProfile = () => {
               <input 
                 type="password" 
                 id="password" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 text-gray-100 placeholder-gray-400"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -1085,7 +1085,7 @@ const UserProfile = () => {
               <input 
                 type="text" 
                 id="confirmText" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 text-gray-100 placeholder-gray-400"
+                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
                 required

@@ -1583,7 +1583,7 @@ const Dashboard = () => {
                     setJoinError("");
                   }}
                   placeholder="Enter an 8-character room code"
-                  className="w-full pl-4 pr-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#94C3D2]/50 focus:border-[#94C3D2] text-gray-100 placeholder-gray-400"
+                  className="w-full pl-4 pr-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 />
                 {joinError && (
                   <p className="mt-2 text-sm text-red-400">{joinError}</p>

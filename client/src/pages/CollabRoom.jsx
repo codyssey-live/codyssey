@@ -1271,8 +1271,7 @@ const CollabRoom = () => {
                     </svg>
                     Open Problem
                   </a>
-                ) : (
-                  <span className="text-white/50 bg-white/10 px-3 py-1 rounded-lg flex items-center text-sm border border-white/20">
+                ) : (                  <span className="text-white/50 bg-white/10 px-3 py-1 rounded-lg flex items-center text-sm border border-white/20">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-4 w-4 mr-1"
@@ -1284,13 +1283,7 @@ const CollabRoom = () => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M14.828 14.828a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"
+                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
                     No Link Available
