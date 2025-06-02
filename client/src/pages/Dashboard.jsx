@@ -118,17 +118,21 @@ const Dashboard = () => {
                 other: platformCounts.other || 0,
               },
             });
-            
-            // Format problems for display
-            const formattedProblems = userProblems.map(p => ({
-              id: p._id,
-              title: p.title,
-              link: p.url,
-              platform: p.platform,
-              dateAdded: new Date(p.dateAdded).toISOString().split('T')[0],
-              status: p.status || "unsolved",
-              difficulty: p.difficulty
-            }));
+              // Format problems for display
+            const formattedProblems = userProblems.map(p => {
+              // Log dates to help debugging
+              console.log(`Problem: ${p.title}, Date: ${p.dateAdded}, Status: ${p.status}`);
+              return {
+                id: p._id,
+                title: p.title,
+                link: p.url,
+                platform: p.platform,
+                dateAdded: new Date(p.dateAdded).toISOString().split('T')[0],
+                dateAddedRaw: p.dateAdded, // Keep raw date for accurate sorting
+                status: p.status || "unsolved",
+                difficulty: p.difficulty
+              };
+            });
             
             setAllProblems(formattedProblems);
           }
@@ -148,26 +152,40 @@ const Dashboard = () => {
       localStorage.removeItem('autoCreateRoom');
     };
   }, []);
-
   // Filter problems based on active tab
   useEffect(() => {
     if (allProblems.length === 0) {
       setProblems([]);
       return;
     }
-    
-    if (activeTab === "recent") {
-      // Sort by date added (newest first) and take the top 5
-      const recentProblems = [...allProblems]
-        .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded))
-        .slice(0, 5);
+      // Create a sorted copy for all cases to ensure consistent ordering
+    const sortedProblems = [...allProblems].sort((a, b) => {
+      // Use the raw date if available for more accurate sorting
+      const dateA = a.dateAddedRaw ? new Date(a.dateAddedRaw) : 
+                    a.dateAdded ? new Date(a.dateAdded) : new Date(0);
+      const dateB = b.dateAddedRaw ? new Date(b.dateAddedRaw) : 
+                    b.dateAdded ? new Date(b.dateAdded) : new Date(0);
+      
+      // Log the comparison to help debug sorting
+      console.log(`Comparing: ${a.title} (${dateA}) vs ${b.title} (${dateB})`);
+      
+      // Sort newest first (most recent at the top)
+      return dateB - dateA;
+    });
+      if (activeTab === "recent") {
+      // Take the top 5 most recent problems
+      const recentProblems = sortedProblems.slice(0, 5);
       setProblems(recentProblems);
+      console.log("Recent problems (sorted newest first):", recentProblems);
     } else if (activeTab === "solved") {
-      setProblems(allProblems.filter((p) => p.status === "solved"));
+      // Keep the sorted order (newest first) for solved problems too
+      setProblems(sortedProblems.filter((p) => p.status === "solved"));
     } else if (activeTab === "unsolved") {
-      setProblems(allProblems.filter((p) => p.status === "unsolved"));
+      // Keep the sorted order (newest first) for unsolved problems too
+      setProblems(sortedProblems.filter((p) => p.status === "unsolved"));
     } else if (activeTab === "solveLater") {
-      setProblems(allProblems.filter((p) => p.status === "solveLater"));
+      // Keep the sorted order (newest first) for solve later problems too
+      setProblems(sortedProblems.filter((p) => p.status === "solveLater"));
     }
   }, [activeTab, allProblems]);
 

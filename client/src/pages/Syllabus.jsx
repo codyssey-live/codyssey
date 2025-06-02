@@ -340,7 +340,6 @@ const Syllabus = () => {
     setDayToDelete(day);
     setShowDeleteConfirmModal(true);
   };
-
   const handleAddProblem = () => {
     if (!selectedDay || !newProblemTitle || !newProblemUrl) return;
     
@@ -350,6 +349,8 @@ const Syllabus = () => {
       difficulty: newProblemDifficulty,
       platform: newProblemPlatform,
       url: newProblemUrl,
+      dateAdded: new Date(), // Add current date to ensure it appears in recent problems
+      status: 'unsolved',
     };
     
     const updatedDays = syllabusDays.map(day => 
@@ -700,14 +701,14 @@ const Syllabus = () => {
                                       {problem.platform}
                                     </span>
                                   </div>
-                                  <div className="mt-2 flex items-center gap-3">
-                                    <Link 
+                                  <div className="mt-2 flex items-center gap-3">                                    <Link 
                                       to="/collab-room" 
                                       state={{ 
                                         problemLink: problem.url,
                                         problemId: problem.id || problem._id,
                                         dayId: selectedDay.id || selectedDay._id,
-                                        status: problem.status || 'unsolved'
+                                        status: problem.status || 'unsolved',
+                                        updateTimestamp: true // Flag to indicate dateAdded should be updated
                                       }}
                                       className="text-sm text-white bg-[#94C3D2] hover:bg-[#7EB5C3] px-3 py-1.5 rounded-lg flex items-center transition-colors shadow-sm"
                                     >

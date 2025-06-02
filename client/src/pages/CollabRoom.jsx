@@ -126,8 +126,7 @@ const CollabRoom = () => {
         }
       })
       .catch((err) => console.error("Could not copy code: ", err));
-  };
-  useEffect(() => {
+  };  useEffect(() => {
     // Initialize problem information from location state
     if (location.state) {
       if (location.state.problemLink) {
@@ -149,6 +148,32 @@ const CollabRoom = () => {
           "Setting day ID from location state:",
           location.state.dayId
         );
+      }
+      
+      // Check if we should update the timestamp (coming from syllabus page)
+      if (location.state.updateTimestamp && location.state.problemId && location.state.dayId) {
+        const updateTimestamp = async () => {
+          try {
+            // Import and use the utility function to update the problem status
+            // This will also update the dateAdded timestamp on the backend
+            const { updateProblemStatus } = await import("../utils/syllabusApiUtils");
+            const result = await updateProblemStatus(
+              location.state.dayId, 
+              location.state.problemId, 
+              location.state.status || 'unsolved'
+            );
+            
+            if (result.success) {
+              console.log("Updated problem timestamp successfully");
+            } else {
+              console.error("Failed to update problem timestamp:", result.message);
+            }
+          } catch (error) {
+            console.error("Error updating problem timestamp:", error);
+          }
+        };
+        
+        updateTimestamp();
       }
 
       // Initialize problem details if provided directly in state

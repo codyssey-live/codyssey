@@ -7,11 +7,14 @@ export const saveSyllabus = async (syllabusData) => {
     const transformedData = syllabusData.map(day => {
       // Preserve MongoDB _id if exists, otherwise omit client-side id
       const { id, ...dayWithoutNumericId } = day;
-      
-      // Transform embedded problems to ensure they have proper format
+        // Transform embedded problems to ensure they have proper format
       const problems = day.problems?.map(problem => {
         const { id: problemId, ...problemWithoutId } = problem;
-        return problemWithoutId;
+        // Ensure dateAdded is present for all problems
+        return {
+          ...problemWithoutId,
+          dateAdded: problemWithoutId.dateAdded || new Date()
+        };
       }) || [];
       
       // Transform resources to videos with proper format for the backend

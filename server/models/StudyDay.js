@@ -23,6 +23,10 @@ const problemSchema = new mongoose.Schema({
     type: String,
     enum: ['unsolved', 'solved', 'solveLater'],
     default: 'unsolved'
+  },
+  dateAdded: {
+    type: Date,
+    default: Date.now
   }
 });
 

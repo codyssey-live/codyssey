@@ -380,9 +380,11 @@ export const updateProblemStatus = async (req, res) => {
     }
     
     console.log(`Found problem to update: ${problem.title}, current status: ${problem.status}`);
-    
-    // Update the status
+      // Update the status
     problem.status = status;
+    
+    // Update the dateAdded field to current time to ensure it appears in recent problems
+    problem.dateAdded = new Date();
     
     // Save the updated study day
     await studyDay.save();
@@ -485,18 +487,23 @@ export const getUserSyllabusProblems = async (req, res) => {
         success: false,
         message: `No syllabus found for user ${userId}`
       });
-    }
-    
-    // Extract all problems from all study days
+    }    // Extract all problems from all study days
     const problems = [];
     syllabus.studyDays.forEach(day => {
       if (day.problems && day.problems.length > 0) {
-        problems.push(...day.problems.map(problem => ({
-          ...problem.toObject(),
-          dateAdded: problem._id ? problem._id.getTimestamp() : new Date()
-        })));
+        problems.push(...day.problems.map(problem => {
+          const problemObj = problem.toObject();
+          // Use problem's dateAdded if it exists, otherwise fall back to ObjectId timestamp
+          return {
+            ...problemObj,
+            dateAdded: problemObj.dateAdded || (problem._id ? problem._id.getTimestamp() : new Date())
+          };
+        }));
       }
     });
+    
+    // Sort problems by dateAdded, newest first
+    problems.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
     
     return res.status(200).json({
       success: true,
