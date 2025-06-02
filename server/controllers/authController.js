@@ -6,8 +6,8 @@ import User from '../models/User.js';
 const cookieOptions = {
   httpOnly: true,
   secure: true,
-  sameSite: 'strict',
-  maxAge: 24 * 60 * 60 * 1000 // 1 day in milliseconds
+  sameSite: 'None',
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
 };
 
 export const signup = async (req, res) => {
