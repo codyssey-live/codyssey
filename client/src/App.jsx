@@ -17,7 +17,7 @@ import "./App.css";
 import axios from 'axios';
 
 // Configure axios defaults
-axios.defaults.baseURL = 'http://localhost:8080';
+axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 axios.defaults.withCredentials = true;
 
 // Placeholder components for routes that don't exist yet
