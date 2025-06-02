@@ -5,7 +5,7 @@ import User from '../models/User.js';
 // Cookie options
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+  secure: true,
   sameSite: 'strict',
   maxAge: 24 * 60 * 60 * 1000 // 1 day in milliseconds
 };
