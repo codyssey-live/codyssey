@@ -1,23 +1,5 @@
+
 const ProblemList = ({ problems, cardStyle = {} }) => {
-  const handleCopyLink = (link) => {
-    navigator.clipboard.writeText(link)
-      .then(() => alert('Link copied to clipboard!'))
-      .catch(err => console.error('Could not copy link: ', err));
-  };
-  
-  const handleShare = (problem) => {
-    if (navigator.share) {
-      navigator.share({
-        title: `Coding Problem: ${problem.title}`,
-        text: `Check out this coding problem: ${problem.title}`,
-        url: problem.link
-      })
-      .catch(err => console.error('Error sharing: ', err));
-    } else {
-      handleCopyLink(problem.link);
-      alert('Sharing not supported on this browser. Link copied to clipboard instead!');
-    }
-  };
   
   const getPlatformBadgeColor = (platform) => {
     switch (platform.toLowerCase()) {

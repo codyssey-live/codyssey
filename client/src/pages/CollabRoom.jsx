@@ -11,12 +11,12 @@ import {
 import { updateProblemStatus } from "../utils/syllabusApiUtils";
 import apiClient from "../utils/apiClient"; // Import apiClient for making API requests
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const CollabRoom = () => {
   const location = useLocation();
   const { roomData } = useRoom();
-  const editorRef = useRef(null);
-  const [problemLink, setProblemLink] = useState("");
+  const editorRef = useRef(null);  const [problemLink, setProblemLink] = useState("");
   const [problemId, setProblemId] = useState(null); // Add this state
   const [dayId, setDayId] = useState(null); // Add this state
   const [language, setLanguage] = useState("javascript");
@@ -25,6 +25,8 @@ const CollabRoom = () => {
   const [problemStatus, setProblemStatus] = useState("unsolved");
   const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
   const [statusUpdateError, setStatusUpdateError] = useState(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingLanguage, setPendingLanguage] = useState(null);
   // Removed statusUpdateSuccess state as requested
   const [statusMessage, setStatusMessage] = useState({ type: "", text: "" });
   const [showStatusMessage, setShowStatusMessage] = useState(true);
@@ -755,33 +757,36 @@ const CollabRoom = () => {
     navigator.clipboard
       .writeText(editorValue)
       .then(() => {
-        alert("Code copied to clipboard!");
+        toast("Code copied to clipboard!");
       })
       .catch((err) => {
         console.error("Could not copy code: ", err);
       });
   };
 
-  const shareRoom = () => {
-    const shareLink = `${window.location.origin}/collab-room?id=${Date.now()}`;
-    navigator.clipboard
-      .writeText(shareLink)
-      .then(() => {
-        alert("Room link copied to clipboard!");
-      })
-      .catch((err) => {
-        console.error("Could not copy room link: ", err);
-      });
-  };
-
+  
   const handleLanguageChange = (newLang) => {
-    if (
-      code.trim() &&
-      !window.confirm("Changing language will reset the code. Continue?")
-    )
+    if (code.trim()) {
+      setPendingLanguage(newLang);
+      setShowConfirmDialog(true);
       return;
+    }
+    
+    // If no code or user confirmed, proceed with language change
     setLanguage(newLang);
     setCode(boilerplates[newLang]);
+  };
+  
+  // Function to handle confirmation dialog result
+  const handleConfirmLanguageChange = (confirmed) => {
+    setShowConfirmDialog(false);
+    
+    if (confirmed && pendingLanguage) {
+      setLanguage(pendingLanguage);
+      setCode(boilerplates[pendingLanguage]);
+    }
+    
+    setPendingLanguage(null);
   };
 
   const getMonacoLanguage = (lang) => {
@@ -1819,8 +1824,34 @@ const CollabRoom = () => {
             </div>
           </div>
         </div>
-      </div>
-
+      </div>      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-gradient-to-b from-[#1a1a2e]/95 to-[#16213e]/95 backdrop-blur-md text-white/95 p-6 rounded-xl shadow-2xl max-w-md w-full border border-white/10">
+            <div className="border-b border-white/10 pb-3 mb-4">
+              <h3 className="text-xl font-semibold text-[#94C3D2]">Confirm Language Change</h3>
+            </div>
+            <p className="mb-6 text-white/90 leading-relaxed">
+              Changing language will reset your current code. Do you want to continue?
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button 
+                onClick={() => handleConfirmLanguageChange(false)} 
+                className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white/90 border border-white/10 rounded-lg transition-all duration-200"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => handleConfirmLanguageChange(true)} 
+                className="px-5 py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] text-white rounded-lg transition-all duration-200"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Code Snippet Modal */}
       {isCodeModalOpen && (
         <div className="fixed inset-0 z-50 overflow-auto bg-black/70 flex items-center justify-center p-4">

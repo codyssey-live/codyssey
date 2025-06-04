@@ -5,6 +5,7 @@ import { useRoom } from '../context/RoomContext';
 import socket from '../socket';
 import { emitVideoControl, setupVideoSyncListeners } from '../utils/videoSyncUtils';
 import { loadLectureMessages, saveLectureMessages } from '../utils/lectureRoomChatPersistence';
+import { toast } from 'react-toastify';
 
 // A small delay to ensure operations don't conflict
 const SYNC_DELAY = 300;
@@ -18,18 +19,21 @@ const LectureRoom = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [userName, setUserName] = useState('User');
   
+  // State for note deletion confirmation
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState(null);
+  
   // YouTube player instance
   const playerRef = useRef(null);
   const isRemoteUpdateRef = useRef(false);  // Flag to prevent infinite loops
   const videoIdRef = useRef(null);
   const hasJoinedVideoRoom = useRef(false);
   const wasPlayingBeforeTabChange = useRef(false); // Track if video was playing before tab visibility change
-  
-  // Add state for notes functionality
+    // Add state for notes functionality
   const [notes, setNotes] = useState('');
   const [savedNotes, setSavedNotes] = useState([]);
   const [showNotesModal, setShowNotesModal] = useState(false);
-  // Extract URL from location state if available (from DailyPlan page)  
+  
   // Get username from localStorage   
   useEffect(() => {
     const savedUsername = localStorage.getItem('roomUsername') || 'User';
@@ -379,14 +383,14 @@ const LectureRoom = () => {
       // If in a room and not the creator, disallow changing videos
     if (roomData.inRoom && !roomData.isRoomCreator) {
       console.log('Only the room creator can change videos');
-      alert('Only the room creator can change videos');
+      toast.warning('Only the room creator can change videos');
       return;
     }
     
     // Extract the video ID from the URL
     const videoId = extractVideoId(videoUrl);
     if (!videoId) {
-      alert('Invalid YouTube URL');
+      toast.error('Invalid YouTube URL');
       return;
     }
     
@@ -629,12 +633,12 @@ const LectureRoom = () => {
   // Notes related functions
   const saveNote = () => {
     if (!notes.trim()) {
-      alert('Please add some notes before saving.');
+      toast.info('Please add some notes before saving.');
       return;
     }
     
     if (!videoUrl) {
-      alert('No video URL found. Please enter a YouTube URL first.');
+      toast.warning('No video URL found. Please enter a YouTube URL first.');
       return;
     }
     
@@ -660,13 +664,12 @@ const LectureRoom = () => {
     try {
       // Store with both video URL and user to allow for personalized notes
       const storageKey = `video_notes_${videoUrl}_${userName}`;
-      localStorage.setItem(storageKey, JSON.stringify(updatedNotes));      alert(`Note saved successfully at ${formatVideoTime(currentTime)}!`);
+      localStorage.setItem(storageKey, JSON.stringify(updatedNotes));      toast.success(`Note saved successfully at ${formatVideoTime(currentTime)}!`);
       setNotes('');
     } catch (error) {
       console.error("Error saving note:", error);
-      alert('Failed to save note. Please try again.');
-    }
-  };
+      toast.error('Failed to save note. Please try again.');
+    }  };
   
   // Format video time as mm:ss
   const formatVideoTime = (seconds) => {
@@ -674,15 +677,36 @@ const LectureRoom = () => {
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
   const deleteNote = (noteId) => {
-    if (window.confirm('Are you sure you want to delete this note?')) {
-      const updatedNotes = savedNotes.filter(note => note.id !== noteId);
+    // Set the note ID and show the confirmation dialog
+    setNoteToDelete(noteId);
+    setShowDeleteConfirmation(true);
+  };
+  
+  const handleConfirmDelete = () => {
+    // Only proceed if we have a valid note ID
+    if (noteToDelete) {
+      const updatedNotes = savedNotes.filter(note => note.id !== noteToDelete);
       setSavedNotes(updatedNotes);
       
       // Use the user-specific storage key
       const storageKey = `video_notes_${videoUrl}_${userName}`;
       localStorage.setItem(storageKey, JSON.stringify(updatedNotes));
+      
+      // Show success message
+      toast.success("Note deleted successfully!");
+      
+      // Reset state
+      setNoteToDelete(null);
+      setShowDeleteConfirmation(false);
     }
+  };
+  
+  const handleCancelDelete = () => {
+    // Reset state without deleting
+    setNoteToDelete(null);
+    setShowDeleteConfirmation(false);
   };
   
   const formatDate = (dateString) => {
@@ -1604,6 +1628,33 @@ const LectureRoom = () => {
               ) : (
                 <p className="text-white/60 text-center">No notes saved for this video yet.</p>
               )}
+            </div>
+          </div>        </div>
+      )}
+      
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirmation && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-gradient-to-b from-[#1a1a2e]/95 to-[#16213e]/95 backdrop-blur-md text-white/95 p-6 rounded-xl shadow-2xl max-w-md w-full border border-white/10">
+            <div className="border-b border-white/10 pb-3 mb-4">
+              <h3 className="text-xl font-semibold text-[#94C3D2]">Delete Note</h3>
+            </div>
+            <p className="mb-6 text-white/90 leading-relaxed">
+              Are you sure you want to delete this note? This cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button 
+                onClick={handleCancelDelete} 
+                className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white/90 border border-white/10 rounded-lg transition-all duration-200"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleConfirmDelete} 
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white/95 rounded-lg transition-all duration-200"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import { motion } from "framer-motion"; // Add this import for animations
 import { fetchCurrentUser, getUserId } from "../utils/authUtils";
+import { toast } from "react-toastify";
 import { 
   updateUserProfile, 
   uploadProfilePicture,
@@ -436,7 +437,7 @@ const UserProfile = () => {
       closeModal();
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile information');
+      toast.error('Failed to update profile information');
     }
   };
 
@@ -459,7 +460,7 @@ const UserProfile = () => {
       }
     } catch (error) {
       console.error('Error deleting education:', error);
-      alert('Failed to delete education entry');
+      toast.error('Failed to delete education entry');
     }
   };
 
@@ -482,7 +483,7 @@ const UserProfile = () => {
       }
     } catch (error) {
       console.error('Error deleting work experience:', error);
-      alert('Failed to delete work experience entry');
+      toast.error('Failed to delete work experience entry');
     }
   };
 
@@ -492,7 +493,7 @@ const UserProfile = () => {
       const response = await changePassword(user.id, passwordData);
       
       if (response && response.success) {
-        alert('Password changed successfully!');
+        toast.success('Password changed successfully!');
         closeModal();
       } else {
         // Show the specific error message from the server
@@ -500,7 +501,7 @@ const UserProfile = () => {
       }
     } catch (error) {
       console.error('Error changing password:', error);
-      alert(`Failed to change password: ${error.message || 'Unknown error'}`);
+      toast.error(`Failed to change password: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -510,7 +511,7 @@ const UserProfile = () => {
       const response = await deleteAccount(user.id, passwordData);
       
       if (response && response.success) {
-        alert('Your account has been successfully deleted. You will be redirected to the home page.');
+        toast.info('Your account has been successfully deleted. You will be redirected to the home page.');
         // Clear any user data from local storage
         localStorage.removeItem('userId');
         localStorage.removeItem('token');
@@ -524,7 +525,7 @@ const UserProfile = () => {
       }
     } catch (error) {
       console.error('Error deleting account:', error);
-      alert(`Failed to delete account: ${error.message || 'Unknown error'}`);
+      toast.error(`Failed to delete account: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -599,9 +600,8 @@ const UserProfile = () => {
       
     const handleSubmit = async (e) => {
       e.preventDefault();
-        
-      if (!school || !degree || !startYear) {
-        alert('Please fill in all required fields');
+          if (!school || !degree || !startYear) {
+        toast.warning('Please fill in all required fields');
         return;
       }
         
@@ -639,7 +639,7 @@ const UserProfile = () => {
         onClose();
       } catch (error) {
         console.error('Error adding education:', error);
-        alert(`Failed to add education information: ${error.message || 'Unknown error'}`);
+        toast.error(`Failed to add education information: ${error.message || 'Unknown error'}`);
       }
     };
       
@@ -741,9 +741,8 @@ const UserProfile = () => {
       
     const handleSubmit = async (e) => {
       e.preventDefault();
-        
-      if (!company || !position || !startDate) {
-        alert('Please fill in all required fields');
+          if (!company || !position || !startDate) {
+        toast.warning('Please fill in all required fields');
         return;
       }
         
@@ -761,7 +760,7 @@ const UserProfile = () => {
           
         if (!userId) {
           console.error('User ID is missing:', user);
-          alert('User ID is missing. Please try refreshing the page or logging in again.');
+          toast.error('User ID is missing. Please try refreshing the page or logging in again.');
           return;
         }
           
@@ -788,7 +787,7 @@ const UserProfile = () => {
         onClose();
       } catch (error) {
         console.error('Error adding work experience:', error);
-        alert(`Failed to add work experience: ${error.message}`);
+        toast.error(`Failed to add work experience: ${error.message}`);
       }
     };
       

@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { format } from "date-fns";
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import apiClient from '../utils/apiClient';
 import { fetchSyllabus, saveSyllabus, deleteStudyDay } from '../utils/syllabusApiUtils';
@@ -296,7 +297,7 @@ const Syllabus = () => {
 
   const handleDeleteDay = async (dayId) => {
     if (syllabusDays.length <= 1) {
-      alert("Cannot delete the only study day. Please add a new day before deleting this one.");
+      toast.warning("Cannot delete the only study day. Please add a new day before deleting this one.");
       return;
     }
     
@@ -332,7 +333,7 @@ const Syllabus = () => {
       }
     } catch (error) {
       console.error('Error deleting study day:', error);
-      alert(`Failed to delete study day: ${error.message}`);
+      toast.error(`Failed to delete study day: ${error.message}`);
     } finally {
       // Close the confirmation modal regardless of success/failure
       setShowDeleteConfirmModal(false);
@@ -452,7 +453,7 @@ const Syllabus = () => {
   const handleSaveSyllabus = async () => {
     try {
       if (!userId) {
-        alert("User ID not available. Please log in again.");
+        toast.error("User ID not available. Please log in again.");
         return;
       }
       
@@ -492,13 +493,13 @@ const Syllabus = () => {
           }
         }
         
-        alert("Syllabus saved successfully!");
+        toast.success("Syllabus saved successfully!");
       } else {
         throw new Error(response.message || "Unknown error saving syllabus");
       }
     } catch (error) {
       console.error("Error saving syllabus:", error);
-      alert(`Failed to save syllabus: ${error.message}`);
+      toast.error(`Failed to save syllabus: ${error.message}`);
     }
   };
 

@@ -13,6 +13,8 @@ import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import { RoomProvider } from "./context/RoomContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
 import axios from 'axios';
 
@@ -25,10 +27,20 @@ const Profile = () => <div className="p-10">Profile Page (Coming Soon)</div>;
 const Settings = () => <div className="p-10">Settings Page (Coming Soon)</div>;
 const NotFound = () => <div className="p-10">Page Not Found</div>;
 
-function App() {
-  return (
+function App() {  return (
     <Router>
       <RoomProvider>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
         <div className="app min-h-screen flex flex-col">
           <div className="flex-grow">
             <Routes>

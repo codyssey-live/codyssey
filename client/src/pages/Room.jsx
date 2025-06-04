@@ -8,8 +8,7 @@ import { useRoom } from '../context/RoomContext';
 import socket from '../socket'; // Import socket directly
 import { loadMessages, saveMessages, clearMessages } from '../utils/chatPersistence';
 
-const Room = () => {
-  const { roomId } = useParams();
+const Room = () => {  const { roomId } = useParams();
   const navigate = useNavigate();
   const instructionsRef = useRef(null);
   const chatRef = useRef(null);
@@ -19,6 +18,7 @@ const Room = () => {
   const isRefreshing = useRef(false);
   const { roomData, setRoomData } = useRoom();
   const [syllabusUrl, setSyllabusUrl] = useState('/syllabus');
+  const [showEndRoomConfirmation, setShowEndRoomConfirmation] = useState(false);
 
   // Update syllabus URL based on room context
   useEffect(() => {
@@ -51,7 +51,6 @@ const Room = () => {
   const [isRoomCreator, setIsRoomCreator] = useState(false);
   const [roomSessionExpired, setRoomSessionExpired] = useState(false);
   const [userId, setUserId] = useState(null);
-
   // Define early to avoid undefined function references
   const handleLeaveRoom = () => {
     console.log("Leaving room", roomId);
@@ -101,15 +100,16 @@ const Room = () => {
     
     // Redirect to dashboard
     navigate('/dashboard');
-    toast.info('You have left the room');
+    toast.info('You have left the room', { position: "top-center" });
   };
-
   // Handle room ending - modified to delete the room directly
   const handleEndRoom = () => {
     console.log(`Ending room ${roomId} (with deletion)`);
     
     // Emit an end-room event to inform all participants
     if (socketRef.current) {
+      toast.info("Ending room...", { position: "top-center" });
+      
       socketRef.current.emit('end-room', { 
         roomId, 
         username: userName,
@@ -126,14 +126,13 @@ const Room = () => {
       
       socketRef.current.once('end-room-error', (data) => {
         console.error("Error ending room:", data);
-        toast.error(data.message || "Failed to end room");
+        toast.error(data.message || "Failed to end room", { position: "top-center" });
       });
     } else {
-      toast.error("Socket connection not available");
+      toast.error("Socket connection not available", { position: "top-center" });
     }
   };
-  
-  // Common cleanup function for room ending
+    // Common cleanup function for room ending
   const cleanupAfterRoomEnd = (roomId, endedBy) => {
     // Clear messages for this room
     clearMessages(roomId);
@@ -165,29 +164,27 @@ const Room = () => {
     
     // Redirect to dashboard
     navigate('/dashboard');
-    toast.success(endedBy ? `Room ended by ${endedBy}` : 'Room ended');
+    toast.success(endedBy ? `Room ended by ${endedBy}` : 'Room ended', { position: "top-center" });
   };
 
   // Check if user has a valid room session with time validation
   useEffect(() => {
     console.log("Validating room session for:", roomId);
     
-    const validateRoomSession = () => {
-      // First check if this room was previously ended
+    const validateRoomSession = () => {      // First check if this room was previously ended
       const endedRooms = JSON.parse(localStorage.getItem('endedRooms') || '[]');
       if (endedRooms.includes(roomId)) {
         console.log("Room was previously ended");
-        toast.error("This room has been ended and is no longer available");
+        toast.error("This room has been ended and is no longer available", { position: "top-center" });
         navigate('/dashboard');
         return false;
       }
       
       const roomInfo = localStorage.getItem('roomInfo');
       console.log("Room info from localStorage:", roomInfo);
-      
-      if (!roomInfo) {
+        if (!roomInfo) {
         console.log("No room info found - direct URL access attempt");
-        toast.error("Direct room access is not allowed. Please join through the dashboard.");
+        toast.error("Direct room access is not allowed. Please join through the dashboard.", { position: "top-center" });
         navigate('/dashboard');
         return false;
       }
@@ -200,19 +197,17 @@ const Room = () => {
         const createdOrJoinedAt = new Date(parsedInfo.createdAt || parsedInfo.joinedAt).getTime();
         const currentTime = new Date().getTime();
         const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-        
-        if (currentTime - createdOrJoinedAt > SESSION_DURATION) {
+          if (currentTime - createdOrJoinedAt > SESSION_DURATION) {
           console.log("Room session expired");
           setRoomSessionExpired(true);
-          toast.error("Your room session has expired. Please create or join a new room.");
+          toast.error("Your room session has expired. Please create or join a new room.", { position: "top-center" });
           handleLeaveRoom();
           return false;
         }
-        
-        // Check if this is the requested room
+          // Check if this is the requested room
         if (parsedInfo.roomId !== roomId) {
           console.log("Room ID mismatch - attempting to access unauthorized room");
-          toast.error("You don't have access to this room");
+          toast.error("You don't have access to this room", { position: "top-center" });
           navigate('/dashboard');
           return false;
         }
@@ -414,11 +409,10 @@ const Room = () => {
   const recentJoins = useRef(new Map()); // Track recent joins to suppress immediate leaves
   const shownJoinMessages = useRef(new Set()); // Track users we've already shown join messages for
   
-  const setupConnection = (username) => {
-    if (!socketRef.current) {
+  const setupConnection = (username) => {    if (!socketRef.current) {
       console.error('Socket not initialized');
       setLoading(false);
-      toast.error("Couldn't connect to chat server");
+      toast.error("Couldn't connect to chat server", { position: "top-center" });
       return;
     }
     
@@ -558,12 +552,10 @@ const Room = () => {
           timestamp: new Date(data.timestamp)
         }]);
       }
-    });
-
-    // Setup for room-ended event - update to use common cleanup
+    });    // Setup for room-ended event - update to use common cleanup
     socketRef.current.on('room-ended', (data) => {
       console.log("Room ended event received:", data);
-      toast.info(`Room was ended by ${data.username}`);
+      toast.info(`Room was ended by ${data.username}`, { position: "top-center" });
       
       // Use the common cleanup function
       cleanupAfterRoomEnd(roomId, data.username);
@@ -672,32 +664,30 @@ const Room = () => {
     
     setNewMessage('');
   };
-
   const handleCopyRoomId = () => {
     // Copy just the room ID, not a full URL
     navigator.clipboard.writeText(roomId)
       .then(() => {
         setCopySuccess(true);
-        toast.success('Room ID copied to clipboard!');  
+        toast.success('Room ID copied to clipboard!', { position: "top-center" });  
         setTimeout(() => setCopySuccess(false), 3000);
       })
       .catch(err => {
         console.error('Failed to copy room ID:', err);
-        toast.error('Failed to copy room ID');
+        toast.error('Failed to copy room ID', { position: "top-center" });
       });
   };
-
   const handleCopyInviteLink = () => {
     // Copy just the room ID, not a full URL
     navigator.clipboard.writeText(roomId)
       .then(() => {
         setInviteLinkCopied(true);
-        toast.success('Room code copied to clipboard!');
+        toast.success('Room code copied to clipboard!', { position: "top-center" });
         setTimeout(() => setInviteLinkCopied(false), 3000);
       })
       .catch(err => {
         console.error('Failed to copy room ID:', err);
-        toast.error('Failed to copy room code');
+        toast.error('Failed to copy room code', { position: "top-center" });
       });
   };
 
@@ -714,6 +704,43 @@ const Room = () => {
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
       <Navbar />
       <ToastContainer position="top-right" autoClose={3000} />
+
+      {/* End Room Confirmation Dialog */}
+      {showEndRoomConfirmation && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full z-10 relative">
+            <div className="flex items-center mb-4">
+              <div className="bg-red-100 p-2 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 ml-3">End Room Confirmation</h3>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to end this room? This will disconnect all participants and delete the room permanently. This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowEndRoomConfirmation(false)}
+                className="px-4 py-2 border border-gray-900 rounded-md text-gray-700 bg-white hover:bg-gray-50 outline-none "
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  handleEndRoom();
+                  setShowEndRoomConfirmation(false);
+                }}
+                className="px-4 py-2 bg-red-600 text-white/95 rounded-md hover:bg-red-700 outline-none"
+              >
+                End Room
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {roomSessionExpired ? (
         <div className="container mx-auto px-4 py-16 text-center">
@@ -819,15 +846,11 @@ const Room = () => {
                   </svg>
                   Leave Room
                 </button>
-                
-                {/* End Room button only for room creators */}
+                  {/* End Room button only for room creators */}
                 {isRoomCreator && (
                   <button
-                    onClick={() => {
-                      if(confirm("Are you sure you want to end this room? This will delete the room permanently and cannot be undone.")) {
-                        handleEndRoom();
-                      }
-                    }}
+                    onClick={() => setShowEndRoomConfirmation(true)}
+                    
                     className="px-4 py-2 bg-red-500/80 text-white/80 rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center w-full md:w-auto"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
