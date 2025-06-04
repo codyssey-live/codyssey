@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const baseURL = process.env.NODE_ENV === 'production' 
-  ? import.meta.env.BACKEND_URL
+  ? import.meta.env.VITE_BACKEND_URL
   : 'http://localhost:8080/api';
 
 // Create an axios instance with default configurations
