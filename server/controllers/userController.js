@@ -141,6 +141,8 @@ export const deleteAccount = async (req, res) => {
     // Clear authentication cookie
     res.cookie('token', '', { 
       httpOnly: true,
+      secure: true,
+      sameSite: 'None',
       expires: new Date(0) // Expires immediately
     });
     
