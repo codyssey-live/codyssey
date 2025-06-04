@@ -3,9 +3,11 @@ import { useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useRoom } from '../context/RoomContext';
 import socket from '../socket';
-import { emitVideoControl, setupVideoSyncListeners } from '../utils/videoSyncUtils';
+import { emitVideoSync, applySyncCommand, joinVideoRoom } from '../utils/lectureRoomVideoSync';
 import { loadLectureMessages, saveLectureMessages } from '../utils/lectureRoomChatPersistence';
 import { toast } from 'react-toastify';
+import { fetchAllNotes, createNote, deleteNote as deleteNoteAPI } from '../utils/noteApiUtils';
+import { format } from 'date-fns';
 
 // A small delay to ensure operations don't conflict
 const SYNC_DELAY = 300;
@@ -18,6 +20,7 @@ const LectureRoom = () => {
   const [newMessage, setNewMessage] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [userName, setUserName] = useState('User');
+  const [isLoadingNotes, setIsLoadingNotes] = useState(false);
   
   // State for note deletion confirmation
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -28,11 +31,18 @@ const LectureRoom = () => {
   const isRemoteUpdateRef = useRef(false);  // Flag to prevent infinite loops
   const videoIdRef = useRef(null);
   const hasJoinedVideoRoom = useRef(false);
-  const wasPlayingBeforeTabChange = useRef(false); // Track if video was playing before tab visibility change
-    // Add state for notes functionality
+  const wasPlayingBeforeTabChange = useRef(false);
+
+  // Add state for notes functionality
   const [notes, setNotes] = useState('');
   const [savedNotes, setSavedNotes] = useState([]);
   const [showNotesModal, setShowNotesModal] = useState(false);
+  const [videoTitle, setVideoTitle] = useState('');
+  
+  // Add state for notes sorting and pagination
+  const [sortCriteria, setSortCriteria] = useState('newest'); // 'newest', 'oldest', 'videoTitle'
+  const [currentPage, setCurrentPage] = useState(1);
+  const notesPerPage = 5; // Number of notes to display per page
   
   // Get username from localStorage   
   useEffect(() => {
@@ -59,13 +69,36 @@ const LectureRoom = () => {
       setIsConnected(true);
     }
     
+    // Fetch all notes for the user regardless of video
+    fetchUserNotes();
+    
     // Cleanup socket connection
     return () => {
       socket.off('connect');
     };
   }, [roomData.roomId, roomData.isRoomCreator]);
   
-  // Handle video URL from location state and load user-specific notes
+  // Fetch all notes for the current user
+  const fetchUserNotes = async () => {
+    setIsLoadingNotes(true);
+    try {
+      const response = await fetchAllNotes();
+      if (response.success) {
+        console.log('Fetched notes:', response.data);
+        setSavedNotes(response.data);
+      } else {
+        console.error('Failed to fetch notes:', response.message);
+        toast.error('Failed to load notes');
+      }
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+      toast.error('Error loading notes');
+    } finally {
+      setIsLoadingNotes(false);
+    }
+  };
+  
+  // Handle video URL from location state
   useEffect(() => {
     if (location.state && location.state.videoLink) {
       const link = location.state.videoLink;
@@ -75,15 +108,14 @@ const LectureRoom = () => {
       const videoId = extractVideoId(link);
       videoIdRef.current = videoId;
       
-      // Load saved notes for this video from localStorage - now user-specific
-      const storageKey = `video_notes_${link}_${userName}`;
-      const notesFromStorage = localStorage.getItem(storageKey);
-      if (notesFromStorage) {
-        setSavedNotes(JSON.parse(notesFromStorage));
-      } else {
-        // Try fallback to non-user-specific notes (for backward compatibility)
-        const legacyNotes = localStorage.getItem(`video_notes_${link}`);
-        if (legacyNotes) setSavedNotes(JSON.parse(legacyNotes));
+      // Try to get video title
+      if (playerRef.current && typeof playerRef.current.getVideoData === 'function') {
+        try {
+          const videoData = playerRef.current.getVideoData();
+          setVideoTitle(videoData.title);
+        } catch (error) {
+          console.error('Error getting video title:', error);
+        }
       }
       
       // If we're in a room and have a video ID, try to automatically join the video room
@@ -92,7 +124,7 @@ const LectureRoom = () => {
         setTimeout(() => joinVideoRoom(), 1000); // Small delay to ensure everything is initialized
       }
     }
-  }, [location, userName, roomData.inRoom, roomData.roomId, socket.connected]);
+  }, [location, roomData.inRoom, roomData.roomId, socket.connected]);
   
   // Extract YouTube video ID from URL
   const extractVideoId = (url) => {
@@ -156,7 +188,8 @@ const LectureRoom = () => {
       default: return 'Unknown error';
     }
   };
-      // Initialize the YouTube player
+  
+  // Initialize the YouTube player
   const initializePlayer = (videoId) => {
     if (!videoId) return;
     
@@ -263,6 +296,16 @@ const LectureRoom = () => {
           joinVideoRoom();
         }, 300);
       }
+    }
+    
+    // Try to get video title
+    try {
+      const videoData = event.target.getVideoData();
+      if (videoData && videoData.title) {
+        setVideoTitle(videoData.title);
+      }
+    } catch (err) {
+      console.error('Could not get video title', err);
     }
   };
   
@@ -591,7 +634,8 @@ const LectureRoom = () => {
   };
   // Reference for scrolling to bottom
   const messagesEndRef = useRef(null);
-    const scrollToBottom = () => {
+  
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
   
@@ -631,45 +675,50 @@ const LectureRoom = () => {
     setNewMessage('');
   };
   // Notes related functions
-  const saveNote = () => {
+  const saveNote = async () => {
     if (!notes.trim()) {
       toast.info('Please add some notes before saving.');
       return;
     }
     
-    if (!videoUrl) {
-      toast.warning('No video URL found. Please enter a YouTube URL first.');
-      return;
-    }
-    
     // Get current video time to link note to specific point in video
     let currentTime = 0;
+    let videoId = null;
+    
     if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
       currentTime = playerRef.current.getCurrentTime();
+      videoId = videoIdRef.current;
     }
     
-    const newNote = {
-      id: Date.now(),
-      text: notes,
-      date: new Date().toISOString(),
-      videoTime: currentTime, // Save the timestamp in the video
-      username: userName,     // Link to user
-      videoId: videoIdRef.current,
-      roomId: roomData.inRoom ? roomData.roomId : null
+    // Create the note object
+    const noteData = {
+      content: notes,
+      videoId: videoId,
+      videoTitle: videoTitle,
+      videoUrl: videoUrl,
+      videoTimestamp: currentTime
     };
     
-    const updatedNotes = [...savedNotes, newNote];
-    setSavedNotes(updatedNotes);
-    
     try {
-      // Store with both video URL and user to allow for personalized notes
-      const storageKey = `video_notes_${videoUrl}_${userName}`;
-      localStorage.setItem(storageKey, JSON.stringify(updatedNotes));      toast.success(`Note saved successfully at ${formatVideoTime(currentTime)}!`);
-      setNotes('');
+      const response = await createNote(noteData);
+      
+      if (response.success) {
+        // Update the local state with the new note
+        setSavedNotes(prevNotes => [response.data, ...prevNotes]);
+        
+        toast.success(videoId 
+          ? `Note saved successfully at ${formatVideoTime(currentTime)}!`
+          : 'Note saved successfully!');
+        
+        setNotes('');
+      } else {
+        toast.error(response.message || 'Failed to save note');
+      }
     } catch (error) {
       console.error("Error saving note:", error);
       toast.error('Failed to save note. Please try again.');
-    }  };
+    }
+  };
   
   // Format video time as mm:ss
   const formatVideoTime = (seconds) => {
@@ -684,18 +733,23 @@ const LectureRoom = () => {
     setShowDeleteConfirmation(true);
   };
   
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     // Only proceed if we have a valid note ID
     if (noteToDelete) {
-      const updatedNotes = savedNotes.filter(note => note.id !== noteToDelete);
-      setSavedNotes(updatedNotes);
-      
-      // Use the user-specific storage key
-      const storageKey = `video_notes_${videoUrl}_${userName}`;
-      localStorage.setItem(storageKey, JSON.stringify(updatedNotes));
-      
-      // Show success message
-      toast.success("Note deleted successfully!");
+      try {
+        const response = await deleteNoteAPI(noteToDelete);
+        
+        if (response.success) {
+          // Update local state
+          setSavedNotes(prevNotes => prevNotes.filter(note => note._id !== noteToDelete));
+          toast.success("Note deleted successfully!");
+        } else {
+          toast.error(response.message || 'Failed to delete note');
+        }
+      } catch (error) {
+        console.error('Error deleting note:', error);
+        toast.error('An error occurred while deleting note');
+      }
       
       // Reset state
       setNoteToDelete(null);
@@ -710,9 +764,10 @@ const LectureRoom = () => {
   };
   
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-  };  const handlePasteNotes = async () => {
+    return format(new Date(dateString), 'MMM d, yyyy h:mm a');
+  };
+  
+  const handlePasteNotes = async () => {
     try {
       const text = await navigator.clipboard.readText();
       if (text) setNotes(text);
@@ -721,6 +776,86 @@ const LectureRoom = () => {
     }
   };
   
+  // Jump to specific timestamp in video when clicking on a note that has a timestamp
+  const jumpToTimestamp = (videoUrl, timestamp) => {
+    if (!videoUrl || timestamp === undefined || timestamp === null) {
+      return;
+    }
+    
+    // Set the video URL if it's different from current
+    if (videoUrl !== videoUrl) {
+      setVideoUrl(videoUrl);
+      // Extract the video ID from the URL
+      const videoId = extractVideoId(videoUrl);
+      if (videoId) {
+        videoIdRef.current = videoId;
+      }
+    }
+    
+    // If player is ready, seek to the timestamp
+    if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
+      playerRef.current.seekTo(timestamp, true);
+      toast.info(`Jumped to ${formatVideoTime(timestamp)}`);
+    } else {
+      // If player isn't ready yet, we'll try initializing it first
+      const videoId = extractVideoId(videoUrl);
+      if (videoId) {
+        // Force initialize the player
+        const container = document.getElementById('youtube-player');
+        if (container) {
+          // Clear container first
+          container.innerHTML = '';
+          
+          // Create iframe directly if YouTube API isn't loaded
+          const iframe = document.createElement('iframe');
+          iframe.src = `https://www.youtube.com/embed/${videoId}?start=${Math.floor(timestamp)}&autoplay=1`;
+          iframe.width = '100%';
+          iframe.height = '600';
+          iframe.frameBorder = '0';
+          iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+          iframe.allowFullscreen = true;
+          
+          container.appendChild(iframe);
+          toast.info(`Jumped to ${formatVideoTime(timestamp)}`);
+        }
+      }
+    }
+  };
+
+  // Function to sort notes based on criteria
+  const sortNotes = (notes) => {
+    if (!Array.isArray(notes)) return [];
+    
+    switch (sortCriteria) {
+      case 'newest':
+        return [...notes].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      case 'oldest':
+        return [...notes].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      case 'videoTitle':
+        return [...notes].sort((a, b) => {
+          const titleA = a.videoTitle?.toLowerCase() || '';
+          const titleB = b.videoTitle?.toLowerCase() || '';
+          return titleA.localeCompare(titleB);
+        });
+      default:
+        return notes;
+    }
+  };
+
+  // Get current notes for pagination
+  const indexOfLastNote = currentPage * notesPerPage;
+  const indexOfFirstNote = indexOfLastNote - notesPerPage;
+  const sortedNotes = sortNotes(savedNotes);
+  const currentNotes = sortedNotes.slice(indexOfFirstNote, indexOfLastNote);
+  
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Reset to first page when sort criteria changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sortCriteria]);
+
   // Handle video sync messages from server
   useEffect(() => {
     if (!socket.connected || !roomData.inRoom) {
@@ -1496,10 +1631,12 @@ const LectureRoom = () => {
                   style={{ height: '250px' }}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Take notes for this video..."
+                  placeholder="Take notes for this video or just general notes..."
                 ></textarea>
               </div>
-            </div>            {/* Chat Section - Fixed height with scrollable content matching Room page's chat style */}
+            </div>
+
+            {/* Chat Section */}
             <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/20 flex flex-col" style={{ height: "500px" }}>
               <div className="p-4 border-b border-white/20 flex justify-between items-center">
                 <div>
@@ -1586,7 +1723,7 @@ const LectureRoom = () => {
         </div>
       </div>
 
-      {/* Modal for viewing saved notes - remains unchanged */}
+      {/* Modal for viewing saved notes - Updated with sorting and pagination */}
       {showNotesModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-3xl max-h-[80vh] overflow-hidden flex flex-col border border-white/20">
@@ -1599,37 +1736,171 @@ const LectureRoom = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
+            
+            {/* Sorting options */}
+            <div className="px-4 pt-3 pb-2 border-b border-white/20 flex flex-wrap gap-2">
+              <span className="text-white/70 mr-2 my-auto">Sort by:</span>
+              <button 
+                onClick={() => setSortCriteria('newest')}
+                className={`px-3 py-1 text-sm rounded-full border ${sortCriteria === 'newest' 
+                  ? 'bg-[#94C3D2] text-white border-[#94C3D2]' 
+                  : 'bg-transparent text-white/70 border-white/20 hover:bg-white/10'}`}
+              >
+                Newest
+              </button>
+              <button 
+                onClick={() => setSortCriteria('oldest')}
+                className={`px-3 py-1 text-sm rounded-full border ${sortCriteria === 'oldest' 
+                  ? 'bg-[#94C3D2] text-white border-[#94C3D2]' 
+                  : 'bg-transparent text-white/70 border-white/20 hover:bg-white/10'}`}
+              >
+                Oldest
+              </button>
+              <button 
+                onClick={() => setSortCriteria('videoTitle')}
+                className={`px-3 py-1 text-sm rounded-full border ${sortCriteria === 'videoTitle' 
+                  ? 'bg-[#94C3D2] text-white border-[#94C3D2]' 
+                  : 'bg-transparent text-white/70 border-white/20 hover:bg-white/10'}`}
+              >
+                Video Title
+              </button>
+              <div className="ml-auto text-right text-white/70 text-sm">
+                {savedNotes.length} note{savedNotes.length !== 1 ? 's' : ''} total
+              </div>
+            </div>
+            
             <div 
               className="p-4 overflow-y-auto flex-1" 
               style={{ 
-                maxHeight: '60vh', 
+                maxHeight: 'calc(60vh - 40px)', 
                 overflowY: 'auto',
                 scrollbarWidth: 'thin',
                 scrollbarColor: '#d1d5db #f3f4f6'
               }}
             >
-              {savedNotes.length > 0 ? (
-                <ul className="space-y-4">
-                  {savedNotes.map(note => (
-                    <li key={note.id} className="bg-white/10 p-4 rounded-lg border border-white/20">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs text-white/80 font-medium">{formatDate(note.date)}</span>
-                        <button
-                          onClick={() => deleteNote(note.id)}
-                          className="bg-red-900/50 text-red-200 border border-red-600/30 px-3 py-1 rounded font-medium hover:bg-red-900/70 transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                      <p className="whitespace-pre-wrap text-white/95 font-medium">{note.text}</p>
-                    </li>
-                  ))}
-                </ul>
+              {isLoadingNotes ? (
+                <div className="flex justify-center items-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#94C3D2]"></div>
+                  <span className="ml-2 text-white/80">Loading notes...</span>
+                </div>
+              ) : savedNotes.length > 0 ? (
+                <>
+                  <ul className="space-y-4">
+                    {currentNotes.map(note => (
+                      <li key={note._id} className="bg-white/10 p-4 rounded-lg border border-white/20">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="text-xs text-white/70">
+                            {formatDate(note.createdAt)}
+                          </div>
+                          <div>
+                            {note.videoUrl && note.videoTimestamp > 0 && (
+                              <button
+                                onClick={() => {
+                                  jumpToTimestamp(note.videoUrl, note.videoTimestamp);
+                                  setShowNotesModal(false);
+                                }}
+                                className="bg-blue-900/50 text-blue-200 border border-blue-600/30 px-3 py-1 rounded font-medium hover:bg-blue-900/70 transition-colors mr-2"
+                              >
+                                Jump to {formatVideoTime(note.videoTimestamp)}
+                              </button>
+                            )}
+                            <button
+                              onClick={() => deleteNote(note._id)}
+                              className="bg-red-900/50 text-red-200 border border-red-600/30 px-3 py-1 rounded font-medium hover:bg-red-900/70 transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                        {note.videoTitle && (
+                          <div className="mb-2 pb-2 border-b border-white/10">
+                            <p className="text-xs font-medium text-[#94C3D2]">Video: {note.videoTitle}</p>
+                          </div>
+                        )}
+                        <p className="whitespace-pre-wrap text-white/95 font-medium">{note.content}</p>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  {/* Pagination */}
+                  {savedNotes.length > notesPerPage && (
+                    <div className="flex justify-center mt-6 gap-2">
+                      <button
+                        onClick={() => paginate(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className={`px-3 py-1.5 rounded border ${
+                          currentPage === 1
+                            ? 'bg-white/5 text-white/40 border-white/10 cursor-not-allowed'
+                            : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/20'
+                        }`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      
+                      {/* Page numbers */}
+                      {Array.from({ length: Math.ceil(savedNotes.length / notesPerPage) }).map((_, index) => {
+                        // Show current page, first, last, and pages around current page
+                        const pageNumber = index + 1;
+                        const isCurrentPage = pageNumber === currentPage;
+                        
+                        // Show all page numbers if there are only a few, otherwise use ellipsis
+                        const totalPages = Math.ceil(savedNotes.length / notesPerPage);
+                        
+                        if (totalPages <= 7 || 
+                            pageNumber === 1 || 
+                            pageNumber === totalPages || 
+                            Math.abs(pageNumber - currentPage) <= 1) {
+                          return (
+                            <button
+                              key={pageNumber}
+                              onClick={() => paginate(pageNumber)}
+                              className={`px-3 py-1.5 rounded border ${
+                                isCurrentPage
+                                  ? 'bg-[#94C3D2] text-white border-[#94C3D2]'
+                                  : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/20'
+                              }`}
+                            >
+                              {pageNumber}
+                            </button>
+                          );
+                        } 
+                        
+                        // Show ellipsis, but only once between page numbers
+                        if (
+                          (pageNumber === 2 && currentPage > 3) || 
+                          (pageNumber === totalPages - 1 && currentPage < totalPages - 2)
+                        ) {
+                          return <span key={pageNumber} className="px-2 py-1.5 text-white/50">...</span>;
+                        }
+                        
+                        // Hide other page numbers
+                        return null;
+                      })}
+                      
+                      <button
+                        onClick={() => paginate(currentPage + 1)}
+                        disabled={currentPage === Math.ceil(savedNotes.length / notesPerPage)}
+                        className={`px-3 py-1.5 rounded border ${
+                          currentPage === Math.ceil(savedNotes.length / notesPerPage)
+                            ? 'bg-white/5 text-white/40 border-white/10 cursor-not-allowed'
+                            : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/20'
+                        }`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
-                <p className="text-white/60 text-center">No notes saved for this video yet.</p>
+                <p className="text-white/60 text-center">You don't have any saved notes yet.</p>
               )}
             </div>
-          </div>        </div>
+          </div>
+        </div>
       )}
       
       {/* Delete Confirmation Modal */}
