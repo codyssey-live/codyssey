@@ -3,7 +3,7 @@ import { Resend } from 'resend';
 import dotenv from 'dotenv';
 
 // Ensure environment variables are loaded
-dotenv.config();
+dotenv.config({ path: path.resolve('.', '.env') });
 
 const router = express.Router();
 
