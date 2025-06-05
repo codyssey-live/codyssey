@@ -93,19 +93,14 @@ function App() {  return (
                   <UserProfile />
                 </ProtectedRoute>
               } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } />
+              
               <Route path="/room/:roomId" element={
                 <ProtectedRoute>
                   <Room />
                 </ProtectedRoute>
               } />
               
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
+              
             </Routes>
           </div>
           <Footer />
