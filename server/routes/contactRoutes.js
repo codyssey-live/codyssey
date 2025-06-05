@@ -1,6 +1,7 @@
 import express from 'express';
 import { Resend } from 'resend';
 import dotenv from 'dotenv';
+import path from 'path';
 
 // Ensure environment variables are loaded
 dotenv.config({ path: path.resolve('.', '.env') });
