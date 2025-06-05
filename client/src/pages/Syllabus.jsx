@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Navbar from '../components/Navbar';
 import { Link, useParams } from 'react-router-dom';
 import { format } from "date-fns";
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { toast } from "react-toastify";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import apiClient from '../utils/apiClient';
 import { fetchSyllabus, saveSyllabus, deleteStudyDay } from '../utils/syllabusApiUtils';
 import { useRoom } from '../context/RoomContext';
@@ -63,13 +62,93 @@ const calendarStyles = `
 
 // Difficulty badge color mapping - updated for new theme
 const difficultyColors = {
-  Easy: "bg-green-900/50 text-green-200 border border-green-600/30",
+  Easy: "bg-green-900/50 text-white/90 border border-green-600/30",
   Medium: "bg-yellow-900/50 text-yellow-200 border border-yellow-600/30",
   Hard: "bg-red-900/50 text-red-200 border border-red-600/30"
 };
 
+// Custom Notification Component
+const Notification = ({ id, message, type, onDismiss }) => {
+  // Auto-dismiss after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onDismiss(id);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [id, onDismiss]);
+  
+  // Set colors based on notification type
+  const getBgColor = () => {
+    switch (type) {
+      case 'success': return 'bg-green-900/60 border-green-500/60';
+      case 'error': return 'bg-red-900/70 border-red-500/50';
+      case 'warning': return 'bg-yellow-900/70 border-yellow-500/50';
+      default: return 'bg-gray-900/70 border-gray-500/50';
+    }
+  };
+  
+  const getIconColor = () => {
+    switch (type) {
+      case 'success': return 'text-white/90';
+      case 'error': return 'text-white/90';
+      case 'warning': return 'text-white/90';
+      case 'info': return 'text-white/90';
+      default: return 'text-white/90';
+    }
+  };
+  
+  // Icon based on notification type
+  const renderIcon = () => {
+    const iconClass = `h-5 w-5 ${getIconColor()} mr-2`;
+    switch (type) {
+      case 'success':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+        );
+      case 'error':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+        );
+      case 'warning':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+  
+  return (
+    <motion.div 
+      className={`flex items-center px-4 py-3 rounded-lg shadow-lg border ${getBgColor()} backdrop-blur-lg`}
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 50 }}
+      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+    >
+      {renderIcon()}
+      <p className="text-white/90 font-medium">{message}</p>
+      <button 
+        onClick={() => onDismiss(id)} 
+        className="ml-4 text-white/70 hover:text-white transition-colors"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </motion.div>
+  );
+};
+
+// Main component
 const Syllabus = () => {
-  const { userId: paramUserId } = useParams(); // Get userId from URL params if available
+  const { userId: paramUserId } = useParams();
   const { roomData } = useRoom();
   const [syllabusDays, setSyllabusDays] = useState([]);
   const [selectedDay, setSelectedDay] = useState(null);
@@ -79,6 +158,26 @@ const Syllabus = () => {
   const [isViewingOtherUserSyllabus, setIsViewingOtherUserSyllabus] = useState(false);
   const [syllabusOwnerId, setSyllabusOwnerId] = useState(null);
   
+  // Notification system state
+  const [notifications, setNotifications] = useState([]);
+  const notificationIdCounter = useRef(0);
+  
+  // Add notification function
+  const addNotification = (message, type = 'success') => {
+    const newId = notificationIdCounter.current++;
+    setNotifications(prevNotifications => [
+      ...prevNotifications, 
+      { id: newId, message, type }
+    ]);
+  };
+  
+  // Dismiss notification function
+  const dismissNotification = (id) => {
+    setNotifications(prevNotifications => 
+      prevNotifications.filter(notification => notification.id !== id)
+    );
+  };
+
   // Pagination states
   const [problemsPage, setProblemsPage] = useState(1);
   const [resourcesPage, setResourcesPage] = useState(1);
@@ -250,7 +349,10 @@ const Syllabus = () => {
   }, [syllabusOwnerId]);
 
   const handleAddDay = () => {
-    if (!newDayTitle || !newDayDate) return;
+    if (!newDayTitle || !newDayDate) {
+      addNotification("Please provide a title and date for the study day", "error");
+      return;
+    }
     
     const newDay = {
       id: syllabusDays.length + 1,
@@ -266,10 +368,15 @@ const Syllabus = () => {
     setNewDayDescription("");
     setNewDayDate(new Date());
     setShowAddDayModal(false);
+    
+    addNotification("Study day added successfully!");
   };
 
   const handleEditDay = () => {
-    if (!editDayTitle || !editDayDate) return;
+    if (!editDayTitle || !editDayDate) {
+      addNotification("Please provide a title and date", "error");
+      return;
+    }
     
     const updatedDays = syllabusDays.map(day => 
       day.id === editDayId 
@@ -285,6 +392,7 @@ const Syllabus = () => {
     }
     
     setShowEditDayModal(false);
+    addNotification("Study day updated successfully!");
   };
 
   const openEditDayModal = (day) => {
@@ -297,7 +405,7 @@ const Syllabus = () => {
 
   const handleDeleteDay = async (dayId) => {
     if (syllabusDays.length <= 1) {
-      toast.warning("Cannot delete the only study day. Please add a new day before deleting this one.");
+      addNotification("Cannot delete the only study day. Please add a new day before deleting this one.", "warning");
       return;
     }
     
@@ -331,9 +439,12 @@ const Syllabus = () => {
         const newIndex = Math.max(0, activeTabIndex - (activeTabIndex >= syllabusDays.findIndex(d => d.id === dayId) ? 1 : 0));
         setActiveTabIndex(newIndex);
       }
+      
+      // Show success message immediately after updating state
+      addNotification("Study day deleted successfully!");
     } catch (error) {
       console.error('Error deleting study day:', error);
-      toast.error(`Failed to delete study day: ${error.message}`);
+      addNotification(`Failed to delete study day: ${error.message}`, "error");
     } finally {
       // Close the confirmation modal regardless of success/failure
       setShowDeleteConfirmModal(false);
@@ -347,7 +458,15 @@ const Syllabus = () => {
     setShowDeleteConfirmModal(true);
   };
   const handleAddProblem = () => {
-    if (!selectedDay || !newProblemTitle || !newProblemUrl) return;
+    if (!selectedDay) {
+      addNotification("No study day selected", "error");
+      return;
+    }
+    
+    if (!newProblemTitle || !newProblemUrl) {
+      addNotification("Please provide a title and URL for the problem", "error");
+      return;
+    }
     
     const newProblem = {
       id: Date.now(),
@@ -355,7 +474,7 @@ const Syllabus = () => {
       difficulty: newProblemDifficulty,
       platform: newProblemPlatform,
       url: newProblemUrl,
-      dateAdded: new Date(), // Add current date to ensure it appears in recent problems
+      dateAdded: new Date(),
       status: 'unsolved',
     };
     
@@ -370,16 +489,26 @@ const Syllabus = () => {
     setNewProblemTitle("");
     setNewProblemUrl("");
     setShowAddProblemModal(false);
+    
+    addNotification("Problem added successfully!");
   };
 
   const handleAddResource = () => {
-    if (!selectedDay || !newResourceTitle || !newResourceUrl) return;
+    if (!selectedDay) {
+      addNotification("No study day selected", "error");
+      return;
+    }
+    
+    if (!newResourceTitle || !newResourceUrl) {
+      addNotification("Please provide a title and URL for the video", "error");
+      return;
+    }
     
     const newResource = {
       id: Date.now(),
       title: newResourceTitle,
-      type: 'single', // Using 'single' for database compatibility
-      displayType: 'video', // Add a display type for frontend filtering
+      type: 'single',
+      displayType: 'video',
       url: newResourceUrl,
     };
     
@@ -394,6 +523,8 @@ const Syllabus = () => {
     setNewResourceTitle("");
     setNewResourceUrl("");
     setShowAddResourceModal(false);
+    
+    addNotification("Video added successfully!");
   };
 
   const handleDeleteProblem = (problemId) => {
@@ -401,7 +532,6 @@ const Syllabus = () => {
     
     const updatedDays = syllabusDays.map(day => {
       if (day.id === selectedDay.id) {
-        // Filter problems, checking both id and _id properties
         const filteredProblems = day.problems.filter(p => 
           String(p.id) !== String(problemId) && String(p._id) !== String(problemId)
         );
@@ -421,6 +551,8 @@ const Syllabus = () => {
       ...selectedDay, 
       problems: updatedProblems
     });
+    
+    addNotification("Problem deleted successfully!");
   };
 
   const handleDeleteResource = (resourceId) => {
@@ -428,7 +560,6 @@ const Syllabus = () => {
     
     const updatedDays = syllabusDays.map(day => {
       if (day.id === selectedDay.id) {
-        // Filter resources, checking both id and _id properties
         const filteredResources = day.resources.filter(r => 
           String(r.id) !== String(resourceId) && String(r._id) !== String(resourceId)
         );
@@ -448,17 +579,19 @@ const Syllabus = () => {
       ...selectedDay, 
       resources: updatedResources
     });
+    
+    addNotification("Video deleted successfully!");
   };
 
   const handleSaveSyllabus = async () => {
     try {
       if (!userId) {
-        toast.error("User ID not available. Please log in again.");
+        addNotification("User ID not available. Please log in again.", "error");
         return;
       }
       
-      // Show loading indicator or disable button here if needed
-      console.log("Saving syllabus for user:", userId, syllabusDays);
+      // Show immediate feedback that saving is in progress
+      
       
       // Add userId to each day to ensure proper ownership
       const daysWithUserId = syllabusDays.map(day => ({
@@ -493,13 +626,13 @@ const Syllabus = () => {
           }
         }
         
-        toast.success("Syllabus saved successfully!");
+        addNotification("Syllabus saved successfully!");
       } else {
         throw new Error(response.message || "Unknown error saving syllabus");
       }
     } catch (error) {
       console.error("Error saving syllabus:", error);
-      toast.error(`Failed to save syllabus: ${error.message}`);
+      addNotification(`Failed to save syllabus: ${error.message}`, "error");
     }
   };
 
@@ -601,6 +734,22 @@ const Syllabus = () => {
       <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
         <Navbar />
         
+        {/* Notification container with AnimatePresence for smooth transitions */}
+        <div className="fixed top-20 right-4 z-50 w-72 space-y-2 pointer-events-none">
+          <AnimatePresence>
+            {notifications.map(notification => (
+              <div key={notification.id} className="pointer-events-auto">
+                <Notification 
+                  id={notification.id} 
+                  message={notification.message} 
+                  type={notification.type}
+                  onDismiss={dismissNotification}
+                />
+              </div>
+            ))}
+          </AnimatePresence>
+        </div>
+        
         <div className="container mx-auto px-4 py-8 relative z-10">
           {/* Header Section */}
           <motion.div 
@@ -624,7 +773,7 @@ const Syllabus = () => {
                     style={{ textShadow: "0 0 10px rgba(255, 255, 255, 0.3)" }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-white/90" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                     Save Syllabus
                   </button>
@@ -1050,7 +1199,7 @@ const Syllabus = () => {
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                     </div>
                     <input
@@ -1307,107 +1456,6 @@ const Syllabus = () => {
                     className="w-full bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all py-2.5 rounded-lg text-white font-medium shadow-lg"
                   >
                     Add Video
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-
-        {/* Edit Day Modal */}
-        {showEditDayModal && (
-          <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <motion.div 
-              className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Edit Study Day</h3>
-                <button
-                  onClick={() => setShowEditDayModal(false)}
-                  className="text-white/80 hover:text-white transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="space-y-5">
-                <div>
-                  <label htmlFor="edit-day-title" className="block text-sm font-medium text-[#94C3D2] mb-1.5">
-                    Title
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <input
-                      id="edit-day-title"
-                      type="text"
-                      placeholder="e.g., Array Fundamentals"
-                      className="w-full pl-10 pr-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
-                      value={editDayTitle}
-                      onChange={(e) => setEditDayTitle(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label htmlFor="edit-day-description" className="block text-sm font-medium text-[#94C3D2] mb-1.5">
-                    Description
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2z" />
-                      </svg>
-                    </div>
-                    <input
-                      id="edit-day-description"
-                      type="text"
-                      placeholder="A short description of the topic"
-                      className="w-full pl-10 pr-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
-                      value={editDayDescription}
-                      onChange={(e) => setEditDayDescription(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#94C3D2] mb-1.5">
-                    Date
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <input
-                      type="date"
-                      id="edit-day-date"
-                      className="w-full pl-10 pr-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 appearance-none"
-                      value={editDayDate.toISOString().split('T')[0]}
-                      onChange={(e) => setEditDayDate(new Date(e.target.value))}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 mt-6">
-                  <button
-                    type="button"
-                    onClick={() => setShowEditDayModal(false)}
-                    className="px-4 py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleEditDay}
-                    className="w-full bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all py-2.5 rounded-lg text-white font-medium shadow-lg"
-                  >
-                    Save Changes
                   </button>
                 </div>
               </div>
