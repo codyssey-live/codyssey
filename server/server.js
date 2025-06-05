@@ -12,6 +12,7 @@ import userRoutes from './routes/userRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import syllabusRoutes from './routes/syllabusRoutes.js';
 import noteRoutes from './routes/noteRoutes.js';
+import contactRoutes from './routes/contactRoutes.js';
 
 // Load environment variables
 dotenv.config({ path: path.resolve('.', '.env') });
@@ -53,6 +54,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/syllabus', syllabusRoutes);
 app.use('/api/notes', noteRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Socket.IO connection handling
 const connectedUsers = new Map(); // Store connected users with their socket IDs

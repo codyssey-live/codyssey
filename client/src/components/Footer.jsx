@@ -64,9 +64,27 @@ const Footer = () => {
     setSubmitError('');
     
     try {
-      // Here you would typically send the form data to your backend API
-      // For now, we'll simulate a successful submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Make API call to the contact endpoint
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: contactForm.name,
+          email: contactForm.email,
+          subject: contactForm.subject || 'Contact Form Submission',
+          message: contactForm.message
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Something went wrong');
+      }
+      
+      console.log('Contact form submission successful:', data);
       
       // Success!
       setSubmitSuccess(true);
@@ -87,7 +105,7 @@ const Footer = () => {
       
     } catch (error) {
       console.error('Error submitting contact form:', error);
-      setSubmitError('Failed to send message. Please try again later.');
+      setSubmitError(error.message || 'Failed to send message. Please try again later.');
     } finally {
       setIsSubmitting(false);
     }
