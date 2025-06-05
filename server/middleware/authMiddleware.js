@@ -4,8 +4,19 @@ import User from '../models/User.js';
 // Protect routes - verify token middleware
 export const protect = async (req, res, next) => {
   try {
-    // Get token from cookies
-    const token = req.cookies.token;
+    // Try to get token from multiple sources
+    let token;
+    
+    // Check for token in cookies first
+    const cookieToken = req.cookies.token;
+    if (cookieToken) {
+      token = cookieToken;
+    }
+    
+    // If no cookie token, check for Authorization header
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
     
     // Check if token exists
     if (!token) {

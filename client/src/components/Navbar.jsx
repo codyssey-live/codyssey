@@ -103,17 +103,32 @@ const Navbar = () => {
       setSyllabusPath('/syllabus');
     }
   }, [roomData]);
-
   const handleSignOut = async () => {
     try {
       // Call signout endpoint to clear the cookie
-      await apiClient.post('/auth/signout');
+      const response = await apiClient.post('/auth/signout');
+      
+      // Clear localStorage items related to authentication
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      
+      // Optionally clear other user-related data
+      localStorage.removeItem('roomInfo');
+      localStorage.removeItem('roomUsername');
       
       // Close the dropdown and redirect to home
       setIsDropdownOpen(false);
       navigate('/');
     } catch (error) {
       console.error('Sign out failed:', error);
+      
+      // Even if the API call fails, try to clear local storage
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      
+      // Still redirect to home
+      setIsDropdownOpen(false);
+      navigate('/');
     }
   };
   

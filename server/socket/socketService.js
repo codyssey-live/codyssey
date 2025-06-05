@@ -245,9 +245,8 @@ export const initSocket = (server) => {
         socket.to(roomId).emit('receive-message', messageData);
       }
     });
-    
-    // SIMPLIFIED - Allow any user to end the room
-    socket.on('end-room', async ({ roomId, username, deleteCompletely = true }) => {
+      // Handle room-end requests with proper owner verification
+    socket.on('end-room', async ({ roomId, username, userId, deleteCompletely = true }) => {
       console.log(`Request to end room ${roomId} by ${username} (socket ${socket.id})`);
       
       if (!roomId || !activeRooms.has(roomId)) {
@@ -259,14 +258,30 @@ export const initSocket = (server) => {
       }
       
       try {
-        // Always delete the room from the database
-        const result = await Room.findOneAndDelete({ roomId });
+        // Find the room first to verify ownership
+        const room = await Room.findOne({ roomId });
         
-        if (!result) {
-          console.log(`No room found with ID ${roomId} in database to delete`);
-        } else {
-          console.log(`Room ${roomId} completely deleted from database`);
+        if (!room) {
+          socket.emit('end-room-error', {
+            success: false,
+            message: 'Room not found in database'
+          });
+          return;
         }
+        
+        // Verify that the requesting user is the creator of the room
+        if (!userId || room.inviterId.toString() !== userId.toString()) {
+          console.log(`Unauthorized attempt to end room by user ${userId}, owner is ${room.inviterId}`);
+          socket.emit('end-room-error', {
+            success: false,
+            message: 'You are not authorized to end this room'
+          });
+          return;
+        }
+        
+        // Delete the room after ownership verification
+        await Room.findOneAndDelete({ roomId });
+        console.log(`Room ${roomId} completely deleted from database`)
         
         // Notify all users in the room
         io.to(roomId).emit('room-ended', {

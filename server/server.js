@@ -33,7 +33,7 @@ app.use(cookieParser());
 
 // 3. Then setup CORS with credentials support
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://codyssey-lovat.vercel.app', 'https://codyssey.live'],
+  origin: ['https://codyssey.live', 'http://localhost:5173', 'https://codyssey-lovat.vercel.app'],
   credentials: true,
 }));
 

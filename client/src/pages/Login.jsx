@@ -37,16 +37,26 @@ const Login = () => {
     setLoading(true);
     setError(null);
     
-    try {
-      // Use apiClient with credentials to allow cookie setting
+    try {      // Use apiClient with credentials to allow cookie setting
       const response = await apiClient.post('/auth/login', { 
         email: formData.email, 
         password: formData.password 
       });
       
-      // Store user name in localStorage
-      if (response.data && response.data.user && response.data.user.name) {
-        localStorage.setItem('userName', response.data.user.name);
+      // Store user name and ID in localStorage
+      if (response.data && response.data.user) {
+        if (response.data.user.name) {
+          localStorage.setItem('userName', response.data.user.name);
+        }
+        
+        if (response.data.user.id) {
+          localStorage.setItem('userId', response.data.user.id);
+        }
+        
+        // Store the token in localStorage for client-side authentication
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
       }
       
       // Clear any existing room info to prevent automatic room creation on login

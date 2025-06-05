@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useRoom } from '../context/RoomContext';
 import socket from '../socket'; // Import socket directly
 import { loadMessages, saveMessages, clearMessages } from '../utils/chatPersistence';
+import apiClient from '../utils/apiClient'; // Import the API client
 
 const Room = () => {  const { roomId } = useParams();
   const navigate = useNavigate();
@@ -101,10 +102,12 @@ const Room = () => {  const { roomId } = useParams();
     // Redirect to dashboard
     navigate('/dashboard');
     toast.info('You have left the room', { position: "top-center" });
-  };
-  // Handle room ending - modified to delete the room directly
+  };  // Handle room ending - modified to delete the room directly
   const handleEndRoom = () => {
     console.log(`Ending room ${roomId} (with deletion)`);
+    
+    // Get the current user ID from localStorage
+    const userId = localStorage.getItem('userId');
     
     // Emit an end-room event to inform all participants
     if (socketRef.current) {
@@ -113,6 +116,7 @@ const Room = () => {  const { roomId } = useParams();
       socketRef.current.emit('end-room', { 
         roomId, 
         username: userName,
+        userId: userId, // Include userId to verify room ownership on server
         deleteCompletely: true // Always delete completely when ending the room
       });
       
@@ -214,18 +218,17 @@ const Room = () => {  const { roomId } = useParams();
           // Check if user is the creator from roomInfo OR from roomCreatorHistory
         const creatorHistory = JSON.parse(localStorage.getItem('roomCreatorHistory') || '{}');
         const wasCreator = creatorHistory[roomId] === true;
+          // Get the current user ID
+        const currentUserId = localStorage.getItem('userId');
         
-        // Set isRoomCreator based on current roomInfo OR previous history as creator
-        const isCreator = !!parsedInfo.isCreator || wasCreator;
+        // Room creator is determined by comparing current user ID with the room inviterId
+        const isCreator = parsedInfo.inviterId === currentUserId;
         setIsRoomCreator(isCreator);
-        console.log("User is room creator:", isCreator);
+        console.log("User is room creator:", isCreator, "Current user ID:", currentUserId, "Room inviter ID:", parsedInfo.inviterId);
         
-        // If the user is a creator based on history but not reflected in roomInfo, update roomInfo
-        if (wasCreator && !parsedInfo.isCreator) {
-          console.log("Restoring creator status from history to roomInfo");
-          parsedInfo.isCreator = true;
-          localStorage.setItem('roomInfo', JSON.stringify(parsedInfo));
-        }
+        // Update roomInfo with the correct creator status based on user ID
+        parsedInfo.isCreator = isCreator;
+        localStorage.setItem('roomInfo', JSON.stringify(parsedInfo));
         
         // If we have inviterId, update context
         if (parsedInfo.inviterId) {
@@ -699,6 +702,49 @@ const Room = () => {  const { roomId } = useParams();
   const isCurrentUser = (messageUser) => {
     return messageUser === userName;
   };
+
+  // Add function to verify room creator status from server
+  const verifyRoomCreatorStatus = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        console.log('Cannot verify room creator status: no user ID available');
+        setIsRoomCreator(false);
+        return;
+      }
+      
+      // Call the API to get room details
+      const response = await apiClient.get(`/rooms/validate/${roomId}`);
+      
+      if (response.data.success) {
+        const { inviterId } = response.data.data;
+        
+        // Check if current user is the room creator by comparing IDs
+        const isCreator = userId === inviterId.toString();
+        console.log('Room creator verification:', { userId, inviterId, isCreator });
+        
+        // Update the state and localStorage
+        setIsRoomCreator(isCreator);
+        
+        // Update room info in localStorage
+        const roomInfo = localStorage.getItem('roomInfo');
+        if (roomInfo) {
+          const parsedInfo = JSON.parse(roomInfo);
+          parsedInfo.isCreator = isCreator;
+          parsedInfo.inviterId = inviterId;
+          localStorage.setItem('roomInfo', JSON.stringify(parsedInfo));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to verify room creator status:', error);
+      setIsRoomCreator(false);
+    }
+  };
+
+  // Call the verification when the component mounts
+  useEffect(() => {
+    verifyRoomCreatorStatus();
+  }, [roomId]); // Re-verify when room ID changes
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">

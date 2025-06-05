@@ -70,9 +70,10 @@ export const validateRoom = async (req, res) => {
 export const endRoom = async (req, res) => {
   try {
     const { roomId } = req.params;
+    const userId = req.user._id;
     
-    // Always find and delete the room
-    const room = await Room.findOneAndDelete({ roomId });
+    // Find the room first to check ownership
+    const room = await Room.findOne({ roomId });
     
     if (!room) {
       return res.status(404).json({
@@ -80,6 +81,17 @@ export const endRoom = async (req, res) => {
         message: 'Room not found'
       });
     }
+    
+    // Check if the current user is the creator of the room
+    if (room.inviterId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to end this room'
+      });
+    }
+    
+    // Delete the room after ownership verification
+    await Room.findOneAndDelete({ roomId });
     
     return res.status(200).json({
       success: true,

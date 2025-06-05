@@ -12,6 +12,7 @@ import { fetchCurrentUser } from "../utils/authUtils";
 import { fetchUserSyllabusProblems } from "../utils/syllabusApiUtils";
 import axios from "axios";
 import { motion } from "framer-motion";
+import apiClient from "../utils/apiClient"; // Import our configured axios instance
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -193,10 +194,14 @@ const Dashboard = () => {
   const mockUserId = "user123";
 
   const BASE_URL = window.location.origin;
-
   // IMPORTANT DEBUG: Add console logs to track the flow
   const handleCreateRoomClick = () => {
     console.log("Create Room button clicked");
+    
+    // Log authentication state for debugging
+    const token = localStorage.getItem('token');
+    console.log("Auth token present:", !!token);
+    
     setShowInviteModal(true);
   };
 
@@ -204,14 +209,11 @@ const Dashboard = () => {
     try {
       setCreatingRoom(true);
 
-      try {
-        // Use axios with credentials included
-        const response = await axios.post(
-          "/api/rooms/create",
-          {},
-          {
-            withCredentials: true,
-          }
+      try {        // Use our apiClient instead of axios directly to ensure credentials are sent
+        // apiClient already has withCredentials set to true globally
+        const response = await apiClient.post(
+          "/rooms/create",
+          {} // Empty body
         );
 
         const data = response.data;
@@ -223,9 +225,7 @@ const Dashboard = () => {
           setRoomId(newRoomId);
           setRoomCreated(true);
 
-          const userId = localStorage.getItem("userId");
-
-          // Make sure to include all required room info
+          const userId = localStorage.getItem("userId");          // Make sure to include all required room info
           localStorage.setItem(
             "roomInfo",
             JSON.stringify({
@@ -236,6 +236,13 @@ const Dashboard = () => {
               userId: userId,
             })
           );
+
+          // Also store this room ID in a separate mapping of rooms created by this user
+          const userCreatedRooms = JSON.parse(
+            localStorage.getItem("userCreatedRooms") || "{}"
+          );
+          userCreatedRooms[newRoomId] = userId;
+          localStorage.setItem("userCreatedRooms", JSON.stringify(userCreatedRooms));
 
           // Also add to validated rooms cache
           const validatedRooms = JSON.parse(
@@ -316,13 +323,16 @@ const Dashboard = () => {
     );
     window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
   };
-
   const handleJoinRoom = async (e) => {
     e.preventDefault();
     if (!joinLink) {
       setJoinError("Please enter a room code");
       return;
     }
+    
+    // Log authentication state for debugging
+    const token = localStorage.getItem('token');
+    console.log("Join Room - Auth token present:", !!token);
 
     try {
       // Extract room ID - either directly entered or from a URL
@@ -353,29 +363,37 @@ const Dashboard = () => {
       );
       const wasRoomCreator = roomCreatorHistory[roomIdToJoin] === true;
 
-      try {
-        // Validate room before joining
-        const response = await axios.get(`/api/rooms/validate/${roomIdToJoin}`);
+      try {        // Validate room before joining - use apiClient for consistent auth handling
+        const response = await apiClient.get(`/rooms/validate/${roomIdToJoin}`);
 
         if (response.data.success) {
           console.log("Room validation successful");
 
           // Get inviterId from the response
           const inviterId = response.data.data.inviterId;
-          
-          // Check if this user is the original creator by ID match
+            // Check if this user is the original creator by comparing user ID with inviter ID
           const currentUserId = localStorage.getItem("userId");
-          const isOriginalCreator = currentUserId && inviterId && currentUserId === inviterId;
           
-          // If user is the original creator by ID match, update creator history
-          if (isOriginalCreator && !wasRoomCreator) {
-            console.log("User identified as original creator by ID match, updating history");
+          // Room creator status is ONLY determined by matching the current user ID with the inviterId
+          // This prevents unauthorized users from ending rooms
+          const isOriginalCreator = currentUserId && inviterId && currentUserId === inviterId.toString();
+          
+          console.log("Room ownership check:", { 
+            currentUserId, 
+            inviterId, 
+            isOriginalCreator 
+          });
+          
+          // Room creator history is no longer used to determine if user can end room
+          // We're keeping it just for backward compatibility
+          if (isOriginalCreator) {
+            console.log("User is the room creator by ID match");
             roomCreatorHistory[roomIdToJoin] = true;
             localStorage.setItem("roomCreatorHistory", JSON.stringify(roomCreatorHistory));
           }
           
-          // Use creator status from history or original creator check
-          const finalCreatorStatus = wasRoomCreator || isOriginalCreator;
+          // Set creator status based ONLY on ID match with inviterId
+          const finalCreatorStatus = isOriginalCreator;
 
           // Save the joined room info
           localStorage.setItem(

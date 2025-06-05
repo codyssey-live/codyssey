@@ -90,15 +90,14 @@ export const login = async (req, res) => {
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
     
     // Send token in cookie
     res.cookie('token', token, cookieOptions);
 
     res.status(200).json({ 
       message: 'Login successful!', 
+      token: token, // Also include token in response body for client-side auth
       user: { id: user._id, name: user.name, email: user.email } 
     });
   } catch (err) {
@@ -114,7 +113,10 @@ export const signout = async (req, res) => {
     expires: new Date(0) // Expires immediately
   });
   
-  res.status(200).json({ message: 'Signed out successfully' });
+  res.status(200).json({ 
+    message: 'Signed out successfully',
+    clearLocalStorage: true // Signal to client to clear localStorage tokens
+  });
 };
 
 export const getCurrentUser = async (req, res) => {
