@@ -22,10 +22,7 @@ import axios from 'axios';
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 axios.defaults.withCredentials = true;
 
-// Placeholder components for routes that don't exist yet
-const Profile = () => <div className="p-10">Profile Page (Coming Soon)</div>;
-const Settings = () => <div className="p-10">Settings Page (Coming Soon)</div>;
-const NotFound = () => <div className="p-10">Page Not Found</div>;
+
 
 function App() {  return (
     <Router>
