@@ -10,6 +10,8 @@ const roomUsers = new Map();
 const socketMap = new Map();
 // Store the last activity timestamps to prevent duplicate notifications
 const lastActivity = new Map();
+// Store problem details by roomId for collaboration rooms
+const roomProblemDetails = new Map();
 // Set to store permanently ended room IDs that cannot be rejoined
 const endedRooms = new Set();
 // Initialize maps for video state tracking
@@ -23,9 +25,97 @@ export const initSocket = (server) => {
       credentials: true
     }
   });
-
   io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`);
+    
+    // Handle problem details sharing for collaboration rooms
+    socket.on('share-problem-details', ({ roomId, problemDetails, dayId, problemId }) => {
+      console.log(`Problem details shared in room ${roomId} by ${socket.id}: ${problemDetails.title}`);
+      
+      if (!roomId || !problemDetails) {
+        return;
+      }
+      
+      // Store the problem details for this room
+      roomProblemDetails.set(roomId, {
+        details: problemDetails,
+        dayId,
+        problemId,
+        sharedBy: socket.id,
+        sharedAt: new Date()
+      });
+      
+      // Broadcast the problem details to all users in the room (except sender)
+      socket.to(roomId).emit('problem-details', {
+        problemDetails,
+        dayId,
+        problemId
+      });
+      
+      console.log(`Problem details broadcasted to room ${roomId}`);
+    });
+      // Handle sharing problem status updates between participants
+    socket.on('share-problem-status', ({ roomId, status, dayId, problemId, problemTitle }) => {
+      console.log(`Problem status update in room ${roomId}: ${status} for problem ${problemId}`);
+      
+      if (!roomId || !status || !problemId) {
+        return;
+      }
+      
+      // Get the username from socket data
+      const socketData = socketMap.get(socket.id);
+      const username = socketData ? socketData.username : 'A participant';
+      
+      // Broadcast the status update to all users in the room
+      socket.to(roomId).emit('problem-status-update', {
+        status,
+        dayId,
+        problemId,
+        problemTitle,
+        username,
+        fromSocketId: socket.id,
+        timestamp: new Date()
+      });
+      
+      console.log(`Problem status update broadcasted to room ${roomId}`);
+    });
+    
+    // Handle requests for problem details from newly joined users
+    socket.on('request-problem-details', ({ roomId }) => {
+      console.log(`Problem details requested in room ${roomId} by ${socket.id}`);
+      
+      if (!roomId) {
+        return;
+      }
+      
+      const storedDetails = roomProblemDetails.get(roomId);
+      
+      if (storedDetails) {
+        // Send the stored problem details directly to the requester
+        socket.emit('problem-details', {
+          problemDetails: storedDetails.details,
+          dayId: storedDetails.dayId,
+          problemId: storedDetails.problemId
+        });
+        
+        console.log(`Problem details sent to requester ${socket.id} in room ${roomId}`);
+      } else {
+        // If no details are stored yet, try to find a room creator to request them from
+        const roomCreator = Array.from(socketMap.entries())
+          .find(([_, userData]) => userData.roomId === roomId && userData.isCreator);
+          
+        if (roomCreator) {
+          const [creatorSocketId] = roomCreator;
+          console.log(`Requesting problem details from room creator ${creatorSocketId}`);
+          
+          // Send a request to the room creator's socket
+          io.to(creatorSocketId).emit('request-problem-details', {
+            roomId,
+            requestedBy: socket.id
+          });
+        }
+      }
+    });
     
     // Handle video control events
     socket.on('video-control', (data) => {
@@ -292,10 +382,10 @@ export const initSocket = (server) => {
         
         // Add to ended rooms set
         endedRooms.add(roomId);
-        
-        // Remove room data from memory
+          // Remove room data from memory
         roomUsers.delete(roomId);
         activeRooms.delete(roomId);
+        roomProblemDetails.delete(roomId); // Clean up problem details
         
         // Get all sockets in the room
         const roomSockets = io.sockets.adapter.rooms.get(roomId);

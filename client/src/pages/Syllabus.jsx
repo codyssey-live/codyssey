@@ -942,15 +942,20 @@ const Syllabus = () => {
                                         {problem.platform}
                                       </span>
                                     </div>
-                                    <div className="mt-2 flex items-center gap-3">                                    
-                                      <Link 
+                                    <div className="mt-2 flex items-center gap-3">                                      <Link 
                                         to="/collab-room" 
                                         state={{ 
                                           problemLink: problem.url,
                                           problemId: problem.id || problem._id,
                                           dayId: selectedDay.id || selectedDay._id,
                                           status: problem.status || 'unsolved',
-                                          updateTimestamp: true // Flag to indicate dateAdded should be updated
+                                          updateTimestamp: true, // Flag to indicate dateAdded should be updated
+                                          isCreator: true, // Mark as room creator when navigating from syllabus
+                                          // Include full problem details for better synchronization
+                                          problemTitle: problem.title,
+                                          difficulty: problem.difficulty,
+                                          platform: problem.platform,
+                                          url: problem.url
                                         }}
                                         className="text-sm text-white bg-[#94C3D2] hover:bg-[#7EB5C3] px-3 py-1.5 rounded-lg flex items-center transition-colors shadow-sm"
                                       >
