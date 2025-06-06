@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import { motion } from "framer-motion"; // Add this import for animations
 import { fetchCurrentUser, getUserId } from "../utils/authUtils";
-import { toast } from "react-toastify";
+import { useNotification } from "../context/NotificationContext";
 import { 
   updateUserProfile, 
   uploadProfilePicture,
@@ -174,20 +174,7 @@ const UserProfile = () => {
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [profileProgress, setProfileProgress] = useState(10); // Start with 10% for having an account
   const [loading, setLoading] = useState(true);
-  
-  // Function to handle toast notifications - optimized for immediate display
-  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
-  
-  const showNotification = (message, type = 'success') => {
-    // Immediately clear any existing notification
-    setNotification({ show: false, message: '', type: '' });
-    
-    // Set the new notification without delay
-    setNotification({ show: true, message, type });
-    
-    // Auto-hide after 5 seconds
-    setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
-  };
+  const { addNotification } = useNotification();
 
   // User data state with minimal initial values and ID from localStorage
   const [user, setUser] = useState({
@@ -325,8 +312,8 @@ const UserProfile = () => {
       };
       reader.readAsDataURL(file);
       
-      // Show notification that upload is in progress
-      showNotification('Uploading profile photo...', 'info');
+      // Show notification that upload is' in progress
+      
       
       // Upload to server
       const response = await uploadProfilePicture(user.id, formData);
@@ -349,14 +336,14 @@ const UserProfile = () => {
         closeModal();
         
         // Show success notification
-        showNotification('Profile photo uploaded successfully!');
+        addNotification('Profile photo uploaded successfully!', 'success');
       } else {
         console.error('Invalid response format:', response);
-        showNotification('Failed to upload profile picture: Invalid server response', 'error');
+        addNotification('Failed to upload profile picture: Invalid server response', 'error');
       }
     } catch (error) {
       console.error('Error uploading profile picture:', error);
-      showNotification(`Failed to upload profile picture: ${error.message || 'Unknown error'}`, 'error');
+      addNotification(`Failed to upload profile picture: ${error.message || 'Unknown error'}`, 'error');
     }
   };
 
@@ -364,12 +351,12 @@ const UserProfile = () => {
   const handleRemovePhoto = async () => {
     try {
       if (!user.id) {
-        showNotification('User ID not found', 'error');
+        addNotification('User ID not found', 'error');
         return;
       }
       
       // Show notification that removal is in progress
-      showNotification('Removing profile photo...', 'info');
+      
       
       // Use the profileApiUtils helper
       const response = await removeProfilePicture(user.id);
@@ -388,7 +375,7 @@ const UserProfile = () => {
         closeModal();
         
         // Show success notification
-        showNotification('Profile photo removed successfully!');
+        addNotification('Profile photo removed successfully!', 'success');
         
         // Update progress if needed
         updateProgress('photo', false);
@@ -397,7 +384,7 @@ const UserProfile = () => {
       }
     } catch (error) {
       console.error('Error removing profile photo:', error);
-      showNotification(`Failed to remove profile photo: ${error.message || 'Unknown error'}`, 'error');
+      addNotification(`Failed to remove profile photo: ${error.message || 'Unknown error'}`, 'error');
     }
   };
 
@@ -437,7 +424,7 @@ const UserProfile = () => {
       closeModal();
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('Failed to update profile information');
+      addNotification('Failed to update profile information', 'error');
     }
   };
 
@@ -460,7 +447,7 @@ const UserProfile = () => {
       }
     } catch (error) {
       console.error('Error deleting education:', error);
-      toast.error('Failed to delete education entry');
+      addNotification('Failed to delete education entry', 'error');
     }
   };
 
@@ -483,7 +470,7 @@ const UserProfile = () => {
       }
     } catch (error) {
       console.error('Error deleting work experience:', error);
-      toast.error('Failed to delete work experience entry');
+      addNotification('Failed to delete work experience entry', 'error');
     }
   };
 
@@ -493,7 +480,7 @@ const UserProfile = () => {
       const response = await changePassword(user.id, passwordData);
       
       if (response && response.success) {
-        toast.success('Password changed successfully!');
+        addNotification('Password changed successfully!', 'success');
         closeModal();
       } else {
         // Show the specific error message from the server
@@ -501,7 +488,7 @@ const UserProfile = () => {
       }
     } catch (error) {
       console.error('Error changing password:', error);
-      toast.error(`Failed to change password: ${error.message || 'Unknown error'}`);
+      addNotification(`Failed to change password: ${error.message || 'Unknown error'}`, 'error');
     }
   };
 
@@ -511,7 +498,7 @@ const UserProfile = () => {
       const response = await deleteAccount(user.id, passwordData);
       
       if (response && response.success) {
-        toast.info('Your account has been successfully deleted. You will be redirected to the home page.');
+        
         // Clear any user data from local storage
         localStorage.removeItem('userId');
         localStorage.removeItem('token');
@@ -525,7 +512,7 @@ const UserProfile = () => {
       }
     } catch (error) {
       console.error('Error deleting account:', error);
-      toast.error(`Failed to delete account: ${error.message || 'Unknown error'}`);
+      addNotification(`Failed to delete account: ${error.message || 'Unknown error'}`, 'error');
     }
   };
 
@@ -601,7 +588,7 @@ const UserProfile = () => {
     const handleSubmit = async (e) => {
       e.preventDefault();
           if (!school || !degree || !startYear) {
-        toast.warning('Please fill in all required fields');
+        addNotification('Please fill in all required fields', 'warning');
         return;
       }
         
@@ -639,7 +626,7 @@ const UserProfile = () => {
         onClose();
       } catch (error) {
         console.error('Error adding education:', error);
-        toast.error(`Failed to add education information: ${error.message || 'Unknown error'}`);
+        addNotification(`Failed to add education information: ${error.message || 'Unknown error'}`, 'error');
       }
     };
       
@@ -742,7 +729,7 @@ const UserProfile = () => {
     const handleSubmit = async (e) => {
       e.preventDefault();
           if (!company || !position || !startDate) {
-        toast.warning('Please fill in all required fields');
+        addNotification('Please fill in all required fields', 'warning');
         return;
       }
         
@@ -760,7 +747,7 @@ const UserProfile = () => {
           
         if (!userId) {
           console.error('User ID is missing:', user);
-          toast.error('User ID is missing. Please try refreshing the page or logging in again.');
+          addNotification('User ID is missing. Please try refreshing the page or logging in again.', 'error');
           return;
         }
           
@@ -787,7 +774,7 @@ const UserProfile = () => {
         onClose();
       } catch (error) {
         console.error('Error adding work experience:', error);
-        toast.error(`Failed to add work experience: ${error.message}`);
+        addNotification(`Failed to add work experience: ${error.message}`, 'error');
       }
     };
       
@@ -1129,15 +1116,6 @@ const UserProfile = () => {
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
       <Navbar />
-      
-      {/* Notification toast */}
-      {notification.show && (
-        <div className={`fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
-          notification.type === 'error' ? 'bg-red-500' : 'bg-green-500'
-        } text-white`}>
-          {notification.message}
-        </div>
-      )}
 
       {loading ? (
         <div className="flex justify-center items-center h-[70vh]">
