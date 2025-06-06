@@ -135,29 +135,69 @@ export const applySyncCommand = (player, data, isRemoteUpdateRef, callback = nul
         
       case 'seek':
         console.log(`Syncing: seek to ${data.time}`);
+          // First pause the video to ensure consistent seeking behavior
+        player.pauseVideo();
         
-        // More reliable seeking with verification
-        player.seekTo(data.time, true);
-        
-        // Verify seek worked
-        let seekVerifyAttempts = 0;
-        const verifySeek = () => {
-          const currentPos = player.getCurrentTime();
-          if (Math.abs(currentPos - data.time) > 2) {
-            if (seekVerifyAttempts < 2) {
-              seekVerifyAttempts++;
-              console.log(`Seek verification failed on attempt ${seekVerifyAttempts}. Expected: ${data.time}, Got: ${currentPos}. Trying again...`);
+        // Wait a brief moment to ensure pause takes effect
+        setTimeout(() => {
+          // Store initial state for better debugging
+          const initialState = player.getPlayerState();
+          const initialPos = player.getCurrentTime();
+          console.log(`Initial state before seek: state=${initialState}, position=${initialPos}, target=${data.time}`);
+          
+          // More reliable seeking with verification
+          player.seekTo(data.time, true);
+          
+          // Verify seek worked with better handling of the reset-to-zero issue
+          let seekVerifyAttempts = 0;
+          const maxSeekAttempts = 5; // More attempts for better reliability
+          
+          const verifySeek = () => {
+            const currentPos = player.getCurrentTime();
+            
+            // Special handling for position 0 problem
+            if (currentPos < 0.5 && data.time > 1.0) {
+              // This is clearly wrong - video reset to beginning when it shouldn't have
+              console.log(`CRITICAL ERROR: Video reset to position ${currentPos} instead of ${data.time}, fixing immediately...`);
               player.seekTo(data.time, true);
-              setTimeout(verifySeek, 150);
-            } else {
-              console.log(`Giving up on precise seeking after ${seekVerifyAttempts} attempts.`);
+              // Use a longer delay for this critical fix
+              setTimeout(verifySeek, 300);
+              return;
             }
-          } else {
-            console.log(`Seek successful, now at ${currentPos}`);
-          }
-        };
-        
-        setTimeout(verifySeek, 200);
+            
+            // Use tighter tolerance for position checking
+            if (Math.abs(currentPos - data.time) > 1.0) {
+              if (seekVerifyAttempts < maxSeekAttempts) {
+                seekVerifyAttempts++;
+                const retryDelay = 150 + (seekVerifyAttempts * 50); // Progressive delay
+                console.log(`Seek verification failed on attempt ${seekVerifyAttempts}. Expected: ${data.time}, Got: ${currentPos}. Trying again in ${retryDelay}ms...`);
+                player.seekTo(data.time, true);
+                setTimeout(verifySeek, retryDelay);              } else {
+                console.log(`Still couldn't get exact seek position after ${maxSeekAttempts} attempts. Best position: ${currentPos}, expected: ${data.time}`);
+                // Force one final seek with a larger timeout
+                setTimeout(() => {
+                  player.seekTo(data.time, true);
+                  
+                  // Final verification and cleanup
+                  setTimeout(() => {
+                    const finalPos = player.getCurrentTime();
+                    console.log(`Final position after all attempts: ${finalPos}, target was: ${data.time}`);
+                  }, 300);
+                }, 300);
+              }
+            } else {
+              console.log(`Seek successful on attempt ${seekVerifyAttempts + 1}, now at ${currentPos}, expected: ${data.time}`);
+              
+              // One final seek to be absolutely sure
+              if (Math.abs(currentPos - data.time) > 0.5) {
+                player.seekTo(data.time, true);
+              }
+            }
+          };
+          
+          // Start verification process
+          setTimeout(verifySeek, 200);
+        }, 150);
         break;
     }
     

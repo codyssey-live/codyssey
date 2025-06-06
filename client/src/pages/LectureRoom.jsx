@@ -8,6 +8,7 @@ import { loadLectureMessages, saveLectureMessages } from '../utils/lectureRoomCh
 import { fetchAllNotes, createNote, deleteNote as deleteNoteAPI } from '../utils/noteApiUtils';
 import { format } from 'date-fns';
 import { AnimatePresence } from 'framer-motion';
+import { applySyncCommand, emitVideoSync } from '../utils/lectureRoomVideoSync';
 
 // A small delay to ensure operations don't conflict
 const SYNC_DELAY = 300;
@@ -811,8 +812,7 @@ const LectureRoom = () => {
     }
     
     console.log('Setting up video sync event listeners');
-    
-    // Callback for video sync events
+      // Callback for video sync events
     const handleVideoSync = (data) => {
       console.log('Received video sync:', data);
       
@@ -828,13 +828,14 @@ const LectureRoom = () => {
         setTimeout(() => {
           if (playerRef.current && typeof playerRef.current.getPlayerState === 'function') {
             console.log('Retrying sync command after delay');
-            applySyncCommand(data);
+            // Use our imported applySyncCommand with better handling
+            applySyncCommand(playerRef.current, data, isRemoteUpdateRef);
           } else {
             // Try one more time with a longer delay
             setTimeout(() => {
               if (playerRef.current && typeof playerRef.current.getPlayerState === 'function') {
                 console.log('Second retry for sync command');
-                applySyncCommand(data);
+                applySyncCommand(playerRef.current, data, isRemoteUpdateRef);
               } else {
                 console.log('Player still not ready after multiple retries');
               }
@@ -844,7 +845,8 @@ const LectureRoom = () => {
         return;
       }
       
-      applySyncCommand(data);
+      // Use our imported applySyncCommand with better handling
+      applySyncCommand(playerRef.current, data, isRemoteUpdateRef);
     };
       
     // Function to apply sync commands to the player
@@ -1272,38 +1274,22 @@ const LectureRoom = () => {
     if (!roomData.isRoomCreator || !playerRef.current) {
       return undefined;
     }
-      // Function to handle seeking
+    // Function to handle seeking
     const handleSeek = () => {
       if (isRemoteUpdateRef.current || !playerRef.current) return;
       
       const currentTime = playerRef.current.getCurrentTime();
       console.log(`Sending seek sync to ${currentTime}`);
       
-      // Direct socket emit for more reliability
-      socket.emit('video-control', {
-        roomId: roomData.roomId,
-        action: 'seek',
-        time: currentTime,
-        videoId: videoIdRef.current,
-        userId: roomData.inviterId || socket.id
-      });
+      // Use our enhanced sync utility to send all the necessary events
+      emitVideoSync(
+        roomData.roomId,
+        'seek',
+        currentTime,
+        videoIdRef.current,
+        roomData.inviterId || socket.id
+      );
       
-      // Also emit with underscore format and with sync-video for maximum compatibility
-      socket.emit('video_control', {
-        roomId: roomData.roomId,
-        action: 'seek',
-        time: currentTime,
-        videoId: videoIdRef.current,
-        userId: roomData.inviterId || socket.id
-      });
-      
-      socket.emit('sync-video', {
-        roomId: roomData.roomId,
-        action: 'seek',
-        time: currentTime,
-        videoId: videoIdRef.current,
-        serverTime: Date.now()
-      });      
       // Log the position change instead of adding a system message
       console.log(`Video position changed to ${formatVideoTime(currentTime)}`);
     };
