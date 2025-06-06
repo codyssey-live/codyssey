@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useNotification } from "../context/NotificationContext";
 import Navbar from "../components/Navbar";
 import Header from "../components/dashboard/Header";
 import StatCard from "../components/dashboard/StatCard";
@@ -16,6 +15,7 @@ import apiClient from "../utils/apiClient"; // Import our configured axios insta
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { addNotification } = useNotification();
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joinLink, setJoinLink] = useState("");
@@ -140,7 +140,7 @@ const Dashboard = () => {
         }
       } catch (err) {
         console.error("Error fetching user data:", err);
-        toast.error("Failed to load your problem data");
+        addNotification("Failed to load your problem data", "error");
       } finally {
         setIsLoading(false);
       }
@@ -259,15 +259,15 @@ const Dashboard = () => {
           // Dispatch event to notify Navbar component
           window.dispatchEvent(new CustomEvent("roomCreated"));
 
-          toast.success("Room created successfully!");
+          addNotification("Room created successfully!", "success");
         }
       } catch (error) {
         console.error("Error from server:", error.response?.data || error);
-        toast.error(error.response?.data?.message || "Failed to create room");
+        addNotification(error.response?.data?.message || "Failed to create room", "error");
       }
     } catch (error) {
       console.error("Error creating room:", error);
-      toast.error("Failed to create room");
+      addNotification("Failed to create room", "error");
     } finally {
       setCreatingRoom(false);
     }
@@ -283,7 +283,7 @@ const Dashboard = () => {
 
   const handleCopyLink = () => {
     if (!roomCreated) {
-      toast.info("Please create a room first");
+      addNotification("Please create a room first", "info");
       return;
     }
 
@@ -292,18 +292,18 @@ const Dashboard = () => {
       .writeText(roomId)
       .then(() => {
         setCopySuccess(true);
-        toast.success("Room code copied to clipboard!");
+        addNotification("Room code copied to clipboard!", "success");
         setTimeout(() => setCopySuccess(false), 3000);
       })
       .catch((err) => {
         console.error("Failed to copy room ID: ", err);
-        toast.error("Failed to copy room code");
+        addNotification("Failed to copy room code", "error");
       });
   };
 
   const shareOnWhatsApp = () => {
     if (!roomCreated) {
-      toast.info("Please create a room first");
+      addNotification("Please create a room first", "info");
       return;
     }
     const text = encodeURIComponent(
@@ -314,7 +314,7 @@ const Dashboard = () => {
 
   const shareViaEmail = () => {
     if (!roomCreated) {
-      toast.info("Please create a room first");
+      addNotification("Please create a room first", "info");
       return;
     }
     const subject = encodeURIComponent("Join me on Codyssey");
@@ -444,7 +444,7 @@ const Dashboard = () => {
       // First check if this room was previously ended
       const endedRooms = JSON.parse(localStorage.getItem("endedRooms") || "[]");
       if (endedRooms.includes(roomId)) {
-        toast.error("This room has been ended and is no longer available");
+        addNotification("This room has been ended and is no longer available", "error");
         return;
       }
       // Navigate to the room page with the roomId
@@ -455,8 +455,6 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
       <Navbar />
-      <ToastContainer position="top-right" autoClose={3000} />
-
       <div className="container mx-auto px-4 py-8 relative z-10">
         <motion.div
           className="flex justify-between items-center mb-8"

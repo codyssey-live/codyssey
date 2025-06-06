@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { fetchCurrentUser } from '../utils/authUtils';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useNotification } from '../context/NotificationContext';
 import { useRoom } from '../context/RoomContext';
 import socket from '../socket'; // Import socket directly
 import { loadMessages, saveMessages, clearMessages } from '../utils/chatPersistence';
@@ -18,6 +17,7 @@ const Room = () => {  const { roomId } = useParams();
   const socketRef = useRef(null);
   const isRefreshing = useRef(false);
   const { roomData, setRoomData } = useRoom();
+  const { addNotification } = useNotification();
   const [syllabusUrl, setSyllabusUrl] = useState('/syllabus');
   const [showEndRoomConfirmation, setShowEndRoomConfirmation] = useState(false);
 
@@ -101,7 +101,7 @@ const Room = () => {  const { roomId } = useParams();
     
     // Redirect to dashboard
     navigate('/dashboard');
-    toast.info('You have left the room', { position: "top-center" });
+    addNotification('You have left the room', 'info');
   };  // Handle room ending - modified to delete the room directly
   const handleEndRoom = () => {
     console.log(`Ending room ${roomId} (with deletion)`);
@@ -109,10 +109,11 @@ const Room = () => {  const { roomId } = useParams();
     // Get the current user ID from localStorage
     const userId = localStorage.getItem('userId');
     
+    // Set a flag to avoid duplicate notifications when room end is processed
+    localStorage.setItem('endingRoomByUser', 'true');
+    
     // Emit an end-room event to inform all participants
     if (socketRef.current) {
-      toast.info("Ending room...", { position: "top-center" });
-      
       socketRef.current.emit('end-room', { 
         roomId, 
         username: userName,
@@ -124,20 +125,20 @@ const Room = () => {  const { roomId } = useParams();
       socketRef.current.once('end-room-success', (data) => {
         console.log("Room ended successfully:", data);
         
-        // Clean up room data
-        cleanupAfterRoomEnd(roomId, userName);
+        // Clean up room data - local cleanup only, server event will handle notification
+        cleanupAfterRoomEnd(roomId, userName, true);
       });
       
       socketRef.current.once('end-room-error', (data) => {
         console.error("Error ending room:", data);
-        toast.error(data.message || "Failed to end room", { position: "top-center" });
+        addNotification(data.message || "Failed to end room", "error");
       });
     } else {
-      toast.error("Socket connection not available", { position: "top-center" });
+      addNotification("Socket connection not available", "error");
     }
   };
     // Common cleanup function for room ending
-  const cleanupAfterRoomEnd = (roomId, endedBy) => {
+  const cleanupAfterRoomEnd = (roomId, endedBy, skipNotification = false) => {
     // Clear messages for this room
     clearMessages(roomId);
     
@@ -168,7 +169,20 @@ const Room = () => {  const { roomId } = useParams();
     
     // Redirect to dashboard
     navigate('/dashboard');
-    toast.success(endedBy ? `Room ended by ${endedBy}` : 'Room ended', { position: "top-center" });
+    
+    // Check if we should show notification
+    if (!skipNotification && !localStorage.getItem('roomEndNotificationShown')) {
+      // Set a flag to prevent duplicate notifications
+      localStorage.setItem('roomEndNotificationShown', 'true');
+      
+      // Show notification
+      addNotification(endedBy ? `Room ended by ${endedBy}` : 'Room ended', 'success');
+      
+      // Clear the flag after a short delay to allow for future notifications
+      setTimeout(() => {
+        localStorage.removeItem('roomEndNotificationShown');
+      }, 2000);
+    }
   };
 
   // Check if user has a valid room session with time validation
@@ -179,7 +193,7 @@ const Room = () => {  const { roomId } = useParams();
       const endedRooms = JSON.parse(localStorage.getItem('endedRooms') || '[]');
       if (endedRooms.includes(roomId)) {
         console.log("Room was previously ended");
-        toast.error("This room has been ended and is no longer available", { position: "top-center" });
+        addNotification("This room has been ended and is no longer available", "error");
         navigate('/dashboard');
         return false;
       }
@@ -188,7 +202,7 @@ const Room = () => {  const { roomId } = useParams();
       console.log("Room info from localStorage:", roomInfo);
         if (!roomInfo) {
         console.log("No room info found - direct URL access attempt");
-        toast.error("Direct room access is not allowed. Please join through the dashboard.", { position: "top-center" });
+        addNotification("Direct room access is not allowed. Please join through the dashboard.", "error");
         navigate('/dashboard');
         return false;
       }
@@ -204,14 +218,14 @@ const Room = () => {  const { roomId } = useParams();
           if (currentTime - createdOrJoinedAt > SESSION_DURATION) {
           console.log("Room session expired");
           setRoomSessionExpired(true);
-          toast.error("Your room session has expired. Please create or join a new room.", { position: "top-center" });
+          addNotification("Your room session has expired. Please create or join a new room.", "error");
           handleLeaveRoom();
           return false;
         }
           // Check if this is the requested room
         if (parsedInfo.roomId !== roomId) {
           console.log("Room ID mismatch - attempting to access unauthorized room");
-          toast.error("You don't have access to this room", { position: "top-center" });
+          addNotification("You don't have access to this room", "error");
           navigate('/dashboard');
           return false;
         }
@@ -415,7 +429,7 @@ const Room = () => {  const { roomId } = useParams();
   const setupConnection = (username) => {    if (!socketRef.current) {
       console.error('Socket not initialized');
       setLoading(false);
-      toast.error("Couldn't connect to chat server", { position: "top-center" });
+      addNotification("Couldn't connect to chat server", "error");
       return;
     }
     
@@ -558,10 +572,15 @@ const Room = () => {  const { roomId } = useParams();
     });    // Setup for room-ended event - update to use common cleanup
     socketRef.current.on('room-ended', (data) => {
       console.log("Room ended event received:", data);
-      toast.info(`Room was ended by ${data.username}`, { position: "top-center" });
+      
+      // Check if this was triggered by the current user ending the room
+      const isEndingByCurrentUser = localStorage.getItem('endingRoomByUser') === 'true';
+      
+      // Clear the flag
+      localStorage.removeItem('endingRoomByUser');
       
       // Use the common cleanup function
-      cleanupAfterRoomEnd(roomId, data.username);
+      cleanupAfterRoomEnd(roomId, data.username, isEndingByCurrentUser);
     });
     
     setLoading(false);
@@ -672,12 +691,12 @@ const Room = () => {  const { roomId } = useParams();
     navigator.clipboard.writeText(roomId)
       .then(() => {
         setCopySuccess(true);
-        toast.success('Room ID copied to clipboard!', { position: "top-center" });  
+        addNotification('Room ID copied to clipboard!', 'success');  
         setTimeout(() => setCopySuccess(false), 3000);
       })
       .catch(err => {
         console.error('Failed to copy room ID:', err);
-        toast.error('Failed to copy room ID', { position: "top-center" });
+        addNotification('Failed to copy room ID', 'error');
       });
   };
   const handleCopyInviteLink = () => {
@@ -685,12 +704,12 @@ const Room = () => {  const { roomId } = useParams();
     navigator.clipboard.writeText(roomId)
       .then(() => {
         setInviteLinkCopied(true);
-        toast.success('Room code copied to clipboard!', { position: "top-center" });
+        addNotification('Room code copied to clipboard!', 'success');
         setTimeout(() => setInviteLinkCopied(false), 3000);
       })
       .catch(err => {
         console.error('Failed to copy room ID:', err);
-        toast.error('Failed to copy room code', { position: "top-center" });
+        addNotification('Failed to copy room code', 'error');
       });
   };
 
@@ -749,7 +768,6 @@ const Room = () => {  const { roomId } = useParams();
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
       <Navbar />
-      <ToastContainer position="top-right" autoClose={3000} />
 
       {/* End Room Confirmation Dialog */}
       {showEndRoomConfirmation && (
