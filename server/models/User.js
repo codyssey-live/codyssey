@@ -45,10 +45,15 @@ const userSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
-  ],
-  createdAt: {
+  ],  createdAt: {
     type: Date,
     default: Date.now,
+  },
+  resetCode: {
+    type: String
+  },
+  resetCodeExpires: {
+    type: Date
   },
   // Now we use references instead of embedding
   // These will be populated when needed
