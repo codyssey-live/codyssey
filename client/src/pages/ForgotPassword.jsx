@@ -169,13 +169,12 @@ const ForgotPassword = () => {
                 {step === 1 && "Reset Password"}
                 {step === 2 && "Verify Code"}
                 {step === 3 && "Create New Password"}
-                {success && "Password Reset Complete"}
+                
               </h2>
               <p className="text-[#94C3D2]/90 mb-6 text-center text-sm">
                 {step === 1 && "Enter your email to receive a verification code"}
                 {step === 2 && "Enter the 6-digit code sent to your email"}
                 
-                {success && "Your password has been reset successfully"}
               </p>
             </motion.div>
             
@@ -408,10 +407,8 @@ const ForgotPassword = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-medium text-white mb-2">Password Reset Successful</h3>
-                <p className="text-gray-300 mb-6">
-                  Your password has been successfully reset.
-                </p>
+                <h3 className="text-xl font-medium text-green-500 mb-6">Password Reset Successful</h3>
+                
                 <Link
                   to="/login"
                   className="w-full inline-block bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all py-3 rounded-lg text-white font-medium shadow-lg"
