@@ -313,7 +313,7 @@ const UserProfile = () => {
       reader.readAsDataURL(file);
       
       // Show notification that upload is' in progress
-      
+      addNotification('Uploading profile photo...', 'info');
       
       // Upload to server
       const response = await uploadProfilePicture(user.id, formData);
@@ -332,11 +332,13 @@ const UserProfile = () => {
         // Update progress
         updateProgress('photo', true);
         
-        // Close modal immediately after successful upload
-        closeModal();
-        
         // Show success notification
         addNotification('Profile photo uploaded successfully!', 'success');
+        
+        // Set a short delay (1.5 seconds) before closing the modal
+        setTimeout(() => {
+          closeModal();
+        }, 500);
       } else {
         console.error('Invalid response format:', response);
         addNotification('Failed to upload profile picture: Invalid server response', 'error');
@@ -356,7 +358,7 @@ const UserProfile = () => {
       }
       
       // Show notification that removal is in progress
-      
+       addNotification('Removing profile photo...', 'info');
       
       // Use the profileApiUtils helper
       const response = await removeProfilePicture(user.id);
@@ -371,14 +373,16 @@ const UserProfile = () => {
           profilePicture: ''
         }));
         
-        // Close modal immediately after successful removal
-        closeModal();
-        
         // Show success notification
         addNotification('Profile photo removed successfully!', 'success');
         
         // Update progress if needed
         updateProgress('photo', false);
+        
+        // Set a short delay (1.5 seconds) before closing the modal
+        setTimeout(() => {
+          closeModal();
+        }, 1500);
       } else {
         throw new Error(response?.message || 'Failed to remove profile photo');
       }
