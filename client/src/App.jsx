@@ -13,6 +13,7 @@ import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import { RoomProvider } from "./context/RoomContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
@@ -27,84 +28,84 @@ axios.defaults.withCredentials = true;
 function App() {  return (
     <Router>
       <RoomProvider>
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
-        <div className="app min-h-screen flex flex-col">
-          <div className="flex-grow">
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Home />} />
-              
-              {/* Auth routes - redirect to dashboard if already logged in */}
-              <Route path="/signup" element={
-                <PublicRoute>
-                  <Signup />
-                </PublicRoute>
-              } />
-              <Route path="/login" element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              } />
-              <Route path="/forgot-password" element={
-                <PublicRoute>
-                  <ForgotPassword />
-                </PublicRoute>
-              } />
-              
-              {/* Protected routes */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/syllabus" element={
-                <ProtectedRoute>
-                  <Syllabus />
-                </ProtectedRoute>
-              } />
-              {/* Add route for viewing another user's syllabus */}
-              <Route path="/:userId" element={
-                <ProtectedRoute>
-                  <Syllabus />
-                </ProtectedRoute>
-              } />
-              <Route path="/lecture-room" element={
-                <ProtectedRoute>
-                  <LectureRoom />
-                </ProtectedRoute>
-              } />
-              <Route path="/collab-room" element={
-                <ProtectedRoute>
-                  <CollabRoom />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <UserProfile />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/room/:roomId" element={
-                <ProtectedRoute>
-                  <Room />
-                </ProtectedRoute>
-              } />
-              
-              
-            </Routes>
+        <NotificationProvider>
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
+          <div className="app min-h-screen flex flex-col">
+            <div className="flex-grow">
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Home />} />
+                
+                {/* Auth routes - redirect to dashboard if already logged in */}
+                <Route path="/signup" element={
+                  <PublicRoute>
+                    <Signup />
+                  </PublicRoute>
+                } />
+                <Route path="/login" element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                } />
+                <Route path="/forgot-password" element={
+                  <PublicRoute>
+                    <ForgotPassword />
+                  </PublicRoute>
+                } />
+                
+                {/* Protected routes */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/syllabus" element={
+                  <ProtectedRoute>
+                    <Syllabus />
+                  </ProtectedRoute>
+                } />
+                {/* Add route for viewing another user's syllabus */}
+                <Route path="/:userId" element={
+                  <ProtectedRoute>
+                    <Syllabus />
+                  </ProtectedRoute>
+                } />
+                <Route path="/lecture-room" element={
+                  <ProtectedRoute>
+                    <LectureRoom />
+                  </ProtectedRoute>
+                } />
+                <Route path="/collab-room" element={
+                  <ProtectedRoute>
+                    <CollabRoom />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <UserProfile />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/room/:roomId" element={
+                  <ProtectedRoute>
+                    <Room />
+                  </ProtectedRoute>
+                } />
+              </Routes>
+            </div>
+            <Footer />
           </div>
-          <Footer />
-        </div>
+        </NotificationProvider>
       </RoomProvider>
     </Router>
   );

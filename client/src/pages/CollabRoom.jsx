@@ -11,7 +11,8 @@ import {
 import { updateProblemStatus } from "../utils/syllabusApiUtils";
 import apiClient from "../utils/apiClient"; // Import apiClient for making API requests
 import axios from "axios";
-import { toast } from "react-toastify";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNotification } from '../context/NotificationContext';
 
 const CollabRoom = () => {
   const location = useLocation();
@@ -28,6 +29,7 @@ const CollabRoom = () => {
   const [statusUpdateError, setStatusUpdateError] = useState(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingLanguage, setPendingLanguage] = useState(null);
+   const { addNotification } = useNotification();
   // Removed statusUpdateSuccess state as requested
   const [statusMessage, setStatusMessage] = useState({ type: "", text: "" });
   const [showStatusMessage, setShowStatusMessage] = useState(true);
@@ -1036,10 +1038,13 @@ const CollabRoom = () => {
     navigator.clipboard
       .writeText(editorValue)
       .then(() => {
-        toast("Code copied to clipboard!");
+        // Show success notification
+        addNotification("Code copied to clipboard!", "success");
       })
       .catch((err) => {
         console.error("Could not copy code: ", err);
+        // Show error notification
+        addNotification("Failed to copy to clipboard", "error");
       });
   };
 

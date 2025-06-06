@@ -2,12 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useRoom } from '../context/RoomContext';
+import { useNotification } from '../context/NotificationContext';
 import socket from '../socket';
-import { emitVideoSync, applySyncCommand, joinVideoRoom } from '../utils/lectureRoomVideoSync';
 import { loadLectureMessages, saveLectureMessages } from '../utils/lectureRoomChatPersistence';
-import { toast } from 'react-toastify';
 import { fetchAllNotes, createNote, deleteNote as deleteNoteAPI } from '../utils/noteApiUtils';
 import { format } from 'date-fns';
+import { AnimatePresence } from 'framer-motion';
 
 // A small delay to ensure operations don't conflict
 const SYNC_DELAY = 300;
@@ -21,6 +21,7 @@ const LectureRoom = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [userName, setUserName] = useState('User');
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
+  const { addNotification } = useNotification();
   
   // State for note deletion confirmation
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -88,11 +89,11 @@ const LectureRoom = () => {
         setSavedNotes(response.data);
       } else {
         console.error('Failed to fetch notes:', response.message);
-        toast.error('Failed to load notes');
+        addNotification('Failed to load notes', "error");
       }
     } catch (error) {
       console.error('Error fetching notes:', error);
-      toast.error('Error loading notes');
+      addNotification('Error loading notes', "error");
     } finally {
       setIsLoadingNotes(false);
     }
@@ -422,18 +423,22 @@ const LectureRoom = () => {
   
   const handleSubmitUrl = (e) => {
     e.preventDefault();
-    if (!videoUrl) return;
-      // If in a room and not the creator, disallow changing videos
+    if (!videoUrl) {
+      addNotification("Please enter a YouTube video URL", "warning");
+      return;
+    }
+      
+    // If in a room and not the creator, disallow changing videos
     if (roomData.inRoom && !roomData.isRoomCreator) {
       console.log('Only the room creator can change videos');
-      toast.warning('Only the room creator can change videos');
+      addNotification('Only the room creator can change videos', "warning");
       return;
     }
     
     // Extract the video ID from the URL
     const videoId = extractVideoId(videoUrl);
     if (!videoId) {
-      toast.error('Invalid YouTube URL');
+      addNotification('Invalid YouTube URL', "error");
       return;
     }
     
@@ -677,26 +682,17 @@ const LectureRoom = () => {
   // Notes related functions
   const saveNote = async () => {
     if (!notes.trim()) {
-      toast.info('Please add some notes before saving.');
+      addNotification('Please add some notes before saving.', "info");
       return;
     }
     
-    // Get current video time to link note to specific point in video
-    let currentTime = 0;
-    let videoId = null;
-    
-    if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
-      currentTime = playerRef.current.getCurrentTime();
-      videoId = videoIdRef.current;
-    }
-    
-    // Create the note object
+    // Create the note object - removed timestamp functionality
     const noteData = {
       content: notes,
-      videoId: videoId,
+      videoId: videoIdRef.current,
       videoTitle: videoTitle,
-      videoUrl: videoUrl,
-      videoTimestamp: currentTime
+      videoUrl: videoUrl
+      // Removed videoTimestamp field
     };
     
     try {
@@ -706,21 +702,19 @@ const LectureRoom = () => {
         // Update the local state with the new note
         setSavedNotes(prevNotes => [response.data, ...prevNotes]);
         
-        toast.success(videoId 
-          ? `Note saved successfully at ${formatVideoTime(currentTime)}!`
-          : 'Note saved successfully!');
+        addNotification('Note saved successfully!', "success");
         
         setNotes('');
       } else {
-        toast.error(response.message || 'Failed to save note');
+        addNotification(response.message || 'Failed to save note', "error");
       }
     } catch (error) {
       console.error("Error saving note:", error);
-      toast.error('Failed to save note. Please try again.');
+      addNotification('Failed to save note. Please try again.', "error");
     }
   };
   
-  // Format video time as mm:ss
+  // Format video time as mm:ss - keep this utility function as it might be used elsewhere
   const formatVideoTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -742,13 +736,13 @@ const LectureRoom = () => {
         if (response.success) {
           // Update local state
           setSavedNotes(prevNotes => prevNotes.filter(note => note._id !== noteToDelete));
-          toast.success("Note deleted successfully!");
+          addNotification("Note deleted successfully!", "success");
         } else {
-          toast.error(response.message || 'Failed to delete note');
+          addNotification(response.message || 'Failed to delete note', "error");
         }
       } catch (error) {
         console.error('Error deleting note:', error);
-        toast.error('An error occurred while deleting note');
+        addNotification('An error occurred while deleting note', "error");
       }
       
       // Reset state
@@ -776,52 +770,6 @@ const LectureRoom = () => {
     }
   };
   
-  // Jump to specific timestamp in video when clicking on a note that has a timestamp
-  const jumpToTimestamp = (videoUrl, timestamp) => {
-    if (!videoUrl || timestamp === undefined || timestamp === null) {
-      return;
-    }
-    
-    // Set the video URL if it's different from current
-    if (videoUrl !== videoUrl) {
-      setVideoUrl(videoUrl);
-      // Extract the video ID from the URL
-      const videoId = extractVideoId(videoUrl);
-      if (videoId) {
-        videoIdRef.current = videoId;
-      }
-    }
-    
-    // If player is ready, seek to the timestamp
-    if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-      playerRef.current.seekTo(timestamp, true);
-      toast.info(`Jumped to ${formatVideoTime(timestamp)}`);
-    } else {
-      // If player isn't ready yet, we'll try initializing it first
-      const videoId = extractVideoId(videoUrl);
-      if (videoId) {
-        // Force initialize the player
-        const container = document.getElementById('youtube-player');
-        if (container) {
-          // Clear container first
-          container.innerHTML = '';
-          
-          // Create iframe directly if YouTube API isn't loaded
-          const iframe = document.createElement('iframe');
-          iframe.src = `https://www.youtube.com/embed/${videoId}?start=${Math.floor(timestamp)}&autoplay=1`;
-          iframe.width = '100%';
-          iframe.height = '600';
-          iframe.frameBorder = '0';
-          iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-          iframe.allowFullscreen = true;
-          
-          container.appendChild(iframe);
-          toast.info(`Jumped to ${formatVideoTime(timestamp)}`);
-        }
-      }
-    }
-  };
-
   // Function to sort notes based on criteria
   const sortNotes = (notes) => {
     if (!Array.isArray(notes)) return [];
@@ -1391,6 +1339,7 @@ const LectureRoom = () => {
       }
     };
   }, [roomData.isRoomCreator, roomData.roomId, roomData.inviterId]);
+  
   // Load saved chat messages
   useEffect(() => {
     if (!socket.connected || !roomData.inRoom) {
@@ -1524,10 +1473,17 @@ const LectureRoom = () => {
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
       <Navbar />
       
+      {/* Notification container with AnimatePresence for smooth transitions */}
+      <div className="fixed top-20 right-4 z-50 w-72 space-y-2 pointer-events-none">
+        <AnimatePresence>
+          {/* Notifications will be rendered here by the NotificationContext */}
+        </AnimatePresence>
+      </div>
+      
       <div className="container mx-auto px-4 py-8 relative z-10">
         <h1 className="text-3xl font-bold mb-6"><span className="bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Watch Together</span></h1>   
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Video Player Section - Maintains larger width */}
+          {/* Video Player Section */}
           <div className="lg:w-2/3">
             <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/20 h-full">
               <div className="px-4 pt-4 pb-4">
@@ -1590,9 +1546,9 @@ const LectureRoom = () => {
             </div>
           </div>
           
-          {/* Right Column - Chat and Notes - Maintains height to match video */}
+          {/* Right Column - Chat and Notes */}
           <div className="lg:w-1/3 flex flex-col h-full">
-            {/* Notes Section - Set to approximately half of video height + form */}
+            {/* Notes Section */}
             <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/20 mb-6">
               <div className="p-4 border-b border-white/20 flex justify-between items-center">
                 <h2 className="font-semibold text-white/95">Notes</h2>
@@ -1793,17 +1749,6 @@ const LectureRoom = () => {
                             {formatDate(note.createdAt)}
                           </div>
                           <div>
-                            {note.videoUrl && note.videoTimestamp > 0 && (
-                              <button
-                                onClick={() => {
-                                  jumpToTimestamp(note.videoUrl, note.videoTimestamp);
-                                  setShowNotesModal(false);
-                                }}
-                                className="bg-blue-900/50 text-blue-200 border border-blue-600/30 px-3 py-1 rounded font-medium hover:bg-blue-900/70 transition-colors mr-2"
-                              >
-                                Jump to {formatVideoTime(note.videoTimestamp)}
-                              </button>
-                            )}
                             <button
                               onClick={() => deleteNote(note._id)}
                               className="bg-red-900/50 text-red-200 border border-red-600/30 px-3 py-1 rounded font-medium hover:bg-red-900/70 transition-colors"
@@ -1902,7 +1847,7 @@ const LectureRoom = () => {
           </div>
         </div>
       )}
-      
+
       {/* Delete Confirmation Modal */}
       {showDeleteConfirmation && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/70 flex items-center justify-center z-50">
