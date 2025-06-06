@@ -15,7 +15,14 @@ import noteRoutes from './routes/noteRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 
 // Load environment variables
-dotenv.config({ path: path.resolve('.', '.env') });
+// For Windows - use directly configured path for .env file
+const envPath = path.resolve('.', '.env');
+dotenv.config({ path: envPath });
+
+// Check if Resend API Key is loaded
+const resendApiKey = process.env.RESEND_API_KEY;
+console.log('RESEND_API_KEY available:', resendApiKey ? 'true' : 'false');
+console.log('RESEND_API_KEY is', resendApiKey ? 'available' : 'not available');
 
 const app = express();
 
