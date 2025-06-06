@@ -1728,6 +1728,16 @@ const CollabRoom = () => {
     }
   }, [roomData.inRoom, roomData.roomId, socket.connected, dayId, problemId]);
 
+  // Clean up problem details when navigating away
+  useEffect(() => {
+    return () => {
+      // Clear the problem IDs from localStorage when component unmounts
+      localStorage.removeItem("current_collab_problem_id");
+      localStorage.removeItem("current_collab_day_id");
+      console.log("Cleared problem details on navigation away from Collab Room");
+    };
+  }, []);
+
   // Clean up socket connections and event listeners when component unmounts
   useEffect(() => {
     return () => {
@@ -2026,8 +2036,21 @@ const CollabRoom = () => {
         console.log("Auto-detected platform from URL:", detectedPlatform);
         setProblemDetails((prev) => ({ ...prev, platform: detectedPlatform }));
       }
-    }
-  }, [problemDetails.url, problemDetails.title]); // Function to handle error display in problem details
+    }  }, [problemDetails.url, problemDetails.title]); 
+  
+  // Helper function to check if a title is a placeholder
+  const hasPlaceholderTitle = (title) => {
+    return !title || 
+      title === "LeetCode Problem" ||
+      title === "Problem" ||
+      title === "Loading Problem..." ||
+      title === "No Problem Selected" ||
+      title === "Untitled Problem" ||
+      title === "Coding Problem" ||
+      title.trim() === "";
+  };
+
+  // Function to handle error display in problem details
   const renderProblemDetails = () => {
     if (isLoadingProblem) {
       // Show loading state
@@ -2137,24 +2160,22 @@ const CollabRoom = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8 relative z-10">
+      <Navbar />      <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
             Code Collaboration Room
           </h1>
-        </div>
-
-        {/* Problem Information Card with status buttons integrated */}
-        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6 mb-6">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div>
-              {/* Display actual problem title, not "Problem" */}{" "}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <h2 className="text-xl font-medium text-white/95">
-                  {renderProblemDetails()}
-                </h2>
-              </div>
+        </div>          {/* Problem Information Card with status buttons integrated - only display if a valid problem is selected from syllabus */}
+        {(dayId && problemId && !hasPlaceholderTitle(problemDetails.title)) && (
+          <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6 mb-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div>
+                {/* Display actual problem title, not "Problem" */}{" "}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <h2 className="text-xl font-medium text-white/95">
+                    {renderProblemDetails()}
+                  </h2>
+                </div>
               <div className="mt-3 flex flex-wrap gap-3">
                 {" "}
                 <span
@@ -2448,9 +2469,9 @@ const CollabRoom = () => {
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            )}          </div>
         </div>
+        )}
 
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Code Editor Section */}
