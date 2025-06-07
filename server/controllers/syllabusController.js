@@ -7,9 +7,6 @@ import StudyDay from '../models/StudyDay.js';
 // @access  Private
 export const saveSyllabus = async (req, res) => {
   try {
-    // Enhanced debugging
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
-    console.log('User object:', JSON.stringify(req.user, null, 2));
     
     const { studyDays } = req.body;
     

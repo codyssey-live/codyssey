@@ -122,7 +122,7 @@ const Dashboard = () => {
               // Format problems for display
             const formattedProblems = userProblems.map(p => {
               // Log dates to help debugging
-              console.log(`Problem: ${p.title}, Date: ${p.dateAdded}, Status: ${p.status}`);
+              
               return {
                 id: p._id,
                 title: p.title,
@@ -166,10 +166,7 @@ const Dashboard = () => {
                     a.dateAdded ? new Date(a.dateAdded) : new Date(0);
       const dateB = b.dateAddedRaw ? new Date(b.dateAddedRaw) : 
                     b.dateAdded ? new Date(b.dateAdded) : new Date(0);
-      
-      // Log the comparison to help debug sorting
-      console.log(`Comparing: ${a.title} (${dateA}) vs ${b.title} (${dateB})`);
-      
+            
       // Sort newest first (most recent at the top)
       return dateB - dateA;
     });
@@ -177,7 +174,6 @@ const Dashboard = () => {
       // Take the top 5 most recent problems
       const recentProblems = sortedProblems.slice(0, 5);
       setProblems(recentProblems);
-      console.log("Recent problems (sorted newest first):", recentProblems);
     } else if (activeTab === "solved") {
       // Keep the sorted order (newest first) for solved problems too
       setProblems(sortedProblems.filter((p) => p.status === "solved"));
@@ -195,12 +191,9 @@ const Dashboard = () => {
 
   const BASE_URL = window.location.origin;
   // IMPORTANT DEBUG: Add console logs to track the flow
-  const handleCreateRoomClick = () => {
-    console.log("Create Room button clicked");
-    
+  const handleCreateRoomClick = () => { 
     // Log authentication state for debugging
     const token = localStorage.getItem('token');
-    console.log("Auth token present:", !!token);
     
     setShowInviteModal(true);
   };
@@ -220,7 +213,6 @@ const Dashboard = () => {
 
         if (data.success && data.data.roomId) {
           const newRoomId = data.data.roomId;
-          console.log("Room created successfully with ID:", newRoomId);
 
           setRoomId(newRoomId);
           setRoomCreated(true);
@@ -332,7 +324,7 @@ const Dashboard = () => {
     
     // Log authentication state for debugging
     const token = localStorage.getItem('token');
-    console.log("Join Room - Auth token present:", !!token);
+    
 
     try {
       // Extract room ID - either directly entered or from a URL
@@ -357,7 +349,6 @@ const Dashboard = () => {
         roomIdToJoin = joinLink;
       }
 
-      console.log("Attempting to join room with ID:", roomIdToJoin);      // Check if user was previously the creator of this room
       const roomCreatorHistory = JSON.parse(
         localStorage.getItem("roomCreatorHistory") || "{}"
       );
@@ -367,7 +358,6 @@ const Dashboard = () => {
         const response = await apiClient.get(`/rooms/validate/${roomIdToJoin}`);
 
         if (response.data.success) {
-          console.log("Room validation successful");
 
           // Get inviterId from the response
           const inviterId = response.data.data.inviterId;
@@ -378,16 +368,10 @@ const Dashboard = () => {
           // This prevents unauthorized users from ending rooms
           const isOriginalCreator = currentUserId && inviterId && currentUserId === inviterId.toString();
           
-          console.log("Room ownership check:", { 
-            currentUserId, 
-            inviterId, 
-            isOriginalCreator 
-          });
-          
           // Room creator history is no longer used to determine if user can end room
           // We're keeping it just for backward compatibility
           if (isOriginalCreator) {
-            console.log("User is the room creator by ID match");
+            
             roomCreatorHistory[roomIdToJoin] = true;
             localStorage.setItem("roomCreatorHistory", JSON.stringify(roomCreatorHistory));
           }

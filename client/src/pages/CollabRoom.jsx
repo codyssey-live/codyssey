@@ -140,11 +140,11 @@ const CollabRoom = () => {
   useEffect(() => {
     // Initialize problem information from location state
     if (location.state) {
-      console.log("Location state in CollabRoom:", location.state);
+      
 
       if (location.state.problemLink) {
         setProblemLink(location.state.problemLink);
-        console.log("Setting problem link:", location.state.problemLink);
+        
       }
 
       // Store problem ID and day ID if available - these are critical for fetching problem details
@@ -152,7 +152,7 @@ const CollabRoom = () => {
         // Make sure we convert to string for consistent comparison
         const pId = String(location.state.problemId);
         setProblemId(pId);
-        console.log("Setting problem ID from location state:", pId);
+       
 
         // Store in localStorage to persist across page refreshes
         localStorage.setItem("current_collab_problem_id", pId);
@@ -164,10 +164,6 @@ const CollabRoom = () => {
           "current_collab_problem_id"
         );
         if (savedProblemId) {
-          console.log(
-            "Recovering problem ID from localStorage:",
-            savedProblemId
-          );
           setProblemId(savedProblemId);
         }
       }
@@ -176,7 +172,7 @@ const CollabRoom = () => {
         // Make sure we convert to string for consistent comparison
         const dId = String(location.state.dayId);
         setDayId(dId);
-        console.log("Setting day ID from location state:", dId);
+    
 
         // Store in localStorage to persist across page refreshes
         localStorage.setItem("current_collab_day_id", dId);
@@ -186,7 +182,7 @@ const CollabRoom = () => {
       if (!location.state.dayId) {
         const savedDayId = localStorage.getItem("current_collab_day_id");
         if (savedDayId) {
-          console.log("Recovering day ID from localStorage:", savedDayId);
+         
           setDayId(savedDayId);
         }
       }
@@ -203,7 +199,7 @@ const CollabRoom = () => {
         if (roomData.roomId) {
           localStorage.setItem(`room_creator_${roomData.roomId}`, "true");
         }
-        console.log("This user is the room creator");
+        
       }
 
       // Initialize problem details if provided directly in state
@@ -212,12 +208,7 @@ const CollabRoom = () => {
         location.state.difficulty ||
         location.state.platform
       ) {
-        console.log("Initial problem details from state:", {
-          title: location.state.problemTitle,
-          difficulty: location.state.difficulty,
-          platform: location.state.platform,
-          url: location.state.url,
-        });
+        
 
         // Set initial problem details right away for faster UI rendering
         if (
@@ -237,10 +228,7 @@ const CollabRoom = () => {
 
       // Initialize status based on passed state
       if (location.state.status) {
-        console.log(
-          "Setting initial status from location state:",
-          location.state.status
-        );
+        
         setProblemStatus(location.state.status);
 
         if (location.state.status === "solved") {
@@ -257,12 +245,12 @@ const CollabRoom = () => {
       const savedDayId = localStorage.getItem("current_collab_day_id");
 
       if (savedProblemId) {
-        console.log("Recovering problem ID from localStorage:", savedProblemId);
+        
         setProblemId(savedProblemId);
       }
 
       if (savedDayId) {
-        console.log("Recovering day ID from localStorage:", savedDayId);
+       
         setDayId(savedDayId);
       }
 
@@ -272,7 +260,7 @@ const CollabRoom = () => {
         localStorage.getItem(`room_creator_${roomData.roomId}`) === "true"
       ) {
         setIsRoomCreator(true);
-        console.log("Identified as room creator from localStorage");
+      
       }
     }
 
@@ -287,7 +275,7 @@ const CollabRoom = () => {
       socket.connect();
       socket.on("connect", () => {
         setIsConnected(true);
-        console.log(`Connected to socket server with ID: ${socket.id}`);
+       
       });
     } else {
       setIsConnected(true);
@@ -309,20 +297,11 @@ const CollabRoom = () => {
       setIsLoadingProblem(true);
       setProblemFetchError(null);
 
-      console.log("Starting problem fetch with IDs:", {
-        problemId,
-        dayId,
-        userId: localStorage.getItem("userId"),
-      });
 
       // Use any directly provided details from location state first
       if (location.state && location.state.problemTitle) {
         // We have direct details from location state (likely from Syllabus page)
-        console.log("Using direct problem details from location state:", {
-          title: location.state.problemTitle,
-          difficulty: location.state.difficulty,
-          platform: location.state.platform,
-        });
+        
 
         const directDetails = {
           title: location.state.problemTitle,
@@ -355,16 +334,13 @@ const CollabRoom = () => {
 
       // Skip fetching if we've already received problem details from the room creator
       if (problemDetailsReceived && !isRoomCreator) {
-        console.log("Using problem details received from room creator");
         setIsLoadingProblem(false);
         return;
       }
 
       // If we have both dayId and problemId, fetch problem details directly
       if (dayId && problemId) {
-        console.log(
-          `Fetching problem details for day: ${dayId}, problem: ${problemId}`
-        );
+        
 
         try {
           // First, try the specific endpoint to get a single problem from a study day
@@ -372,13 +348,11 @@ const CollabRoom = () => {
 
           // Be specific about the path to ensure we get the right problem
           const problemEndpoint = `/syllabus/users/${userId}/days/${dayId}/problems/${problemId}`;
-          console.log("Fetching from endpoint:", problemEndpoint);
 
           const response = await safeApiGet(problemEndpoint);
 
           if (response.data && response.data.success && response.data.data) {
             const problem = response.data.data;
-            console.log("Problem data found via direct API:", problem);
 
             // Validate that we received actual data, not placeholders
             if (
@@ -401,11 +375,6 @@ const CollabRoom = () => {
               status: problem.status || "unsolved",
             };
 
-            // Log actual fetched values
-            console.log(
-              "Setting verified problem details from API:",
-              updatedProblemDetails
-            );
 
             setProblemDetails(updatedProblemDetails);
             setProblemStatus(updatedProblemDetails.status);
@@ -426,11 +395,9 @@ const CollabRoom = () => {
             return;
           }
         } catch (directApiError) {
-          console.log("Direct problem API call failed:", directApiError);
           // Continue to try other fetch methods
         } // Try the second approach: Fetch directly from user's syllabus
         try {
-          console.log("Trying to fetch from user's syllabus...");
           const userId = localStorage.getItem("userId");
 
           if (!userId) {
@@ -444,7 +411,6 @@ const CollabRoom = () => {
             throw new Error("Failed to fetch syllabus");
           }
 
-          console.log("Syllabus data fetched, looking for study day:", dayId);
 
           // Find the specific study day
           const syllabus = syllabusResponse.data.data;
@@ -455,8 +421,7 @@ const CollabRoom = () => {
             throw new Error("Study day not found");
           }
 
-          console.log("Study day found, problems:", studyDay.problems.length);
-          console.log("Looking for problem ID:", problemId);
+       
 
           // Find the specific problem in the study day
           const problem = studyDay.problems.find(
@@ -470,7 +435,6 @@ const CollabRoom = () => {
             throw new Error("Problem not found in study day");
           }
 
-          console.log("Problem found in syllabus:", problem);
 
           // Validate and use the problem data
           const updatedProblemDetails = {
@@ -483,10 +447,6 @@ const CollabRoom = () => {
             status: problem.status || "unsolved",
           };
 
-          console.log(
-            "Using problem details from syllabus:",
-            updatedProblemDetails
-          );
 
           setProblemDetails(updatedProblemDetails);
           setProblemStatus(problem.status || "unsolved");
@@ -509,7 +469,7 @@ const CollabRoom = () => {
 
           // Third approach: Try the syllabusApiUtils as the final resort
           try {
-            console.log("Final attempt: Using syllabusApiUtils...");
+          
             const { fetchStudyDay } = await import("../utils/syllabusApiUtils");
             const studyDayResponse = await fetchStudyDay(dayId);
 
@@ -521,7 +481,7 @@ const CollabRoom = () => {
 
             // Parse response data
             const data = studyDayResponse.data;
-            console.log("Study day data from utils:", data);
+           
 
             if (data && Array.isArray(data.problems)) {
               // Find the specific problem in the study day's problems array
@@ -532,7 +492,6 @@ const CollabRoom = () => {
               );
 
               if (problem) {
-                console.log("Problem data found in utils response:", problem);
 
                 // Create consistent problem details
                 const updatedProblemDetails = {
@@ -570,7 +529,6 @@ const CollabRoom = () => {
           }
         }
       } else if (problemLink) {
-        console.log("Using problem link only:", problemLink);
         // Try to detect platform from the URL
         const detectedPlatform = detectPlatformFromUrl(problemLink);
 
@@ -595,7 +553,6 @@ const CollabRoom = () => {
           shareProblemDetailsWithRoom(linkBasedDetails);
         }
       } else {
-        console.log("No problem ID or link available");
         // No problem ID or link, set default values
         const defaultDetails = {
           title: "No Problem Selected",
@@ -649,28 +606,19 @@ const CollabRoom = () => {
     // Skip fetching if we already have received problem details from socket
     // and we're not the room creator (avoid overriding shared details)
     if (problemDetailsReceived && !isRoomCreator) {
-      console.log(
-        "Skipping problem fetch - already received details from room creator"
-      );
+     
       setIsLoadingProblem(false);
       return;
     }
 
     if (dayId && problemId) {
-      console.log(
-        `Ready to fetch problem details - dayId: ${dayId}, problemId: ${problemId}`
-      );
+      
       fetchProblemDetails();
     } else if (problemLink) {
-      console.log("Only have problem link, will try to fetch:", problemLink);
+
       fetchProblemDetails();
     } else {
-      console.log(
-        "Missing required IDs for problem fetch. dayId:",
-        dayId,
-        "problemId:",
-        problemId
-      );
+      
       // If we're the creator, make it clear to guests that no problem is selected yet
       if (isRoomCreator && roomData.inRoom && socket.connected) {
         const defaultDetails = {
@@ -690,11 +638,7 @@ const CollabRoom = () => {
   // Add a retry mechanism for fetching problem details if there's an error
   useEffect(() => {
     if (problemFetchError && fetchRetryCount < 3) {
-      console.log(
-        `Retrying problem details fetch (attempt ${
-          fetchRetryCount + 1
-        } of 3)...`
-      );
+     
       const retryTimer = setTimeout(() => {
         setFetchRetryCount((prev) => prev + 1);
         fetchProblemDetails();
@@ -800,9 +744,7 @@ const CollabRoom = () => {
         return;
       }
 
-      console.log(
-        `Updating problem status: dayId=${dayId}, problemId=${problemId}, status=${statusToApply}`
-      );
+     
       // Use the handleUpdateProblemStatus function which includes all the necessary logic
       await handleUpdateProblemStatus(statusToApply);
 
@@ -813,7 +755,7 @@ const CollabRoom = () => {
 
       // Share status update with room participants
       if (socket.connected && roomData.inRoom && roomData.roomId) {
-        console.log("Sharing status update with room:", statusToApply);
+      
         socket.emit("share-problem-status", {
           roomId: roomData.roomId,
           status: statusToApply,
@@ -897,7 +839,7 @@ const CollabRoom = () => {
         newState ? "solved" : "unsolved"
       );
       if (response.success) {
-        console.log("Problem status updated successfully:", response.data);
+        
       } else {
         console.error("Failed to update problem status:", response.message);
       }
@@ -921,7 +863,7 @@ const CollabRoom = () => {
         newState ? "solveLater" : "unsolved"
       );
       if (response.success) {
-        console.log("Problem status updated successfully:", response.data);
+      
       } else {
         console.error("Failed to update problem status:", response.message);
       }
@@ -957,7 +899,7 @@ const CollabRoom = () => {
       source: "collab-room",
     };
 
-    console.log("Sending collab message to room:", messageData);
+   
 
     // First add the message locally for immediate feedback
     const localMessage = {
@@ -1093,13 +1035,11 @@ const CollabRoom = () => {
     // Load saved messages for this room from localStorage
     const savedMessages = loadCollabMessages(roomData.roomId);
     if (savedMessages && savedMessages.length > 0) {
-      console.log(
-        `Loaded ${savedMessages.length} collab chat messages from storage`
-      );
+     
       setChatMessages(savedMessages);
       setTimeout(scrollToBottom, 100);
     } else {
-      console.log("No saved collab messages found");
+    
       // Add initial system message
       setChatMessages([
         {
@@ -1119,16 +1059,13 @@ const CollabRoom = () => {
       return undefined;
     }
 
-    console.log("Setting up chat message listeners with socket ID:", socket.id);
 
     // Handle incoming messages
     const handleReceiveMessage = (data) => {
-      console.log("Received message:", data);
 
       // Normalize data structure from different message formats      // Check if message is from collab room
       const source = data.source;
       if (source && source !== "collab-room") {
-        console.log("Ignoring message from different source:", source);
         return;
       }
 
@@ -1141,17 +1078,14 @@ const CollabRoom = () => {
 
       // Skip if we've already processed this exact message
       if (processedMessages.current.has(messageId)) {
-        console.log("Skipping duplicate message with ID:", messageId);
         return;
       }
 
       // Skip if this is our own message (we've already added it locally)
       if (username === userName) {
-        console.log("Skipping our own message from server");
         return;
       }
 
-      console.log("Processing new message from:", username);
 
       // Mark as processed with timestamp
       processedMessages.current.set(messageId, Date.now());
@@ -1233,7 +1167,7 @@ const CollabRoom = () => {
         socket.connected
       ) {
         setTimeout(() => {
-          console.log("Room creator joined - requesting problem details");
+       
           socket.emit("request-problem-details", {
             roomId: roomData.roomId,
           });
@@ -1255,7 +1189,6 @@ const CollabRoom = () => {
     }
 
     const handleProblemStatus = (data) => {
-      console.log("Received problem status update:", data);
 
       if (!data || !data.status || !data.problemId) {
         console.warn("Received invalid problem status update");
@@ -1264,13 +1197,11 @@ const CollabRoom = () => {
 
       // Skip if this is our own update (already applied locally)
       if (data.fromSocketId === socket.id) {
-        console.log("Skipping our own status update");
         return;
       }
 
       // Only apply if it matches our current problem
       if (problemId && data.problemId === problemId) {
-        console.log(`Updating local problem status to: ${data.status}`);
 
         // Update status in state
         setProblemStatus(data.status);
@@ -1307,7 +1238,6 @@ const CollabRoom = () => {
       return;
     }
     const handleProblemDetails = (data) => {
-      console.log("Received problem details from room:", data);
 
       if (!data || !data.problemDetails) {
         console.warn("Received invalid problem details");
@@ -1339,16 +1269,7 @@ const CollabRoom = () => {
         data.dayId !== "null" &&
         data.problemId !== "undefined" &&
         data.problemId !== "null";
-
-      // Log validation results for debugging
-      console.log("Problem data validation results:", {
-        isValidData,
-        hasUsableDetails,
-        hasValidIds,
-        title: receivedDetails.title,
-        dayId: data.dayId,
-        problemId: data.problemId,
-      });
+  
 
       // Special case: if we have valid IDs, accept the data even with placeholder title
       const shouldAcceptData = isValidData || hasUsableDetails || hasValidIds;
@@ -1371,9 +1292,7 @@ const CollabRoom = () => {
           problemDetails.title !== "Coding Problem";
 
         if (currentDetailsValid) {
-          console.log(
-            "Keeping existing problem details which seem better than received ones"
-          );
+      
           return;
         }
       }
@@ -1383,7 +1302,6 @@ const CollabRoom = () => {
         setDayId(data.dayId);
         // Also store in localStorage for persistence across refreshes
         localStorage.setItem("current_collab_day_id", data.dayId);
-        console.log("Updated dayId from received data:", data.dayId);
       }
 
       if (
@@ -1394,13 +1312,8 @@ const CollabRoom = () => {
         setProblemId(data.problemId);
         // Also store in localStorage for persistence across refreshes
         localStorage.setItem("current_collab_problem_id", data.problemId);
-        console.log("Updated problemId from received data:", data.problemId);
       }
 
-      console.log(
-        "Updating problem details from received data:",
-        receivedDetails
-      );
 
       // Update problem details - ensure we don't lose information
       setProblemDetails((prev) => {
@@ -1473,8 +1386,6 @@ const CollabRoom = () => {
           status: receivedDetails.status || prev.status || "unsolved",
         };
 
-        console.log("Updated problem details with best values:", bestDetails);
-
         return bestDetails;
       });
 
@@ -1500,7 +1411,6 @@ const CollabRoom = () => {
       // We still track that we received details, but don't show a message in chat
     };
     const handleRequestProblemDetails = (data) => {
-      console.log("Received request for problem details:", data);
 
       // Only respond if we're the room creator
       if (isRoomCreator) {
@@ -1518,23 +1428,13 @@ const CollabRoom = () => {
           problemDetails.title !== "Coding Problem";
 
         if (hasValidDetails || hasProblemIds) {
-          console.log("Responding to problem details request with:", {
-            details: problemDetails,
-            dayId: dayId,
-            problemId: problemId,
-            hasValidDetails,
-            hasProblemIds,
-          });
+         
 
           // Always share what we have, even if it's just the IDs
           shareProblemDetailsWithRoom(problemDetails);
         } else {
-          console.log(
-            "Cannot share problem details - no valid problem selected and no IDs available"
-          );
-
           // We're not showing problem details request messages in chat anymore
-          // Just log the event for debugging purposes
+     // Just log the event for debugging purposes
         }
       }
     };
@@ -1546,7 +1446,6 @@ const CollabRoom = () => {
       const requestDetails = () => {
         // Only request if we haven't received details yet
         if (!problemDetailsReceived) {
-          console.log("Requesting problem details from room creator");
           socket.emit("request-problem-details", {
             roomId: roomData.roomId,
             silent: true,
@@ -1560,7 +1459,6 @@ const CollabRoom = () => {
       // Second request after 2 seconds if needed
       const firstRetryTimeout = setTimeout(() => {
         if (!problemDetailsReceived) {
-          console.log("Retry #1: Requesting problem details");
           socket.emit("request-problem-details", {
             roomId: roomData.roomId,
             silent: false, // Show UI notification on second attempt
@@ -1583,11 +1481,7 @@ const CollabRoom = () => {
     if (!socket.connected || !roomData.inRoom) return;
 
     const roomId = roomData.roomId;
-    console.log(
-      `Joining socket room with ID: ${roomId} as ${
-        isRoomCreator ? "creator" : "guest"
-      }`
-    );
+    
 
     // Include more context in the join event, including problem IDs if available
     const joinData = {
@@ -1614,9 +1508,7 @@ const CollabRoom = () => {
 
     // Add join handling based on creator status
     if (isRoomCreator) {
-      console.log(
-        "Joining as room creator, will share problem details if available"
-      );
+     
 
       // Always share problem details on join - either having the IDs or having actual details is useful
       const hasValidDetailsOrIds =
@@ -1626,29 +1518,17 @@ const CollabRoom = () => {
         (dayId && problemId);
 
       if (hasValidDetailsOrIds) {
-        console.log("Will share problem details with room:", {
-          details: problemDetails,
-          dayId,
-          problemId,
-          hasValidTitle:
-            problemDetails.title &&
-            problemDetails.title !== "Loading Problem..." &&
-            problemDetails.title !== "No Problem Selected",
-          hasIds: !!(dayId && problemId),
-        });
+        
 
         // Short delay to ensure connection is established
         setTimeout(() => {
           shareProblemDetailsWithRoom(problemDetails);
         }, 500);
       } else {
-        console.log(
-          "No problem details or IDs available yet, will share when loaded"
-        );
+        
         // We'll share details once they're fetched in fetchProblemDetails
       }
     } else {
-      console.log("Joining as guest, will request problem details");
       // We'll request details in the problem-details socket listener effect
 
       // Add immediate silent request to speed up synchronization
@@ -1664,13 +1544,9 @@ const CollabRoom = () => {
   const verifyProblemDetailsIntegrity = () => {
     // Only run this check if we're in a room and have problem IDs
     if (!roomData.inRoom || !dayId || !problemId) {
-      console.log(
-        "Skipping problem details integrity check - not enough context"
-      );
+      
       return;
     }
-
-    console.log("Verifying problem details integrity");
 
     // Check if we have valid title data
     const hasValidTitle =
@@ -1685,9 +1561,6 @@ const CollabRoom = () => {
     // For guests, if we don't have proper details after 5 seconds,
     // request them again from the room creator
     if (!isRoomCreator && !hasValidTitle) {
-      console.log(
-        "Problem details might be incomplete, requesting again from creator"
-      );
 
       setTimeout(() => {
         if (socket.connected && roomData.roomId) {
@@ -1701,7 +1574,6 @@ const CollabRoom = () => {
 
     // For creators, ensure we're sharing details
     if (isRoomCreator && roomData.inRoom) {
-      console.log("Verifying that problem details were shared as room creator");
 
       // If we have at least a day ID and problem ID, share what we have
       if (dayId && problemId) {
@@ -1738,9 +1610,7 @@ const CollabRoom = () => {
     return () => {
       // Clear the problem IDs from localStorage when component unmounts
       localStorage.removeItem("current_collab_problem_id");
-      localStorage.removeItem("current_collab_day_id");
-      console.log("Cleared problem details on navigation away from Collab Room");
-    };
+      localStorage.removeItem("current_collab_day_id");    };
   }, []);
 
   // Clean up socket connections and event listeners when component unmounts
@@ -1814,7 +1684,7 @@ const CollabRoom = () => {
 
         // Implement a retry mechanism
         if (!result.retried) {
-          console.log("Retrying status update after failure");
+          
           setTimeout(() => {
             handleUpdateProblemStatus(newStatus);
           }, 2000);
@@ -1887,9 +1757,7 @@ const CollabRoom = () => {
   }; // Function to share problem details with room
   const shareProblemDetailsWithRoom = (details) => {
     if (!socket.connected || !roomData.inRoom) {
-      console.log(
-        "Cannot share problem details: socket not connected or not in room"
-      );
+      
       return;
     }
 
@@ -1973,11 +1841,11 @@ const CollabRoom = () => {
 
     if (lastSharedTime && now - parseInt(lastSharedTime) < 5000) {
       // 5 seconds
-      console.log("Skipping share, already shared recently");
+
       return;
     }
 
-    console.log("Sharing problem details with room:", details);
+  
 
     // Ensure we have valid data with defaults for missing values
     const detailsToShare = {
@@ -2000,12 +1868,6 @@ const CollabRoom = () => {
       problemId || localStorage.getItem("current_collab_problem_id");
     const currentDayId = dayId || localStorage.getItem("current_collab_day_id");
 
-    // Log what we're sharing
-    console.log("Sharing problem details with roomId:", roomData.roomId, {
-      details: detailsToShare,
-      dayId: currentDayId,
-      problemId: currentProblemId,
-    });
 
     socket.emit("share-problem-details", {
       roomId: roomData.roomId,
@@ -2028,7 +1890,6 @@ const CollabRoom = () => {
 
   // Add debugging log when problem details change
   useEffect(() => {
-    console.log("Problem details updated:", problemDetails);
 
     // If difficulty or platform are Unknown but we have URL, try to infer them
     if (
@@ -2038,7 +1899,6 @@ const CollabRoom = () => {
     ) {
       const detectedPlatform = detectPlatformFromUrl(problemDetails.url);
       if (detectedPlatform && problemDetails.platform === "Unknown") {
-        console.log("Auto-detected platform from URL:", detectedPlatform);
         setProblemDetails((prev) => ({ ...prev, platform: detectedPlatform }));
       }
     }  }, [problemDetails.url, problemDetails.title]); 

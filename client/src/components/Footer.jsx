@@ -84,7 +84,7 @@ const Footer = () => {
         throw new Error(data.message || 'Something went wrong');
       }
       
-      console.log('Contact form submission successful:', data);
+     
       
       // Success!
       setSubmitSuccess(true);

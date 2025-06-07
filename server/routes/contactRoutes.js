@@ -11,8 +11,6 @@ const router = express.Router();
 // Check if API key exists and initialize Resend with proper error handling
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-// Log for debugging (remove in production)
-console.log('RESEND_API_KEY available:', !!RESEND_API_KEY);
 
 // Initialize Resend only if API key is available
 let resend;
@@ -44,12 +42,7 @@ router.post('/', async (req, res) => {
     const fromEmail = process.env.EMAIL_FROM;
     const toEmail = process.env.EMAIL_TO;
     
-    // Log email configuration for debugging
-    console.log('Sending email with configuration:', {
-      from: fromEmail,
-      to: toEmail,
-      subject: `Contact Form: ${subject}`,
-    });
+   
     
     if (!fromEmail || !toEmail) {
       console.error('Missing email configuration:', { fromEmail, toEmail });
@@ -82,8 +75,7 @@ router.post('/', async (req, res) => {
       `,
     });
     
-    // Log the response from Resend API for debugging
-    console.log('Resend API response:', data);
+    
 
     if (!data || !data.id) {
       console.warn('Resend API returned success but without an email ID:', data);

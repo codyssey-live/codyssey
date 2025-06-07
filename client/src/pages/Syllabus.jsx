@@ -231,7 +231,7 @@ const Syllabus = () => {
         
         // Case 1: URL param specified - show that user's syllabus
         if (paramUserId) {
-          console.log('Using userId from params:', paramUserId);
+         
           
           // Check if the provided ID is a valid MongoDB ObjectID
           if (paramUserId !== 'syllabus' && !isValidObjectId(paramUserId)) {
@@ -245,23 +245,19 @@ const Syllabus = () => {
         }
         // Case 2: In room context - show host's syllabus
         else if (roomData.inRoom && roomData.inviterId) {
-          console.log('Using inviterId from room context:', roomData.inviterId);
           syllabusOwner = roomData.inviterId;
           isOtherUserSyllabus = roomData.inviterId !== currentUserId;
         }
         // Case 3: Default - show current user's syllabus
         else {
           if (currentUserId) {
-            console.log('Using current userId:', currentUserId);
             syllabusOwner = currentUserId;
             isOtherUserSyllabus = false;
           } else {
             // If no ID in localStorage, fetch from API
-            console.log('Fetching user info from API');
             const response = await apiClient.get('/users/me');
             if (response.data && response.data._id) {
               syllabusOwner = response.data._id;
-              console.log('Fetched userId from API:', syllabusOwner);
               localStorage.setItem('userId', syllabusOwner); // Cache for future use
               isOtherUserSyllabus = false;
             } else {
@@ -292,13 +288,11 @@ const Syllabus = () => {
       
       try {
         setIsLoading(true);
-        console.log('Loading syllabus for user:', syllabusOwnerId);
         
         const response = await fetchSyllabus(syllabusOwnerId);
 
         if (response.success && response.data?.data) {
           const serverSyllabus = response.data.data;
-          console.log('Loaded syllabus from server:', serverSyllabus);
 
           // Map the returned data to the format expected by the UI
           if (serverSyllabus.studyDays && serverSyllabus.studyDays.length > 0) {
@@ -430,17 +424,12 @@ const Syllabus = () => {
       const mongoId = syllabusDays.find(d => d.id === dayId)?._id;
       
       if (mongoId) {
-        console.log(`Deleting day with MongoDB ID: ${mongoId}`);
         const response = await deleteStudyDay(mongoId);
         
         if (!response.success) {
           throw new Error(response.message || 'Failed to delete from database');
         }
-        
-        console.log('Successfully deleted from database');
-      } else {
-        console.log('Day only exists in local state, no database deletion needed');
-      }
+      } 
       
       // Update the UI state after successful database operation or if no database record exists
       const updatedDays = syllabusDays.filter(day => day.id !== dayId);
@@ -618,7 +607,7 @@ const Syllabus = () => {
       const response = await saveSyllabus(daysWithUserId);
       
       if (response.success) {
-        console.log("Syllabus saved successfully:", response.data);
+        
         
         // Update local state with server-returned data to get proper MongoDB IDs
         const serverSyllabus = response.data.data;
