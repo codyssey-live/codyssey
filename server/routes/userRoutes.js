@@ -226,7 +226,6 @@ router.post('/:id/profile-picture', protect, upload.single('profilePicture'), as
         if (publicIdMatch && publicIdMatch[1]) {
           const publicId = `leetroom/profile-pictures/${publicIdMatch[1]}`;
           await deleteImage(publicId);
-          console.log('Deleted old profile picture from Cloudinary');
         }
       } catch (err) {
         console.error('Error deleting old profile picture from Cloudinary:', err);
@@ -296,7 +295,6 @@ router.delete('/:id/profile-picture', protect, async (req, res) => {
           const publicId = `leetroom/profile-pictures/${publicIdMatch[1]}`;
           const result = await deleteImage(publicId);
           cloudinaryDeletionStatus = result.result || 'success';
-          console.log('Deleted profile picture from Cloudinary:', result);
         } else {
           cloudinaryDeletionStatus = 'no_match_found';
         }

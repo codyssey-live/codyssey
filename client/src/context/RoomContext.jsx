@@ -45,7 +45,6 @@ export const RoomProvider = ({ children }) => {
             
             // If creator status is only in history but not in roomInfo, update roomInfo
             if (wasCreator && !parsedInfo.isCreator) {
-              console.log("Restoring creator status from history to roomInfo in context");
               parsedInfo.isCreator = true;
               localStorage.setItem('roomInfo', JSON.stringify(parsedInfo));
             }

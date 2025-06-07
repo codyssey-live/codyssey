@@ -123,7 +123,6 @@ export const deleteAccount = async (req, res) => {
         if (publicIdMatch && publicIdMatch[1]) {
           const publicId = `leetroom/profile-pictures/${publicIdMatch[1]}`;
           await deleteImage(publicId);
-          console.log('Deleted profile picture from Cloudinary');
         }
       } catch (err) {
         console.error('Error deleting profile picture from Cloudinary:', err);
