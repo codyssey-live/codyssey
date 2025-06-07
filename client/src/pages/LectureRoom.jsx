@@ -89,14 +89,7 @@ const LectureRoom = () => {
       
       socket.on('connect_error', (error) => {
         console.error("Socket connection error:", error);
-        // Add system message for the error
-        setChatMessages(prev => [...prev, {
-          id: Date.now(),
-          user: 'System',
-          text: `Connection error: ${error.message}. Trying to reconnect...`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          type: 'system'
-        }]);
+        // Remove adding error message to chat
       });
     } else {
       setIsConnected(true);
@@ -264,26 +257,12 @@ const LectureRoom = () => {
               'onStateChange': onPlayerStateChange,
               'onError': (e) => {
                 console.error('YouTube player error:', e);
-                // Add system message for the error
-                setChatMessages(prev => [...prev, {
-                  id: Date.now(),
-                  user: 'System',
-                  text: `Video error: ${getYoutubeErrorMessage(e.data)}`,
-                  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                  type: 'system'
-                }]);
+                // Remove adding error message to chat
               }
             }
           });
         } catch (error) {
           console.error('Error initializing YouTube player:', error);
-          setChatMessages(prev => [...prev, {
-            id: Date.now(),
-            user: 'System',
-            text: 'Failed to initialize YouTube player. Please refresh the page.',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            type: 'system'
-          }]);
           return;
         }
         
