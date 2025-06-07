@@ -9,6 +9,7 @@ import { fetchAllNotes, createNote, deleteNote as deleteNoteAPI } from '../utils
 import { format } from 'date-fns';
 import { AnimatePresence } from 'framer-motion';
 import { applySyncCommand, emitVideoSync } from '../utils/lectureRoomVideoSync';
+import debounce from 'lodash';
 
 // A small delay to ensure operations don't conflict
 const SYNC_DELAY = 300;

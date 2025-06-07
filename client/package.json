@@ -16,6 +16,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^2.30.0",
     "framer-motion": "^12.7.4",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.503.0",
     "react": "^18.2.0",
     "react-calendar": "^4.8.0",

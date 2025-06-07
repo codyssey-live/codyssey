@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import Navbar from '../components/Navbar';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { format } from "date-fns";
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -213,7 +213,14 @@ const Syllabus = () => {
   const [newResourceTitle, setNewResourceTitle] = useState("");
   const [newResourceType, setNewResourceType] = useState("video");
   const [newResourceUrl, setNewResourceUrl] = useState("");
-  
+    const navigate = useNavigate();
+
+  // Check if a string is a valid MongoDB ObjectID
+  const isValidObjectId = (id) => {
+    // MongoDB ObjectIDs are 24-character hex strings
+    return /^[0-9a-fA-F]{24}$/.test(id);
+  };
+
   // Determine whose syllabus to show and get the correct user ID
   useEffect(() => {
     const determineUserToShow = async () => {
@@ -225,6 +232,14 @@ const Syllabus = () => {
         // Case 1: URL param specified - show that user's syllabus
         if (paramUserId) {
           console.log('Using userId from params:', paramUserId);
+          
+          // Check if the provided ID is a valid MongoDB ObjectID
+          if (paramUserId !== 'syllabus' && !isValidObjectId(paramUserId)) {
+            console.error('Invalid user ID format:', paramUserId);
+            navigate('/dashboard', { replace: true });
+            return;
+          }
+          
           syllabusOwner = paramUserId;
           isOtherUserSyllabus = paramUserId !== currentUserId;
         }
@@ -261,6 +276,7 @@ const Syllabus = () => {
         
       } catch (error) {
         console.error('Error determining user for syllabus:', error);
+        navigate('/dashboard', { replace: true });
       }
     };
     

@@ -62,8 +62,7 @@ function App() {
                     <ForgotPassword />
                   </PublicRoute>
                 } />
-                
-                {/* Protected routes with exact paths */}
+                  {/* Protected routes with exact paths */}
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
                     <Dashboard />
@@ -94,11 +93,16 @@ function App() {
                     <Room />
                   </ProtectedRoute>
                 } />
-                
-                {/* Add more specific routes before dynamic userId route */}
                 <Route path="/user/:userId" element={
                   <ProtectedRoute>
                     <UserProfile />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Route for viewing another user's syllabus by ID */}
+                <Route path="/:userId" element={
+                  <ProtectedRoute>
+                    <Syllabus />
                   </ProtectedRoute>
                 } />
                 
