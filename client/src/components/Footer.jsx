@@ -84,7 +84,7 @@ const Footer = () => {
         throw new Error(data.message || 'Something went wrong');
       }
       
-  
+     
       
       // Success!
       setSubmitSuccess(true);

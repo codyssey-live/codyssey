@@ -200,7 +200,6 @@ const UserProfile = () => {
         // Try to get user ID from localStorage first as a starting point
         const savedUserId = getUserId();
         if (savedUserId) {
-          console.log("Found user ID in localStorage:", savedUserId);
           setUser(prevUser => ({
             ...prevUser,
             id: savedUserId,
@@ -214,7 +213,6 @@ const UserProfile = () => {
           const userId = userData.id || userData._id || savedUserId;
           if (userId) {
             localStorage.setItem('userId', userId);
-            console.log("Setting userId in localStorage:", userId);
           }
           
           // Set all user data including consistent IDs
@@ -317,7 +315,7 @@ const UserProfile = () => {
       
       // Upload to server
       const response = await uploadProfilePicture(user.id, formData);
-      console.log("Profile picture upload response:", response);
+     
       
       if (response && response.data && response.data.profilePicture) {
         // Update with the server URL
@@ -605,16 +603,13 @@ const UserProfile = () => {
         
       try {
         // Save to API
-        console.log('Sending education data to API:', newEducation);
         const response = await addEducation(user.id || user._id, newEducation);
           
         // Check if we got a valid response with data
         if (!response || !response.data) {
           throw new Error('Invalid response from server');
         }
-          
-        console.log('Education added successfully:', response);
-          
+                    
         // Update user state with the response that includes the generated ID from the server
         const updatedEducation = [...user.education, response.data];
           
@@ -754,9 +749,7 @@ const UserProfile = () => {
           addNotification('User ID is missing. Please try refreshing the page or logging in again.', 'error');
           return;
         }
-          
-        console.log('Adding work experience for user:', userId);
-          
+                    
         // Save to API using the user ID
         const response = await addWorkExperience(userId, newWorkExperience);
           
