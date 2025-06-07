@@ -10,6 +10,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Room from "./pages/Room";
 import Footer from "./components/Footer";
+import NotFoundPage from "./components/NotFoundPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import { RoomProvider } from "./context/RoomContext";
@@ -23,9 +24,8 @@ import axios from 'axios';
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 axios.defaults.withCredentials = true;
 
-
-
-function App() {  return (
+function App() {
+  return (
     <Router>
       <RoomProvider>
         <NotificationProvider>
@@ -46,7 +46,7 @@ function App() {  return (
                 {/* Public routes */}
                 <Route path="/" element={<Home />} />
                 
-                {/* Auth routes - redirect to dashboard if already logged in */}
+                {/* Auth routes */}
                 <Route path="/signup" element={
                   <PublicRoute>
                     <Signup />
@@ -63,19 +63,13 @@ function App() {  return (
                   </PublicRoute>
                 } />
                 
-                {/* Protected routes */}
+                {/* Protected routes with exact paths */}
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
                     <Dashboard />
                   </ProtectedRoute>
                 } />
                 <Route path="/syllabus" element={
-                  <ProtectedRoute>
-                    <Syllabus />
-                  </ProtectedRoute>
-                } />
-                {/* Add route for viewing another user's syllabus */}
-                <Route path="/:userId" element={
                   <ProtectedRoute>
                     <Syllabus />
                   </ProtectedRoute>
@@ -95,11 +89,22 @@ function App() {  return (
                     <UserProfile />
                   </ProtectedRoute>
                 } />
-                
                 <Route path="/room/:roomId" element={
                   <ProtectedRoute>
                     <Room />
                   </ProtectedRoute>
+                } />
+                
+                {/* Add more specific routes before dynamic userId route */}
+                <Route path="/user/:userId" element={
+                  <ProtectedRoute>
+                    <UserProfile />
+                  </ProtectedRoute>
+                } />
+                
+                {/* CRITICAL: Catch-all route for any undefined path - THIS MUST BE LAST */}
+                <Route path="*" element={
+                  <NotFoundPage />
                 } />
               </Routes>
             </div>

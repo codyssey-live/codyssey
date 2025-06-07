@@ -17,6 +17,7 @@ const Login = () => {
   
   // Get the intended destination from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/dashboard";
+  const returnTo = location.state?.returnTo || "/dashboard";
 
   // Check for success message from signup
   useEffect(() => {
@@ -37,7 +38,8 @@ const Login = () => {
     setLoading(true);
     setError(null);
     
-    try {      // Use apiClient with credentials to allow cookie setting
+    try {
+      // Use apiClient with credentials to allow cookie setting
       const response = await apiClient.post('/auth/login', { 
         email: formData.email, 
         password: formData.password 
@@ -62,8 +64,12 @@ const Login = () => {
       // Clear any existing room info to prevent automatic room creation on login
       localStorage.removeItem('roomInfo');
       
-      // Navigate to the intended destination
-      navigate(from, { replace: true });
+      // Navigate to the intended destination or return path
+      const returnPath = location.state?.returnTo || location.state?.from?.pathname || '/dashboard';
+      const redirectPath = returnPath !== '/login' && returnPath !== '/signup' && 
+                       returnPath !== '/forgot-password' ? returnPath : '/dashboard';
+                        
+      navigate(redirectPath, { replace: true });
       
     } catch (err) {
       // Extract error message from the response
