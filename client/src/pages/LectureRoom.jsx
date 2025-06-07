@@ -45,26 +45,56 @@ const LectureRoom = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const notesPerPage = 5; // Number of notes to display per page
   
-  // Get username from localStorage   
+  // Get username from localStorage     // Enhanced initialization with improved user status verification and socket handling
   useEffect(() => {
     const savedUsername = localStorage.getItem('roomUsername') || 'User';
     setUserName(savedUsername);
     
-    // Check if user is a room creator from history
+    // Check if user is a room creator from history with more reliable checks
     if (roomData.roomId) {
       const creatorHistory = JSON.parse(localStorage.getItem('roomCreatorHistory') || '{}');
-      if (creatorHistory[roomData.roomId] === true && !roomData.isRoomCreator) {
+      const isCreatorFromSession = localStorage.getItem(`roomCreator_${roomData.roomId}`) === 'true';
+      
+      if ((creatorHistory[roomData.roomId] === true || isCreatorFromSession) && !roomData.isRoomCreator) {
         console.log("Found creator status in history, updating room context");
         setRoomData(prev => ({...prev, isRoomCreator: true}));
       }
+      
+      // If we are the creator, make sure it's saved for future sessions
+      if (roomData.isRoomCreator) {
+        localStorage.setItem(`roomCreator_${roomData.roomId}`, 'true');
+        
+        // Update creator history
+        const updatedCreatorHistory = {...creatorHistory, [roomData.roomId]: true};
+        localStorage.setItem('roomCreatorHistory', JSON.stringify(updatedCreatorHistory));
+      }
     }
     
-    // Connect the socket if not already connected
+    // Connect the socket if not already connected with improved handling
     if (!socket.connected) {
+      console.log("Socket not connected, connecting now...");
       socket.connect();
+      
       socket.on('connect', () => {
         setIsConnected(true);
         console.log(`Connected to socket server with ID: ${socket.id}`);
+        
+        // If in a room with video, try joining automatically after connection
+        if (roomData.inRoom && roomData.roomId && videoIdRef.current) {
+          setTimeout(() => joinVideoRoom(), 1000);
+        }
+      });
+      
+      socket.on('connect_error', (error) => {
+        console.error("Socket connection error:", error);
+        // Add system message for the error
+        setChatMessages(prev => [...prev, {
+          id: Date.now(),
+          user: 'System',
+          text: `Connection error: ${error.message}. Trying to reconnect...`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          type: 'system'
+        }]);
       });
     } else {
       setIsConnected(true);
@@ -76,6 +106,7 @@ const LectureRoom = () => {
     // Cleanup socket connection
     return () => {
       socket.off('connect');
+      socket.off('connect_error');
     };
   }, [roomData.roomId, roomData.isRoomCreator]);
   
@@ -206,24 +237,24 @@ const LectureRoom = () => {
         try {
           // Clear container first in case of re-initialization
           container.innerHTML = '';
-          
-          // Create the player with improved settings for better sync
+            // Create the player with optimized settings for better sync and access control
           const player = new window.YT.Player('youtube-player', {
             height: '600',
             width: '100%',
             videoId: videoId,
             playerVars: {
               'autoplay': 0, // Don't autoplay until creator starts
-              // Always enable controls visually but restrict interaction via CSS
-              'controls': 1,
+              // Show controls for the creator, but guests will have them visually disabled via CSS
+              'controls': roomData.isRoomCreator ? 1 : 0,
               'rel': 0,
-              'fs': 1,
+              'fs': roomData.isRoomCreator ? 1 : 0, // Fullscreen only for creator
               'modestbranding': 1,
               'enablejsapi': 1,
               'origin': window.location.origin,
               'playsinline': 1, // Better for mobile sync
               'iv_load_policy': 3, // Hide annotations for cleaner look
-              'start': 0 // Always start at beginning for consistency
+              'start': 0, // Always start at beginning for consistency
+              'disablekb': roomData.isRoomCreator ? 0 : 1 // Disable keyboard controls for guests
             },
             events: {
               'onReady': onPlayerReady,
@@ -259,21 +290,101 @@ const LectureRoom = () => {
         console.log('YouTube player initialized:', player);
       }
     }, 200);
-  };
-  // YouTube API event handlers with improved initialization
+  };  // Enhanced YouTube API event handlers for better control and synchronization
   const onPlayerReady = (event) => {
     console.log('Player ready', event.target);
     
     // Store the player for later use
     playerRef.current = event.target;
     
+    // Setup an interval for checking time progress for creator only
+    // This helps detect when users manually drag the progress bar
+    if (roomData.isRoomCreator) {
+      // Track the last reported position to detect seeks
+      let lastReportedTime = event.target.getCurrentTime();
+      let lastPlayerState = event.target.getPlayerState();
+      
+      // Check every 3 seconds for significant position changes that weren't from normal playback
+      const seekDetectionInterval = setInterval(() => {
+        if (!playerRef.current) {
+          clearInterval(seekDetectionInterval);
+          return;
+        }
+        
+        try {
+          const currentTime = playerRef.current.getCurrentTime();
+          const currentState = playerRef.current.getPlayerState();
+          
+          // If we're playing, check if position jumped more than expected
+          if (lastPlayerState === window.YT.PlayerState.PLAYING && 
+              currentState === window.YT.PlayerState.PLAYING) {
+            
+            // Calculate expected time range (with 4s tolerance for network/processing delays)
+            const expectedMaxTime = lastReportedTime + 3.5; // 3s interval + 0.5s tolerance
+            
+            // If time jumped forward too much or backward at all while playing
+            if (currentTime > expectedMaxTime || currentTime < lastReportedTime - 0.5) {
+              console.log(`Detected manual seek from ${lastReportedTime} to ${currentTime}`);
+              // Treat as manual seek and sync others
+              handleSeek.current(currentTime);
+            }
+          }
+          
+          // Update tracked values
+          lastReportedTime = currentTime;
+          lastPlayerState = currentState;
+          
+        } catch (e) {
+          console.error("Error in seek detection:", e);
+        }
+      }, 3000);
+    }
+    
     // Enhanced initialization for better sync
     if (roomData.inRoom && roomData.roomId && videoIdRef.current) {
-      // If this client is not the room creator, we should disable controls
+      // If this client is not the room creator, disable all controls
       if (!roomData.isRoomCreator) {
-        // Note: even though we disable controls in the player options,
-        // we do it again here to be 100% sure
-        event.target.getIframe().style.pointerEvents = 'none';
+        // Apply multiple layers of control restrictions
+        const iframe = event.target.getIframe();
+        
+        // Make the iframe non-interactive but allow visibility
+        iframe.style.pointerEvents = 'none';
+        
+        // Add a transparent overlay to prevent any interaction with the player
+        const playerContainer = iframe.parentElement;
+        if (playerContainer) {
+          // Check if overlay already exists
+          let overlay = playerContainer.querySelector('.player-control-overlay');
+          if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'player-control-overlay';
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.zIndex = '10';
+            overlay.style.cursor = 'not-allowed';
+            
+            // Add message to indicate video is controlled by creator
+            const message = document.createElement('div');
+            message.innerText = 'Video is controlled by the room creator';
+            message.style.position = 'absolute';
+            message.style.bottom = '10px';
+            message.style.left = '50%';
+            message.style.transform = 'translateX(-50%)';
+            message.style.backgroundColor = 'rgba(0,0,0,0.7)';
+            message.style.color = 'white';
+            message.style.padding = '8px 12px';
+            message.style.borderRadius = '4px';
+            message.style.fontSize = '14px';
+            
+            overlay.appendChild(message);
+            playerContainer.style.position = 'relative';
+            playerContainer.appendChild(overlay);
+          }
+        }
+        
         console.log('Video controls are disabled - the room creator controls playback');
         
         // Force player to be paused initially to prevent auto-start mismatch
@@ -285,7 +396,7 @@ const LectureRoom = () => {
           joinVideoRoom();
         }, 500);
       } else {
-        // For creators, ensure controls are enabled
+        // For creators, ensure controls are fully enabled
         event.target.getIframe().style.pointerEvents = 'auto';
         console.log('As room creator, you control the video for all participants');
         
@@ -309,7 +420,25 @@ const LectureRoom = () => {
       console.error('Could not get video title', err);
     }
   };
+    // Create debounced emitters for video control events to prevent broadcast storms
+  const debouncedVideoControl = useRef(
+    debounce((action, time) => {
+      if (!roomData.roomId || !socket.connected || !videoIdRef.current) return;
+      
+      console.log(`Sending debounced ${action} event to room at time:`, time);
+      
+      // Emit single event to the new unified handler
+      socket.emit('video-control', {
+        roomId: roomData.roomId,
+        action,
+        time,
+        videoId: videoIdRef.current,
+        userId: roomData.inviterId || socket.id
+      });
+    }, 200, { leading: true, trailing: true, maxWait: 1000 })
+  ).current;
   
+  // Enhanced player state change handler with debouncing
   const onPlayerStateChange = (event) => {
     // Only allow the room creator to control the video
     if (!roomData.isRoomCreator || isRemoteUpdateRef.current || !socket.connected) return;
@@ -318,108 +447,59 @@ const LectureRoom = () => {
     if (!player) return;
     
     try {
-      // Handle state changes
+      // Handle state changes with debouncing to prevent network congestion
       switch (event.data) {
         case window.YT.PlayerState.PLAYING:
-          console.log('Video is playing, broadcasting to room');
+          console.log('Video is playing, broadcasting to room (debounced)');
           
-          // Get current time and retry if not available
+          // Get current time and validate
           const playTime = player.getCurrentTime();
           if (isNaN(playTime)) {
             console.error('Invalid play time received from player:', playTime);
             return;
           }
           
-          // Using multiple event names for better compatibility and reliability
-          // First with hyphen format
-          socket.emit('video-control', {
-            roomId: roomData.roomId,
-            action: 'play',
-            time: playTime,
-            videoId: videoIdRef.current,
-            userId: roomData.inviterId || socket.id
-          });
+          // Use the debounced emitter to prevent excessive events
+          debouncedVideoControl('play', playTime);
           
-          // Then with underscore format
-          socket.emit('video_control', {
-            roomId: roomData.roomId,
-            action: 'play',
-            time: playTime,
-            videoId: videoIdRef.current,
-            userId: roomData.inviterId || socket.id
-          });
-          
-          // And with sync format that includes server time
-          socket.emit('sync-video', {
-            roomId: roomData.roomId,
-            videoId: videoIdRef.current,
-            action: 'play',
-            time: playTime,
-            serverTime: Date.now() // For delay compensation
-          });
-          
-          // Also broadcast a full state update
-          socket.emit('video-state-update', {
-            roomId: roomData.roomId,
-            videoId: videoIdRef.current,
-            currentTime: playTime,
-            isPlaying: true,
-            serverTime: Date.now()
-          });
-          
-          console.log('Sent play event to all participants at time:', playTime);
           break;
           
         case window.YT.PlayerState.PAUSED:
-          console.log('Video is paused, broadcasting to room');
+          console.log('Video is paused, broadcasting to room (debounced)');
           
-          // Get current time and retry if not available
+          // Get current time and validate
           const pauseTime = player.getCurrentTime();
           if (isNaN(pauseTime)) {
             console.error('Invalid pause time received from player:', pauseTime);
             return;
           }
           
-          // Using multiple event names for better compatibility
-          socket.emit('video-control', {
-            roomId: roomData.roomId,
-            action: 'pause',
-            time: pauseTime,
-            videoId: videoIdRef.current,
-            userId: roomData.inviterId || socket.id
-          });
+          // Use the debounced emitter to prevent excessive events
+          debouncedVideoControl('pause', pauseTime);
           
-          socket.emit('video_control', {
-            roomId: roomData.roomId,
-            action: 'pause',
-            time: pauseTime,
-            videoId: videoIdRef.current,
-            userId: roomData.inviterId || socket.id
-          });
-          
-          socket.emit('sync-video', {
-            roomId: roomData.roomId,
-            videoId: videoIdRef.current,
-            action: 'pause',
-            time: pauseTime,
-            serverTime: Date.now()
-          });
-          
-          // Also broadcast a full state update
-          socket.emit('video-state-update', {
-            roomId: roomData.roomId,
-            videoId: videoIdRef.current,
-            currentTime: pauseTime,
-            isPlaying: false,
-            serverTime: Date.now()
-          });
-                console.log('Sent pause event to all participants at time:', pauseTime);
           break;
       }
     } catch (error) {
       console.error('Error in player state change:', error);
     }
   };
+  
+  // Manual seek handler with debouncing
+  const handleSeek = useRef(
+    debounce((newTime) => {
+      if (!roomData.isRoomCreator || !socket.connected) return;
+      
+      console.log(`Manual seek detected, sending seek event to: ${newTime}`);
+      
+      socket.emit('video-control', {
+        roomId: roomData.roomId,
+        action: 'seek',
+        time: newTime,
+        videoId: videoIdRef.current,
+        userId: roomData.inviterId || socket.id
+      });
+    }, 250)
+  ).current;
   
   const handleSubmitUrl = (e) => {
     e.preventDefault();
@@ -465,8 +545,7 @@ const LectureRoom = () => {
         }
       }
     }
-  };
-  // Join the video room for synchronization  
+  };  // Enhanced join video room function for better synchronization
   const joinVideoRoom = async () => {
     if (!roomData.inRoom || !roomData.roomId || !videoIdRef.current) {
       console.log('Missing required data for video room join:', 
@@ -474,7 +553,7 @@ const LectureRoom = () => {
       return;
     }
     
-    // Always rejoin to ensure we have the latest connection
+    // Track if we've already joined this specific video room
     const rejoining = hasJoinedVideoRoom.current === videoIdRef.current;
     if (rejoining) {
       console.log('Already joined this video room, but rejoining to ensure connection');
@@ -485,18 +564,34 @@ const LectureRoom = () => {
       if (!socket.connected) {
         console.log('Socket not connected, connecting now...');
         socket.connect();
-        // Wait for connection to establish
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait for connection to establish with timeout
+        await Promise.race([
+          new Promise(resolve => setTimeout(resolve, 5000)), // Timeout after 5 seconds
+          new Promise(resolve => {
+            const connectHandler = () => {
+              socket.off('connect', connectHandler);
+              resolve();
+            };
+            socket.on('connect', connectHandler);
+          })
+        ]);
+        
+        if (!socket.connected) {
+          console.error('Socket connection timed out');
+          throw new Error('Socket connection timed out');
+        }
       }
       
       console.log(`Joining video room: ${roomData.roomId} for video: ${videoIdRef.current} with socket ID: ${socket.id}`);
       
-      // Create a promise to wait for server response
+      // Create a promise to wait for server response with timeout
       const joinPromise = new Promise((resolve, reject) => {
         // Set up one-time event listeners
         const onSuccess = (data) => {
           socket.off('join-video-room-success', onSuccess);
+          socket.off('join_video_room_success', onSuccess); // Also handle underscore version
           socket.off('join-video-room-error', onError);
+          socket.off('join_video_room_error', onError); // Also handle underscore version
           resolve(data);
         };
         
@@ -803,48 +898,70 @@ const LectureRoom = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [sortCriteria]);
-
-  // Handle video sync messages from server
+  // Handle video sync messages from server with enhanced debouncing
   useEffect(() => {
     if (!socket.connected || !roomData.inRoom) {
       return undefined;
     }
     
-    console.log('Setting up video sync event listeners');
+    console.log('Setting up video sync event listeners with improved handling');
+    
+    // Create debounced handler that will prevent too many sync events in a short time
+    // This helps prevent video glitches when multiple sync events arrive close together
+    const debouncedSyncHandler = debounce((data) => {
+      console.log('Handling debounced video sync:', data);
+      
+      // Process the sync command
+      applySyncCommand(data);
+    }, 150, { leading: true, trailing: true, maxWait: 300 }); // Process first and last event in a burst
     
     // Callback for video sync events
     const handleVideoSync = (data) => {
       console.log('Received video sync:', data);
       
       // Don't process if this is our own message and we're the creator
-      if (roomData.isRoomCreator) {
-        console.log('Ignoring sync as room creator');
+      if (roomData.isRoomCreator && !data.isRequestedUpdate) {
+        console.log('Ignoring sync as room creator - this prevents control loops');
         return;
       }
       
       // If player is not initialized yet, retry with increasing delay
       if (!playerRef.current || typeof playerRef.current.getPlayerState !== 'function') {
-        console.log('Player not ready for sync, will retry in 1 second');
-        setTimeout(() => {
-          if (playerRef.current && typeof playerRef.current.getPlayerState === 'function') {
-            console.log('Retrying sync command after delay');
-            applySyncCommand(data);
-          } else {
-            // Try one more time with a longer delay
-            setTimeout(() => {
-              if (playerRef.current && typeof playerRef.current.getPlayerState === 'function') {
-                console.log('Second retry for sync command');
-                applySyncCommand(data);
-              } else {
-                console.log('Player still not ready after multiple retries');
-              }
-            }, 2000);
+        console.log('Player not ready for sync, will retry with progressive delay');
+        
+        // Use exponential backoff for retries
+        const attemptSync = (attempt = 1, maxAttempts = 5) => {
+          if (attempt > maxAttempts) {
+            console.log(`Giving up after ${maxAttempts} attempts - player still not ready`);
+            return;
           }
-        }, 1000);
+          
+          const delay = Math.min(1000 * Math.pow(1.5, attempt - 1), 5000); // Exponential up to 5 seconds
+          console.log(`Attempt ${attempt}: Retrying sync in ${delay}ms`);
+          
+          setTimeout(() => {
+            if (playerRef.current && typeof playerRef.current.getPlayerState === 'function') {
+              console.log(`Player ready on attempt ${attempt}, applying sync command`);
+              applySyncCommand(data);
+            } else {
+              // Try again with increasing delay
+              attemptSync(attempt + 1, maxAttempts);
+            }
+          }, delay);
+        };
+        
+        attemptSync(1);
         return;
       }
       
-      applySyncCommand(data);
+      // Use debounced handler for most events, but process seek events immediately
+      if (data.action === 'seek') {
+        // Seeks need immediate processing to maintain synchronization
+        applySyncCommand(data);
+      } else {
+        // Play/pause can be debounced to prevent flickering
+        debouncedSyncHandler(data);
+      }
     };
       
     // Function to apply sync commands to the player
@@ -877,8 +994,9 @@ const LectureRoom = () => {
         }
         
         // Set flag to prevent recursive events
-        isRemoteUpdateRef.current = true;        // Apply the sync action with better handling of time position
-        switch (data.action) {          case 'play':
+        isRemoteUpdateRef.current = true;      // Apply the sync action with improved handling of time position and network compensation
+        switch (data.action) {
+          case 'play':
             console.log(`Syncing: play at ${adjustedTime}`);
             
             // Force accurate seek first with initial state check
@@ -889,9 +1007,23 @@ const LectureRoom = () => {
             // First pause to ensure consistent seek behavior
             player.pauseVideo();
             
+            // Calculate additional adjustment for very recent syncs to compensate for processing time
+            let playTimeAdjustment = 0;
+            if (data.serverTime) {
+              // How much time has passed since server sent this command
+              const networkDelay = (Date.now() - data.serverTime) / 1000;
+              
+              // If significant delay, adjust the target position
+              if (networkDelay > 0.3) {
+                playTimeAdjustment = networkDelay;
+                console.log(`Compensating for ${playTimeAdjustment.toFixed(2)}s network delay`);
+                adjustedTime += playTimeAdjustment;
+              }
+            }
+            
             // Wait a brief moment to ensure pause takes effect
             setTimeout(() => {
-              // Now seek to the correct position
+              // Now seek to the correct position with network delay compensation
               player.seekTo(adjustedTime, true);
               
               // Enhanced verification with more attempts and adaptive timing
@@ -1193,7 +1325,7 @@ const LectureRoom = () => {
         let adjustedTime = data.currentTime;
         if (data.serverTime) {
           const clientServerDiff = Date.now() - data.serverTime;
-          if (clientServerDiff > 500 && data.isPlaying) { // Only adjust if delay is significant and video is playing
+          if (clientServerDiff > 500) {
             adjustedTime += clientServerDiff / 1000;
             console.log(`Adjusting time by ${clientServerDiff/1000}s for network delay`);
           }
@@ -1469,6 +1601,37 @@ const LectureRoom = () => {
     }
   }, [roomData.inRoom, roomData.roomId]);
 
+  // Enhanced rendering to show creator status and control permissions
+  const renderControlStatusIndicator = () => {
+    if (!roomData.inRoom) return null;
+    
+    return (
+      <div className="mt-2 mb-4">
+        <div className={`px-3 py-2 rounded-md text-sm flex items-center gap-2 ${
+          roomData.isRoomCreator 
+            ? 'bg-green-900/30 border border-green-600/30 text-green-200'
+            : 'bg-gray-900/30 border border-gray-600/30 text-gray-300'
+        }`}>
+          {roomData.isRoomCreator ? (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span>You are controlling this video for all participants</span>
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              </svg>
+              <span>Video is controlled by the room creator</span>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+  
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
       <Navbar />
@@ -1491,18 +1654,21 @@ const LectureRoom = () => {
                   <div className="flex flex-grow border border-white/20 rounded-lg overflow-hidden bg-[#2d3748]">
                     <input
                       type="text"
-                      placeholder="YouTube URL..."
+                      placeholder={roomData.isRoomCreator ? "YouTube URL..." : "Only the room creator can change videos"}
                       className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 border-none outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2]"
                       value={videoUrl}
                       onChange={(e) => setVideoUrl(e.target.value)}
+                      disabled={roomData.inRoom && !roomData.isRoomCreator}
                     />
                     <button
                       type="button"
-                      className="px-4 py-2.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                      className={`px-4 py-2.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors ${roomData.inRoom && !roomData.isRoomCreator ? 'opacity-50 cursor-not-allowed' : ''}`}
                       onClick={() => {
+                        if (roomData.inRoom && !roomData.isRoomCreator) return;
                         const clipboardText = navigator.clipboard.readText();
                         clipboardText.then(text => setVideoUrl(text));
                       }}
+                      disabled={roomData.inRoom && !roomData.isRoomCreator}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -1517,6 +1683,8 @@ const LectureRoom = () => {
                     Watch
                   </button>
                 </form>
+                {/* Show control status indicator for clearer user experience */}
+                {renderControlStatusIndicator()}
               </div>
                 {videoUrl ? (
                 <div className="w-full border-t border-white/20">
