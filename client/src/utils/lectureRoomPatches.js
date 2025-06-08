@@ -12,21 +12,10 @@
  */
 function improvedLectureMessageHandler(socket, io) {
   socket.on('lecture-send-message', ({ roomId, message, username, messageId, isCode }) => {
-    console.log(`Lecture message in room ${roomId} from ${username}: ${message}`);
-    
-    // Make sure the socket joins the room itself if not joined already
     socket.join(roomId);
     
-    // Log all sockets in the room for debugging
     const roomSockets = io.sockets.adapter.rooms.get(roomId);
-    console.log(`Room ${roomId} has ${roomSockets ? roomSockets.size : 0} sockets connected`);
     
-    // Map socket IDs in room for debug
-    if (roomSockets) {
-      console.log(`Socket IDs in room: ${Array.from(roomSockets).join(', ')}`);
-    }
-    
-    // Create a standardized message object
     const messageData = {
       message,
       username,
@@ -37,14 +26,8 @@ function improvedLectureMessageHandler(socket, io) {
       type: 'lecture-chat'
     };
     
-    // Force broadcast to ALL users in the room INCLUDING sender for reliability
     io.in(roomId).emit('lecture-receive-message', messageData);
-    
-    // Also emit with underscore format for compatibility
     io.in(roomId).emit('lecture_receive_message', messageData);
-    
-    // Log the broadcast
-    console.log(`Broadcasted lecture message to all ${roomSockets ? roomSockets.size : 0} clients in room ${roomId}`);
   });
 }
 

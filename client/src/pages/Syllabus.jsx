@@ -235,7 +235,7 @@ const Syllabus = () => {
           
           // Check if the provided ID is a valid MongoDB ObjectID
           if (paramUserId !== 'syllabus' && !isValidObjectId(paramUserId)) {
-            console.error('Invalid user ID format:', paramUserId);
+           
             navigate('/dashboard', { replace: true });
             return;
           }
@@ -261,7 +261,7 @@ const Syllabus = () => {
               localStorage.setItem('userId', syllabusOwner); // Cache for future use
               isOtherUserSyllabus = false;
             } else {
-              console.error('Failed to get user ID from API response');
+
             }
           }
         }
@@ -271,7 +271,7 @@ const Syllabus = () => {
         setIsViewingOtherUserSyllabus(isOtherUserSyllabus);
         
       } catch (error) {
-        console.error('Error determining user for syllabus:', error);
+        
         navigate('/dashboard', { replace: true });
       }
     };
@@ -337,7 +337,6 @@ const Syllabus = () => {
           setSelectedDay(defaultDay);
         }
       } catch (error) {
-        console.error('Error loading syllabus:', error);
         
         // Set default data on error
         const defaultDay = {
@@ -451,7 +450,7 @@ const Syllabus = () => {
       setDayToDelete(null);
       addNotification("Study day deleted successfully!");
     } catch (error) {
-      console.error('Error deleting study day:', error);
+
       // Show error notification and keep modal open on error
       addNotification(`Failed to delete study day: ${error.message}`, "error");
     }
@@ -636,7 +635,6 @@ const Syllabus = () => {
         throw new Error(response.message || "Unknown error saving syllabus");
       }
     } catch (error) {
-      console.error("Error saving syllabus:", error);
       addNotification(`Failed to save syllabus: ${error.message}`, "error");
     }
   };

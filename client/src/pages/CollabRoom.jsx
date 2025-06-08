@@ -140,7 +140,9 @@ const CollabRoom = () => {
           }, 1500);
         }
       })
-      .catch((err) => console.error("Could not copy code: ", err));
+      .catch((err) => {
+        // Handle error (e.g., show notification)
+      });
   };
   useEffect(() => {
     // Initialize problem information from location state
@@ -366,9 +368,7 @@ const CollabRoom = () => {
               problem.title === "LeetCode Problem" ||
               problem.title === "Problem"
             ) {
-              console.warn(
-                "API returned placeholder problem data, trying alternative fetch"
-              );
+              
               throw new Error("API returned placeholder data");
             }
 
@@ -406,7 +406,7 @@ const CollabRoom = () => {
           const userId = localStorage.getItem("userId");
 
           if (!userId) {
-            console.error("No user ID found in local storage");
+            
             throw new Error("User ID not available");
           }
           // Get user's whole syllabus and extract the problem
@@ -422,7 +422,7 @@ const CollabRoom = () => {
           const studyDay = syllabus.studyDays.find((day) => day._id === dayId);
 
           if (!studyDay) {
-            console.error("Study day not found in syllabus:", dayId);
+           
             throw new Error("Study day not found");
           }
 
@@ -436,7 +436,7 @@ const CollabRoom = () => {
           );
 
           if (!problem) {
-            console.error("Problem not found in study day");
+            
             throw new Error("Problem not found in study day");
           }
 
@@ -470,8 +470,7 @@ const CollabRoom = () => {
           setIsLoadingProblem(false);
           return;
         } catch (syllabusError) {
-          console.error("Error fetching from syllabus:", syllabusError);
-
+          
           // Third approach: Try the syllabusApiUtils as the final resort
           try {
           
@@ -529,7 +528,7 @@ const CollabRoom = () => {
             // If we reach here, we couldn't get the problem details
             throw new Error("Problem not found in study day data");
           } catch (utilsError) {
-            console.error("All fetch attempts failed:", utilsError);
+           
             useFallbackProblemDetails();
           }
         }
@@ -576,7 +575,7 @@ const CollabRoom = () => {
         }
       }
     } catch (error) {
-      console.error("Error fetching problem details:", error);
+     
       setProblemFetchError(error.message || "Failed to load problem details");
       useFallbackProblemDetails();
     } finally {
@@ -693,7 +692,7 @@ const CollabRoom = () => {
         return "Coding Problem";
       }
     } catch (err) {
-      console.error("Error parsing URL:", err);
+      
     }
 
     return "Coding Problem";
@@ -726,7 +725,7 @@ const CollabRoom = () => {
 
       return null;
     } catch (error) {
-      console.error("Error detecting platform from URL:", error);
+      
       return null;
     }
   }; // Modified handleStatusChange to use our handleUpdateProblemStatus function
@@ -738,10 +737,7 @@ const CollabRoom = () => {
 
       // Validate required parameters
       if (!dayId || !problemId) {
-        console.error("Missing required parameters for status update", {
-          dayId,
-          problemId,
-        });
+        
         setStatusUpdateError(
           "Missing problem information. Please try again from the syllabus page."
         );
@@ -770,7 +766,7 @@ const CollabRoom = () => {
         });
       }
     } catch (error) {
-      console.error("Error in handleStatusChange:", error);
+      
       // Error handling is already done in handleUpdateProblemStatus
     }
   };
@@ -818,7 +814,7 @@ const CollabRoom = () => {
             }
           }
         } catch (error) {
-          console.error("Error fetching problem status:", error);
+          
           // Don't show error to user, just use localStorage value if available
         }
       }
@@ -846,7 +842,7 @@ const CollabRoom = () => {
       if (response.success) {
         
       } else {
-        console.error("Failed to update problem status:", response.message);
+      
       }
     }
   };
@@ -870,7 +866,7 @@ const CollabRoom = () => {
       if (response.success) {
       
       } else {
-        console.error("Failed to update problem status:", response.message);
+      
       }
     }
   };
@@ -976,7 +972,7 @@ const CollabRoom = () => {
         ]);
       }
     } catch (err) {
-      console.error("Failed to paste code: ", err);
+     
     }
   };
 
@@ -989,8 +985,7 @@ const CollabRoom = () => {
         addNotification("Code copied to clipboard!", "success");
       })
       .catch((err) => {
-        console.error("Could not copy code: ", err);
-        // Show error notification
+      
         addNotification("Failed to copy to clipboard", "error");
       });
   };
@@ -1196,7 +1191,7 @@ const CollabRoom = () => {
     const handleProblemStatus = (data) => {
 
       if (!data || !data.status || !data.problemId) {
-        console.warn("Received invalid problem status update");
+        
         return;
       }
 
@@ -1245,7 +1240,7 @@ const CollabRoom = () => {
     const handleProblemDetails = (data) => {
 
       if (!data || !data.problemDetails) {
-        console.warn("Received invalid problem details");
+        
         return;
       }
 
@@ -1280,10 +1275,7 @@ const CollabRoom = () => {
       const shouldAcceptData = isValidData || hasUsableDetails || hasValidIds;
 
       if (!shouldAcceptData) {
-        console.warn(
-          "Received problem details contain only placeholder data without valid IDs:",
-          receivedDetails
-        );
+        
 
         // If we already have better details, don't replace them
         const currentDetailsValid =
@@ -1646,7 +1638,7 @@ const CollabRoom = () => {
   // Handle updating problem status
   const handleUpdateProblemStatus = async (newStatus) => {
     if (!problemId || !dayId) {
-      console.error("Cannot update status: Problem details not available");
+     
       return;
     }
 
@@ -1683,7 +1675,7 @@ const CollabRoom = () => {
         // Persist the status in localStorage by problem ID
         localStorage.setItem(`problem_status_${problemId}`, newStatus);
       } else {
-        console.error("Failed to update problem status:", result.message);
+
         setStatusUpdateError(result.message);
         setTimeout(() => setStatusUpdateError(null), 3000);
 
@@ -1697,7 +1689,7 @@ const CollabRoom = () => {
         }
       }
     } catch (error) {
-      console.error("Error updating problem status:", error);
+      
       setStatusUpdateError("An error occurred while updating status");
       setTimeout(() => setStatusUpdateError(null), 3000);
     } finally {
@@ -1767,13 +1759,13 @@ const CollabRoom = () => {
     }
 
     if (!details) {
-      console.warn("Cannot share undefined problem details");
+      
       return;
     }
 
     // Validate the problem details object before sending
     if (typeof details !== "object") {
-      console.warn("Problem details must be an object");
+      
       return;
     }
 
@@ -1795,10 +1787,7 @@ const CollabRoom = () => {
       details.title.toLowerCase() === "unknown";
 
     if (isPurelyPlaceholder && !dayId && !problemId) {
-      console.warn(
-        "Not sharing placeholder problem details without IDs:",
-        details.title
-      );
+     
 
       // If this is a deliberate share attempt (not automatic), show warning to room creator
       const isInitialShare = !hasSharedProblemDetails;
@@ -1824,7 +1813,6 @@ const CollabRoom = () => {
         (!details.url || details.url === "");
 
       if (hasAllPlaceholderValues) {
-        console.warn("Not sharing details with all placeholder values");
         return;
       }
     }

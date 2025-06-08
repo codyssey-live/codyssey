@@ -31,7 +31,7 @@ const Navbar = () => {
           });
         }
       } catch (err) {
-        console.error('Failed to fetch user data:', err);
+        // Handle error (e.g., show notification)
       } finally {
         setLoading(false);
       }
@@ -67,7 +67,7 @@ const Navbar = () => {
             setActiveRoomId(null);
           }
         } catch (error) {
-          console.error('Error parsing room info:', error);
+          // Handle error (e.g., show notification)
           setHasActiveRoom(false);
           setActiveRoomId(null);
         }
@@ -121,7 +121,7 @@ const Navbar = () => {
       setIsDropdownOpen(false);
       navigate('/');
     } catch (error) {
-      console.error('Sign out failed:', error);
+      // Handle error (e.g., show notification)
       
       // Even if the API call fails, try to clear local storage
       localStorage.removeItem('token');

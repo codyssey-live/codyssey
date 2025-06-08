@@ -4,10 +4,11 @@ const ProblemList = ({ problems, cardStyle = {} }) => {
       .then(() => {
         // You could add a notification here if you have a notification system
         // For example: addNotification("Link copied to clipboard!", "success");
-        alert("Link copied to clipboard!");
+        //alert("Link copied to clipboard!");
       })
       .catch(err => {
-        console.error('Failed to copy link: ', err);
+        // Handle error (e.g., show notification)
+        
       });
   };
 
@@ -19,7 +20,7 @@ const ProblemList = ({ problems, cardStyle = {} }) => {
         url: problem.link,
       })
       .catch(err => {
-        console.error('Share failed:', err);
+       // Handle error (e.g., show notification)
       });
     } else {
       handleCopyLink(problem.link);

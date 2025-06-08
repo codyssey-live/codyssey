@@ -71,7 +71,7 @@ const LectureRoom = () => {
         (creatorHistory[roomData.roomId] === true || isCreatorFromSession) &&
         !roomData.isRoomCreator
       ) {
-        console.log("Found creator status in history, updating room context");
+
         setRoomData((prev) => ({ ...prev, isRoomCreator: true }));
       }
 
@@ -93,12 +93,12 @@ const LectureRoom = () => {
 
     // Connect the socket if not already connected with improved handling
     if (!socket.connected) {
-      console.log("Socket not connected, connecting now...");
+     
       socket.connect();
 
       socket.on("connect", () => {
         setIsConnected(true);
-        console.log(`Connected to socket server with ID: ${socket.id}`);
+        
 
         // If in a room with video, try joining automatically after connection
         if (roomData.inRoom && roomData.roomId && videoIdRef.current) {
@@ -107,7 +107,6 @@ const LectureRoom = () => {
       });
 
       socket.on("connect_error", (error) => {
-        console.error("Socket connection error:", error);
         // Remove adding error message to chat
       });
     } else {
@@ -130,15 +129,14 @@ const LectureRoom = () => {
     try {
       const response = await fetchAllNotes();
       if (response.success) {
-        console.log("Fetched notes:", response.data);
+        
         setSavedNotes(response.data);
       } else {
-        console.error("Failed to fetch notes:", response.message);
+        
         addNotification("Failed to load notes", "error");
       }
     } catch (error) {
-      console.error("Error fetching notes:", error);
-      addNotification("Error loading notes", "error");
+      
     } finally {
       setIsLoadingNotes(false);
     }
@@ -163,13 +161,13 @@ const LectureRoom = () => {
           const videoData = playerRef.current.getVideoData();
           setVideoTitle(videoData.title);
         } catch (error) {
-          console.error("Error getting video title:", error);
+          
         }
       }
 
       // If we're in a room and have a video ID, try to automatically join the video room
       if (roomData.inRoom && roomData.roomId && videoId && socket.connected) {
-        console.log("Auto-joining video room on navigation");
+        
         setTimeout(() => joinVideoRoom(), 1000); // Small delay to ensure everything is initialized
       }
     }
@@ -213,10 +211,7 @@ const LectureRoom = () => {
 
       // Define the onYouTubeIframeAPIReady callback
       window.onYouTubeIframeAPIReady = () => {
-        console.log("YouTube IFrame API ready");
-        if (videoIdRef.current) {
-          initializePlayer(videoIdRef.current);
-        }
+       
       };
     } else if (window.YT && window.YT.Player && videoIdRef.current) {
       // If the API is already loaded, initialize immediately
@@ -250,7 +245,6 @@ const LectureRoom = () => {
   const initializePlayer = (videoId) => {
     if (!videoId) return;
 
-    console.log("Initializing YouTube player with ID:", videoId);
 
     // Wait for the element to exist
     const checkElement = setInterval(() => {
@@ -286,27 +280,27 @@ const LectureRoom = () => {
               // Make sure to define onPlayerStateChange before using it here
               onStateChange: onPlayerStateChange,
               onError: (e) => {
-                console.error("YouTube player error:", e);
+               
                 // Remove adding error message to chat
               },
             },
           });
         } catch (error) {
-          console.error("Error initializing YouTube player:", error);
+         
           return;
         }
 
         playerRef.current = player;
 
         // Add extra debug output
-        console.log("YouTube player initialized:", player);
+       
       }
     }, 200);
   };
 
   // Improved player setup with less intrusive controls overlay
   const onPlayerReady = (event) => {
-    console.log("Player ready", event.target);
+  
 
     // Store the player for later use
     playerRef.current = event.target;
@@ -341,9 +335,7 @@ const LectureRoom = () => {
               currentTime > expectedMaxTime ||
               currentTime < lastReportedTime - 0.5
             ) {
-              console.log(
-                `Detected manual seek from ${lastReportedTime} to ${currentTime}`
-              );
+             
               // Treat as manual seek and sync others
               handleSeek.current(currentTime);
             }
@@ -353,7 +345,7 @@ const LectureRoom = () => {
           lastReportedTime = currentTime;
           lastPlayerState = currentState;
         } catch (e) {
-          console.error("Error in seek detection:", e);
+         
         }
       }, 1500); // Reduced interval for better responsiveness (from 3000ms)
     }
@@ -394,9 +386,7 @@ const LectureRoom = () => {
           }
         }
 
-        console.log(
-          "Video controls are disabled - the room creator controls playback"
-        );
+       
 
         // Force player to be paused initially to prevent auto-start mismatch
         event.target.pauseVideo();
@@ -409,9 +399,7 @@ const LectureRoom = () => {
       } else {
         // For creators, ensure controls are fully enabled
         event.target.getIframe().style.pointerEvents = "auto";
-        console.log(
-          "As room creator, you control the video for all participants"
-        );
+       
 
         // Explicitly ensure the video is paused to start
         event.target.pauseVideo();
@@ -430,7 +418,7 @@ const LectureRoom = () => {
         setVideoTitle(videoData.title);
       }
     } catch (err) {
-      console.error("Could not get video title", err);
+     
     }
   };
 
@@ -444,20 +432,18 @@ const LectureRoom = () => {
 
     // Important: Skip sending events if this is triggered by a remote update
     if (isRemoteUpdateRef.current) {
-      console.log("Skipping event emission because this is a remote update");
-      return;
+      
     }
 
     try {
       // Handle state changes with debouncing to prevent network congestion
       switch (event.data) {
         case window.YT.PlayerState.PLAYING:
-          console.log("Video is playing, broadcasting to room (debounced)");
+          
 
           // Get current time and validate
           const playTime = player.getCurrentTime();
           if (isNaN(playTime)) {
-            console.error("Invalid play time received from player:", playTime);
             return;
           }
 
@@ -466,15 +452,12 @@ const LectureRoom = () => {
           break;
 
         case window.YT.PlayerState.PAUSED:
-          console.log("Video is paused, broadcasting to room (debounced)");
+         
 
           // Get current time and validate
           const pauseTime = player.getCurrentTime();
           if (isNaN(pauseTime)) {
-            console.error(
-              "Invalid pause time received from player:",
-              pauseTime
-            );
+            
             return;
           }
 
@@ -483,7 +466,7 @@ const LectureRoom = () => {
           break;
       }
     } catch (error) {
-      console.error("Error in player state change:", error);
+      
     }
   };
 
@@ -494,7 +477,7 @@ const LectureRoom = () => {
         if (!roomData.roomId || !socket.connected || !videoIdRef.current)
           return;
 
-        console.log(`Sending debounced ${action} event to room at time:`, time);
+        
 
         // Add timestamp for network compensation
         const timestamp = Date.now();
@@ -513,7 +496,7 @@ const LectureRoom = () => {
         // Enhanced emit to ensure synchronization works across all channels
         // This adds redundancy to make sure all clients receive the message
         if (action === "play" || action === "pause") {
-          console.log(`Sending additional ${action} sync event for redundancy`);
+
 
           // Immediately send direct command for fastest response
           socket.emit(`creator-${action}-video`, {
@@ -545,7 +528,7 @@ const LectureRoom = () => {
     debounce((newTime) => {
       if (!roomData.isRoomCreator || !socket.connected) return;
 
-      console.log(`Manual seek detected, sending seek event to: ${newTime}`);
+
       const timestamp = Date.now();
 
       // Send direct seek command for immediate response
@@ -580,7 +563,7 @@ const LectureRoom = () => {
 
     // If in a room and not the creator, disallow changing videos
     if (roomData.inRoom && !roomData.isRoomCreator) {
-      console.log("Only the room creator can change videos");
+      
       addNotification("Only the room creator can change videos", "warning");
       return;
     }
@@ -618,26 +601,18 @@ const LectureRoom = () => {
   }; // Enhanced join video room function for better synchronization
   const joinVideoRoom = async () => {
     if (!roomData.inRoom || !roomData.roomId || !videoIdRef.current) {
-      console.log("Missing required data for video room join:", {
-        inRoom: roomData.inRoom,
-        roomId: roomData.roomId,
-        videoId: videoIdRef.current,
-      });
       return;
     }
 
     // Track if we've already joined this specific video room
     const rejoining = hasJoinedVideoRoom.current === videoIdRef.current;
     if (rejoining) {
-      console.log(
-        "Already joined this video room, but rejoining to ensure connection"
-      );
+      
     }
 
     try {
       // Connect socket if not already connected
       if (!socket.connected) {
-        console.log("Socket not connected, connecting now...");
         socket.connect();
         // Wait for connection to establish with timeout
         await Promise.race([
@@ -652,14 +627,12 @@ const LectureRoom = () => {
         ]);
 
         if (!socket.connected) {
-          console.error("Socket connection timed out");
+         
           throw new Error("Socket connection timed out");
         }
       }
 
-      console.log(
-        `Joining video room: ${roomData.roomId} for video: ${videoIdRef.current} with socket ID: ${socket.id}`
-      );
+     
 
       // Create a promise to wait for server response with timeout
       const joinPromise = new Promise((resolve, reject) => {
@@ -691,10 +664,6 @@ const LectureRoom = () => {
 
           // If we're not the room creator and we've received initial state data
           if (!roomData.isRoomCreator && data && data.videoState) {
-            console.log(
-              "Received initial video state on join:",
-              data.videoState
-            );
 
             // Apply the initial state immediately
             setTimeout(() => {
@@ -760,9 +729,7 @@ const LectureRoom = () => {
       hasJoinedVideoRoom.current = videoIdRef.current;
 
       // Log that user joined video sync room instead of adding a chat message
-      console.log(
-        "Joined video sync room. The video is now synchronized with other users."
-      );
+      
 
       // If creator, send initial state to others with all types of events for redundancy
       if (roomData.isRoomCreator && playerRef.current) {
@@ -771,10 +738,7 @@ const LectureRoom = () => {
           const playerState = playerRef.current.getPlayerState();
           const isPlaying = playerState === window.YT.PlayerState.PLAYING;
 
-          console.log("Sending initial video state as creator:", {
-            currentTime,
-            isPlaying,
-          });
+          
 
           // Emit direct play/pause commands for immediate effect
           if (isPlaying) {
@@ -832,17 +796,17 @@ const LectureRoom = () => {
             forceSync: true,
           });
 
-          console.log("Initial state sent through multiple channels");
+          
         } catch (error) {
-          console.error("Error sending initial video state:", error);
+         
         }
       }
     } catch (error) {
-      console.error("Error joining video room:", error);
+     
 
       // Try again with a delay if it failed
       setTimeout(() => {
-        console.log("Retrying video room join...");
+       
         hasJoinedVideoRoom.current = null; // Reset to force rejoin
         joinVideoRoom();
       }, 2000);
@@ -873,7 +837,7 @@ const LectureRoom = () => {
       type: "lecture-chat", // Mark as lecture chat specifically
     };
 
-    console.log("Sending lecture message to room:", messageData);
+   
 
     // Send message via socket with lecture-specific event name - we'll rely on the server broadcast
     // for displaying the message to avoid duplicates
@@ -920,8 +884,7 @@ const LectureRoom = () => {
         addNotification(response.message || "Failed to save note", "error");
       }
     } catch (error) {
-      console.error("Error saving note:", error);
-      addNotification("Failed to save note. Please try again.", "error");
+      
     }
   };
 
@@ -954,7 +917,7 @@ const LectureRoom = () => {
           addNotification(response.message || "Failed to delete note", "error");
         }
       } catch (error) {
-        console.error("Error deleting note:", error);
+      
         addNotification("An error occurred while deleting note", "error");
       }
 
@@ -979,7 +942,7 @@ const LectureRoom = () => {
       const text = await navigator.clipboard.readText();
       if (text) setNotes(text);
     } catch (err) {
-      console.error("Failed to read clipboard: ", err);
+     
     }
   };
 
@@ -1026,13 +989,13 @@ const LectureRoom = () => {
       return undefined;
     }
 
-    console.log("Setting up video sync event listeners with improved handling");
+    
 
     // Create debounced handler that will prevent too many sync events in a short time
     // This helps prevent video glitches when multiple sync events arrive close together
     const debouncedSyncHandler = debounce(
       (data) => {
-        console.log("Handling debounced video sync:", data);
+
 
         // Process the sync command
         applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
@@ -1043,7 +1006,7 @@ const LectureRoom = () => {
 
     // Callback for video sync events
     const handleVideoSync = (data) => {
-      console.log("Received video sync:", data);
+     
 
       // Don't process if this is our own message and we're the creator
       // But allow processing if it's explicitly marked as a creator request
@@ -1052,9 +1015,7 @@ const LectureRoom = () => {
         !data.isRequestedUpdate &&
         !data.forceSync
       ) {
-        console.log(
-          "Ignoring sync as room creator - this prevents control loops"
-        );
+      
         return;
       }
 
@@ -1063,30 +1024,23 @@ const LectureRoom = () => {
         !playerRef.current ||
         typeof playerRef.current.getPlayerState !== "function"
       ) {
-        console.log(
-          "Player not ready for sync, will retry with progressive delay"
-        );
+        
 
         // Use exponential backoff for retries
         const attemptSync = (attempt = 1, maxAttempts = 5) => {
           if (attempt > maxAttempts) {
-            console.log(
-              `Giving up after ${maxAttempts} attempts - player still not ready`
-            );
+            
             return;
           }
 
           const delay = Math.min(1000 * Math.pow(1.5, attempt - 1), 5000); // Exponential up to 5 seconds
-          console.log(`Attempt ${attempt}: Retrying sync in ${delay}ms`);
-
+         
           setTimeout(() => {
             if (
               playerRef.current &&
               typeof playerRef.current.getPlayerState === "function"
             ) {
-              console.log(
-                `Player ready on attempt ${attempt}, applying sync command`
-              );
+
               applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
             } else {
               // Try again with increasing delay
@@ -1103,11 +1057,6 @@ const LectureRoom = () => {
       // Also process play/pause events immediately from the creator for faster response
       if (data.action === "seek" || data.fromCreator) {
         // Seeks and creator actions need immediate processing
-        console.log(
-          "Processing immediately:",
-          data.action,
-          data.fromCreator ? "(from creator)" : ""
-        );
         applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
       } else {
         // Other events can be debounced
@@ -1119,20 +1068,13 @@ const LectureRoom = () => {
     const applySyncCommand = (data, player, isRemoteUpdate, retryCount = 0) => {
       // Check if we're syncing the same video
       if (data.videoId !== videoIdRef.current) {
-        console.log(
-          `Video ID mismatch: got ${data.videoId}, have ${videoIdRef.current}`
-        );
         return;
       }
 
       if (!player) {
         // Retry with shorter delay if player is not ready
         if (retryCount < 3) {
-          console.log(
-            `Player not ready, retrying in ${
-              200 * (retryCount + 1)
-            }ms (attempt ${retryCount + 1})`
-          );
+          
           setTimeout(
             () =>
               applySyncCommand(data, player, isRemoteUpdate, retryCount + 1),
@@ -1151,9 +1093,7 @@ const LectureRoom = () => {
           if (clientServerDiff > 200) {
             // Reduced from 500ms
             adjustedTime += clientServerDiff / 1000;
-            console.log(
-              `Adjusting time by ${clientServerDiff / 1000}s for network delay`
-            );
+            
           }
         }
 
@@ -1163,7 +1103,7 @@ const LectureRoom = () => {
         // More optimized sync actions with faster paths
         switch (data.action) {
           case "play":
-            console.log(`Syncing: play at ${adjustedTime}`);
+           
 
             // Fast path for immediate response (skips verification for speed)
             if (data.priority || data.immediate) {
@@ -1187,7 +1127,7 @@ const LectureRoom = () => {
             break;
 
           case "pause":
-            console.log(`Syncing: pause at ${data.time}`);
+            
 
             // Fast path for immediate response
             if (data.priority || data.immediate) {
@@ -1204,7 +1144,7 @@ const LectureRoom = () => {
             break;
 
           case "seek":
-            console.log(`Syncing: seek to ${data.time}`);
+           
 
             // Fast path for immediate response
             if (data.priority || data.immediate) {
@@ -1236,15 +1176,10 @@ const LectureRoom = () => {
             break;
         }
       } catch (error) {
-        console.error("Error applying sync command:", error);
+       
 
         // Retry on error with reduced delay
         if (retryCount < 3) {
-          console.log(
-            `Error syncing, retrying in ${300 * (retryCount + 1)}ms (attempt ${
-              retryCount + 1
-            })`
-          );
           setTimeout(
             () =>
               applySyncCommand(data, player, isRemoteUpdate, retryCount + 1),
@@ -1255,15 +1190,15 @@ const LectureRoom = () => {
 
       // Reset flag after a shorter delay
       const resetDelay = Math.min(500 + adjustedTime * 3, 1500); // Reduced maximum from 3000ms
-      console.log(`Will reset remote update flag in ${resetDelay}ms`);
+     
 
       setTimeout(() => {
         isRemoteUpdate.current = false;
-        console.log("Remote update flag reset, allowing local control events");
+        
       }, resetDelay);
     }; // Callback for initial video state
     const handleVideoStateUpdate = (data) => {
-      console.log("Received video state update:", data);
+
 
       // Special handling for creator when returning from tab change
       if (
@@ -1271,32 +1206,25 @@ const LectureRoom = () => {
         data.isRequestedUpdate &&
         data.isCreatorRequest
       ) {
-        console.log(
-          "Creator received state update after tab visibility change"
-        );
+        
         // Don't ignore this update, as it may be in response to our visibility change
       }
       // Normal creator behavior - ignore state updates (since creator controls video)
       else if (roomData.isRoomCreator) {
-        console.log("Ignoring video state update as room creator");
+        
         return;
       }
 
       // Check if player and video ID match
       const player = playerRef.current;
       if (!player) {
-        console.log("Player not ready, will retry in 1 second");
+       
         setTimeout(() => handleVideoStateUpdate(data), 1000);
         return;
       }
 
       if (data.videoId !== videoIdRef.current) {
-        console.log(
-          "Video ID mismatch, expected:",
-          videoIdRef.current,
-          "got:",
-          data.videoId
-        );
+        
         return;
       }
 
@@ -1310,15 +1238,11 @@ const LectureRoom = () => {
           const clientServerDiff = Date.now() - data.serverTime;
           if (clientServerDiff > 500) {
             adjustedTime += clientServerDiff / 1000;
-            console.log(
-              `Adjusting time by ${clientServerDiff / 1000}s for network delay`
-            );
+
           }
         }
 
-        console.log(
-          `Applying video state: time=${adjustedTime}, playing=${data.isPlaying}`
-        );
+        
 
         // Force a good seek first
         player.seekTo(adjustedTime, true);
@@ -1326,36 +1250,33 @@ const LectureRoom = () => {
         // Use longer timeout for reliability
         setTimeout(() => {
           if (data.isPlaying) {
-            console.log("Starting video playback from state update");
-            player.playVideo();
+           
 
             // Double-check playing state after a short delay
             setTimeout(() => {
               if (player.getPlayerState() !== window.YT.PlayerState.PLAYING) {
-                console.log("Forcing play again - video did not start");
-                player.playVideo();
+                
               }
             }, 1000);
           } else {
-            console.log("Pausing video from state update");
-            player.pauseVideo();
+            
           }
 
           // Reset flag after a delay
           setTimeout(() => {
             isRemoteUpdateRef.current = false;
-            console.log("Video state update flag reset");
+            
           }, 2000);
         }, 300);
       } catch (error) {
-        console.error("Error applying video state update:", error);
+        
         isRemoteUpdateRef.current = false;
       }
     };
 
     // Video control event - more reliable for initial sync
     const handleVideoControl = (data) => {
-      console.log("Received video control:", data);
+    
 
       // Convert to sync format and process
       handleVideoSync({
@@ -1378,7 +1299,7 @@ const LectureRoom = () => {
 
     // Add special direct play/pause event handlers for more reliable sync
     socket.on("creator-play-video", (data) => {
-      console.log("Received direct play command from creator");
+      
       // Force play with high priority
       if (playerRef.current && data.videoId === videoIdRef.current) {
         isRemoteUpdateRef.current = true;
@@ -1397,7 +1318,7 @@ const LectureRoom = () => {
     });
 
     socket.on("creator-pause-video", (data) => {
-      console.log("Received direct pause command from creator");
+    
       // Force pause with high priority
       if (playerRef.current && data.videoId === videoIdRef.current) {
         isRemoteUpdateRef.current = true;
@@ -1448,11 +1369,11 @@ const LectureRoom = () => {
         if (savedMessages) {
           const parsed = JSON.parse(savedMessages);
           setChatMessages(parsed);
-          console.log(`Loaded ${parsed.length} saved messages from storage`);
+
           setTimeout(scrollToBottom, 100);
         }
       } catch (error) {
-        console.error("Error loading saved chat messages:", error);
+
       }
     };
 
@@ -1465,12 +1386,12 @@ const LectureRoom = () => {
       return undefined;
     }
 
-    console.log("Setting up chat message listeners with socket ID:", socket.id);
+    
     // Process function to avoid duplicates - use a Map for better tracking
     const processedMessages = new Map();
     // Handle incoming messages
     const handleReceiveMessage = (data) => {
-      console.log("Received message:", data);
+
 
       // Normalize data structure from different message formats
       const messageId =
@@ -1482,8 +1403,7 @@ const LectureRoom = () => {
 
       // Skip if we've already processed this exact message
       if (processedMessages.has(messageId)) {
-        console.log("Skipping duplicate message with ID:", messageId);
-        return;
+        
       }
 
       // Check if this is our own message coming back to us
@@ -1500,11 +1420,10 @@ const LectureRoom = () => {
 
       // If we find it in our history, don't show it twice
       if (existingMessageIndex !== -1) {
-        console.log("Skipping message already in chat history");
-        return;
+        
       }
 
-      console.log("Processing new message from:", username);
+      
 
       // Mark as processed with timestamp
       processedMessages.set(messageId, Date.now());
@@ -1553,18 +1472,14 @@ const LectureRoom = () => {
   useEffect(() => {
     if (!roomData.inRoom || !roomData.roomId) return;
 
-    console.log(`Loading saved lecture messages for room: ${roomData.roomId}`);
 
     // Load messages using lectureRoomChatPersistence utility
     const savedMessages = loadLectureMessages(roomData.roomId);
     if (savedMessages && savedMessages.length > 0) {
-      console.log(
-        `Loaded ${savedMessages.length} lecture messages from persistence`
-      );
+
       setChatMessages(savedMessages);
       setTimeout(scrollToBottom, 100);
     } else {
-      console.log("No saved lecture messages found");
     }
   }, [roomData.inRoom, roomData.roomId]);
 

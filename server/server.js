@@ -19,8 +19,11 @@ import contactRoutes from './routes/contactRoutes.js';
 const envPath = path.resolve('.', '.env');
 dotenv.config({ path: envPath });
 
+<<<<<<< Updated upstream
 // Check if Resend API Key is loaded
 const resendApiKey = process.env.RESEND_API_KEY;
+=======
+>>>>>>> Stashed changes
 
 const app = express();
 

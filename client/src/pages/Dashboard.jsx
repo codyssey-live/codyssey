@@ -139,7 +139,7 @@ const Dashboard = () => {
           }
         }
       } catch (err) {
-        console.error("Error fetching user data:", err);
+       
         addNotification("Failed to load your problem data", "error");
       } finally {
         setIsLoading(false);
@@ -186,11 +186,6 @@ const Dashboard = () => {
     }
   }, [activeTab, allProblems]);
 
-  // Generate a mock userId for demo
-  const mockUserId = "user123";
-
-  const BASE_URL = window.location.origin;
-  // IMPORTANT DEBUG: Add console logs to track the flow
   const handleCreateRoomClick = () => { 
     // Log authentication state for debugging
     const token = localStorage.getItem('token');
@@ -254,12 +249,11 @@ const Dashboard = () => {
           addNotification("Room created successfully!", "success");
         }
       } catch (error) {
-        console.error("Error from server:", error.response?.data || error);
+       
         addNotification(error.response?.data?.message || "Failed to create room", "error");
       }
     } catch (error) {
-      console.error("Error creating room:", error);
-      addNotification("Failed to create room", "error");
+      
     } finally {
       setCreatingRoom(false);
     }
@@ -288,7 +282,7 @@ const Dashboard = () => {
         setTimeout(() => setCopySuccess(false), 3000);
       })
       .catch((err) => {
-        console.error("Failed to copy room ID: ", err);
+      
         addNotification("Failed to copy room code", "error");
       });
   };
@@ -413,12 +407,12 @@ const Dashboard = () => {
         if (error.response && error.response.status === 404) {
           setJoinError("Room not found or is no longer active");
         } else {
-          console.error("Error joining room:", error);
+          
           setJoinError("Error validating room. Please try again.");
         }
       }
     } catch (error) {
-      console.error("Error in join room process:", error);
+     
       setJoinError("Invalid room code or connection issue");
     }
   };
@@ -445,7 +439,7 @@ const Dashboard = () => {
         addNotification("Problem link copied to clipboard!", "success");
       })
       .catch((err) => {
-        console.error("Failed to copy problem link: ", err);
+
         addNotification("Failed to copy problem link", "error");
       });
   };
@@ -461,7 +455,6 @@ const Dashboard = () => {
         url: link
       })
       .catch(err => {
-        console.error('Share failed:', err);
         // Fallback to copy if share fails
         handleCopyProblemLink(problem);
       });

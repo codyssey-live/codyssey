@@ -13,7 +13,6 @@ const Header = ({ userName, onCreateRoom, onJoinRoom }) => {
           <div className="flex flex-col sm:flex-row sm:space-x-3 space-y-2 sm:space-y-0 w-full sm:w-auto mt-4 sm:mt-0">
             <button 
               onClick={() => {
-                console.log("Create Room button clicked in Header");
                 if (onCreateRoom) onCreateRoom();
               }}
               className="bg-white/10 border border-white/20 text-white/95 hover:bg-white/20 px-4 py-2.5 rounded-lg flex items-center justify-center sm:justify-start shadow-sm backdrop-blur-sm transition-colors"
@@ -29,7 +28,6 @@ const Header = ({ userName, onCreateRoom, onJoinRoom }) => {
             
             <button 
               onClick={() => {
-                console.log("Join Room button clicked in Header");
                 if (onJoinRoom) onJoinRoom();
               }}
               className="bg-[#94C3D2] text-white px-4 py-2.5 rounded-lg hover:bg-[#7EB5C3] transition-colors shadow-sm flex items-center justify-center sm:justify-start"

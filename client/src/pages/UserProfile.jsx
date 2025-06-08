@@ -28,7 +28,7 @@ const getIdFromResponse = (response) => {
     }
   }
   
-  console.error('Could not find ID in response:', response);
+  
   // Return a fallback if we can't find an ID
   return getUserId(); // Return the ID from localStorage as fallback
 };
@@ -274,7 +274,7 @@ function EducationModal({ onClose }) {
         
       onClose();
     } catch (error) {
-      console.error('Error adding education:', error);
+   
       addNotification(`Failed to add education information: ${error.message || 'Unknown error'}`, 'error');
     }
   };
@@ -395,7 +395,7 @@ function WorkExperienceModal({ onClose }) {
       const userId = user.id || user._id;
         
       if (!userId) {
-        console.error('User ID is missing:', user);
+        
         addNotification('User ID is missing. Please try refreshing the page or logging in again.', 'error');
         return;
       }
@@ -420,7 +420,6 @@ function WorkExperienceModal({ onClose }) {
         
       onClose();
     } catch (error) {
-      console.error('Error adding work experience:', error);
       addNotification(`Failed to add work experience: ${error.message}`, 'error');
     }
   };
@@ -815,7 +814,7 @@ const UserProfile = () => {
           }
         }
       } catch (err) {
-        console.error('Failed to fetch user data:', err);
+
         // Even on error, try to use localStorage as backup
         const savedUserId = getUserId();
         if (savedUserId) {
@@ -917,11 +916,11 @@ const UserProfile = () => {
           closeModal();
         }, 500);
       } else {
-        console.error('Invalid response format:', response);
+
         addNotification('Failed to upload profile picture: Invalid server response', 'error');
       }
     } catch (error) {
-      console.error('Error uploading profile picture:', error);
+
       addNotification(`Failed to upload profile picture: ${error.message || 'Unknown error'}`, 'error');
     }
   };
@@ -964,7 +963,7 @@ const UserProfile = () => {
         throw new Error(response?.message || 'Failed to remove profile photo');
       }
     } catch (error) {
-      console.error('Error removing profile photo:', error);
+
       addNotification(`Failed to remove profile photo: ${error.message || 'Unknown error'}`, 'error');
     }
   };
@@ -1004,7 +1003,7 @@ const UserProfile = () => {
       
       closeModal();
     } catch (error) {
-      console.error('Error updating profile:', error);
+   
       addNotification('Failed to update profile information', 'error');
     }
   };
@@ -1027,7 +1026,7 @@ const UserProfile = () => {
         updateProgress('education', false);
       }
     } catch (error) {
-      console.error('Error deleting education:', error);
+      
       addNotification('Failed to delete education entry', 'error');
     }
   };
@@ -1050,7 +1049,6 @@ const UserProfile = () => {
         updateProgress('workExperience', false);
       }
     } catch (error) {
-      console.error('Error deleting work experience:', error);
       addNotification('Failed to delete work experience entry', 'error');
     }
   };
@@ -1068,7 +1066,6 @@ const UserProfile = () => {
         throw new Error(response?.message || 'Failed to change password');
       }
     } catch (error) {
-      console.error('Error changing password:', error);
       addNotification(`Failed to change password: ${error.message || 'Unknown error'}`, 'error');
     }
   };
@@ -1092,7 +1089,6 @@ const UserProfile = () => {
         throw new Error(response?.message || 'Failed to delete account');
       }
     } catch (error) {
-      console.error('Error deleting account:', error);
       addNotification(`Failed to delete account: ${error.message || 'Unknown error'}`, 'error');
     }
   };
@@ -1203,7 +1199,6 @@ const UserProfile = () => {
           
         onClose();
       } catch (error) {
-        console.error('Error adding education:', error);
         addNotification(`Failed to add education information: ${error.message || 'Unknown error'}`, 'error');
       }
     };
@@ -1570,7 +1565,6 @@ const UserProfile = () => {
                       className="w-full h-full object-cover"
                       alt="Profile"
                       onError={(e) => {
-                        console.error("Image failed to load:", e);
                         e.target.onerror = null; 
                         e.target.src = ""; // Clear the source to prevent continuous errors
                         setProfilePhoto(null); // Reset to default display
