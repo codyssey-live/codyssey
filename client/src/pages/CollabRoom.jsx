@@ -2015,7 +2015,7 @@ const CollabRoom = () => {
             Code Collaboration Room
           </h1>
         </div>          {/* Problem Information Card with status buttons integrated - only display if a valid problem is selected from syllabus */}
-        {(dayId && problemId && !hasPlaceholderTitle(problemDetails.title)) && (
+        {(location.state?.problemId && dayId && problemId && !hasPlaceholderTitle(problemDetails.title)) && (
           <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6 mb-6">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
               <div>
