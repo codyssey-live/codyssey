@@ -10,7 +10,7 @@ export const saveLectureMessages = (roomId, messages) => {
     localStorage.setItem(getStorageKey(roomId), JSON.stringify(messages));
     return true;
   } catch (error) {
-    console.error('Error saving lecture chat messages to localStorage:', error);
+   
     return false;
   }
 };
@@ -29,7 +29,7 @@ export const loadLectureMessages = (roomId) => {
     }
     return null;
   } catch (error) {
-    console.error('Error loading lecture chat messages from localStorage:', error);
+
     return null;
   }
 };
@@ -40,7 +40,7 @@ export const clearLectureMessages = (roomId) => {
     localStorage.removeItem(getStorageKey(roomId));
     return true;
   } catch (error) {
-    console.error('Error clearing lecture chat messages from localStorage:', error);
+
     return false;
   }
 };

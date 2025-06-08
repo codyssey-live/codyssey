@@ -43,19 +43,19 @@ export const saveSyllabus = async (syllabusData) => {
       };
     });
     
-    console.log('Sending syllabus data to API:', transformedData);
+
     
     const response = await apiClient.post('/syllabus', {
       studyDays: transformedData
     });
     
-    console.log('API response:', response.data);
+    
     return {
       success: true,
       data: response.data
     };
   } catch (error) {
-    console.error('Error saving syllabus:', error.response?.data || error.message);
+ 
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to save syllabus'
@@ -70,15 +70,15 @@ export const fetchSyllabus = async (userId) => {
       throw new Error('User ID is required to fetch syllabus');
     }
     
-    console.log('Fetching syllabus for user:', userId);
+ 
     const response = await apiClient.get(`/syllabus/${userId}`);
-    console.log('Syllabus API response:', response.data);
+
     return {
       success: true,
       data: response.data
     };
   } catch (error) {
-    console.error('Error fetching syllabus:', error.response?.data || error.message);
+
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to fetch syllabus'
@@ -95,7 +95,7 @@ export const updateStudyDay = async (dayId, dayData) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Error updating study day:', error.response?.data || error.message);
+
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to update study day'
@@ -106,15 +106,14 @@ export const updateStudyDay = async (dayId, dayData) => {
 // Delete a study day
 export const deleteStudyDay = async (dayId) => {
   try {
-    console.log('Deleting study day with ID:', dayId);
+
     const response = await apiClient.delete(`/syllabus/day/${dayId}`);
-    console.log('Delete API response:', response.data);
+
     return {
       success: true,
       data: response.data
     };
   } catch (error) {
-    console.error('Error deleting study day:', error.response?.data || error.message);
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to delete study day'
@@ -125,12 +124,11 @@ export const deleteStudyDay = async (dayId) => {
 // Update problem status
 export const updateProblemStatus = async (dayId, problemId, status) => {
   try {
-    console.log(`Updating status for problem ${problemId} in day ${dayId} to ${status}`);
     
     // Fix: Use correct API path and apiClient for consistent credentials and basePath handling
     const response = await apiClient.put(`/syllabus/problem/${dayId}/${problemId}/status`, { status });
     
-    console.log('Status update response:', response.data);
+
     
     if (!response.data.success) {
       throw new Error(response.data.message || 'Error updating problem status');
@@ -142,7 +140,6 @@ export const updateProblemStatus = async (dayId, problemId, status) => {
       message: response.data.message || 'Status updated successfully'
     };
   } catch (error) {
-    console.error('Error updating problem status:', error);
     return { 
       success: false, 
       message: error.response?.data?.message || error.message || 'Error updating problem status'
@@ -157,13 +154,11 @@ export const fetchStudyDay = async (dayId) => {
       throw new Error('Day ID is required to fetch study day');
     }
     
-    console.log('Fetching study day with ID:', dayId);
+
     const response = await apiClient.get(`/syllabus/day/${dayId}`);
-    console.log('Study day API response:', response.data);
     
     // Validate the data structure
     if (!response.data.success || !response.data.data) {
-      console.error('Invalid API response structure:', response.data);
       throw new Error('Invalid API response structure');
     }
     
@@ -172,7 +167,6 @@ export const fetchStudyDay = async (dayId) => {
       data: response.data.data
     };
   } catch (error) {
-    console.error('Error fetching study day:', error.response?.data || error.message);
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to fetch study day'
@@ -187,15 +181,13 @@ export const fetchUserSyllabusProblems = async (userId) => {
       throw new Error('User ID is required to fetch user problems');
     }
     
-    console.log('Fetching all problems for user:', userId);
     const response = await apiClient.get(`/syllabus/user/${userId}/problems`);
-    console.log('User problems API response:', response.data);
     return {
       success: true,
       data: response.data.data
     };
   } catch (error) {
-    console.error('Error fetching user problems:', error.response?.data || error.message);
+
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to fetch user problems'

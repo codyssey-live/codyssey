@@ -249,10 +249,7 @@ export const initSocket = (server) => {
       
       // Map socket IDs in room for debug
       if (roomSockets) {
-<<<<<<< Updated upstream
-=======
-        // console.log(`Socket IDs in room: ${Array.from(roomSockets).join(', ')}`);
->>>>>>> Stashed changes
+;
       }
       
       // Create a standardized message object
@@ -273,10 +270,6 @@ export const initSocket = (server) => {
       io.in(roomId).emit('lecture_receive_message', messageData);
       
       // Log the broadcast
-<<<<<<< Updated upstream
-=======
-      // console.log(`Broadcasted lecture message to all ${roomSockets ? roomSockets.size : 0} clients in room ${roomId}`);
->>>>>>> Stashed changes
     });
     
     // Also handle underscore version for compatibility
@@ -480,11 +473,7 @@ export const initSocket = (server) => {
               
               // Only update the participant list
               io.to(roomId).emit('room_data', { participants });
-<<<<<<< Updated upstream
-                            
-=======
               
->>>>>>> Stashed changes
               // If room is empty after this user left, clean it up
               if (participants.length === 0) {
                 roomUsers.delete(roomId);
@@ -499,12 +488,7 @@ export const initSocket = (server) => {
         
         // Clean up socket mapping
         socketMap.delete(socket.id);
-<<<<<<< Updated upstream
-      } else {
-      }
-=======
       } 
->>>>>>> Stashed changes
     });
   });
 

@@ -9,7 +9,7 @@ export const fetchAllNotes = async () => {
       data: response.data.data
     };
   } catch (error) {
-    console.error('Error fetching notes:', error.response?.data || error.message);
+   
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to fetch notes'
@@ -26,7 +26,6 @@ export const createNote = async (noteData) => {
       data: response.data.data
     };
   } catch (error) {
-    console.error('Error creating note:', error.response?.data || error.message);
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to create note'
@@ -42,7 +41,7 @@ export const deleteNote = async (noteId) => {
       success: true
     };
   } catch (error) {
-    console.error('Error deleting note:', error.response?.data || error.message);
+
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to delete note'

@@ -37,7 +37,7 @@ function improvedLectureMessageHandler(socket, io) {
  */
 function improvedSendMessageWithType(socket, io) {
   socket.on('send-message-with-type', ({ roomId, message, username, messageId, isCode, type, socketId }) => {
-    console.log(`Typed message (${type}) in room ${roomId} from ${username}`);
+   
     
     // Make sure the socket joins the room
     socket.join(roomId);
@@ -69,14 +69,14 @@ function improvedSendMessageWithType(socket, io) {
  * Replace in socketService.js
  */
 function improvedHandleVideoControl(socket, { roomId, action, time, videoId, userId }, io, roomVideoStates, activeRooms, socketMap) {
-  console.log(`Video control event from ${userId || socket.id} in room ${roomId}: ${action} at ${time} for video ${videoId}`);
+
   
   // Make sure socket is in the room
   socket.join(roomId);
   
   // Check if this is a valid room
   if (!activeRooms.has(roomId)) {
-    console.log(`Room ${roomId} not found for video sync, creating it`);
+
     // Auto-create room for more flexibility
     activeRooms.set(roomId, {
       users: new Set([socket.id]),
@@ -87,7 +87,7 @@ function improvedHandleVideoControl(socket, { roomId, action, time, videoId, use
   // Get socket data to verify if sender is room creator
   const socketData = socketMap.get(socket.id);
   if (!socketData) {
-    console.log(`No socket data found for ${socket.id}, adding basic data`);
+    
     // Auto-create socket data for more reliability
     socketMap.set(socket.id, {
       username: 'Unknown User',
@@ -120,7 +120,7 @@ function improvedHandleVideoControl(socket, { roomId, action, time, videoId, use
   
   // Get all clients in the room for debugging
   const roomSockets = io.sockets.adapter.rooms.get(roomId);
-  console.log(`Broadcasting video-sync to room ${roomId} with ${roomSockets ? roomSockets.size : 0} clients`);
+  
   
   // Create consistent event data with server timestamp to help calculate network delay
   const eventData = {
@@ -176,29 +176,25 @@ function improvedHandleVideoControl(socket, { roomId, action, time, videoId, use
 // Replace the existing applySyncCommand function with the imported one
 // Replace the video sync code in the handleVideoSync function with:
 function improvedVideoSyncClient(data) {
-  console.log('Received video sync:', data);
   
   // Don't process if this is our own message and we're the creator
   if (roomData.isRoomCreator) {
-    console.log('Ignoring sync as room creator');
     return;
   }
   
   // If player is not ready, retry with delays
   if (!playerRef.current || typeof playerRef.current.getPlayerState !== 'function') {
-    console.log('Player not ready for sync, will retry in 1 second');
     setTimeout(() => {
       if (playerRef.current && typeof playerRef.current.getPlayerState === 'function') {
-        console.log('Retrying sync command after delay');
         applySyncCommand(playerRef.current, data, isRemoteUpdateRef);
       } else {
         // Try one more time with a longer delay
         setTimeout(() => {
           if (playerRef.current && typeof playerRef.current.getPlayerState === 'function') {
-            console.log('Second retry for sync command');
+            
             applySyncCommand(playerRef.current, data, isRemoteUpdateRef);
           } else {
-            console.log('Player still not ready after multiple retries');
+          
           }
         }, 2000);
       }
@@ -215,8 +211,8 @@ function improvedVideoSyncClient(data) {
  */
 async function improvedJoinVideoRoom() {
   if (!roomData.inRoom || !roomData.roomId || !videoIdRef.current) {
-    console.log('Missing required data for video room join:', 
-                { inRoom: roomData.inRoom, roomId: roomData.roomId, videoId: videoIdRef.current });
+     
+               
     return;
   }
   
@@ -240,7 +236,7 @@ async function improvedJoinVideoRoom() {
         const playerState = playerRef.current.getPlayerState();
         const isPlaying = playerState === window.YT.PlayerState.PLAYING;
         
-        console.log('Sending initial video state as creator:', { currentTime, isPlaying });
+        
         
         // Use our utility function to ensure all events are sent
         emitVideoSync(
@@ -251,15 +247,15 @@ async function improvedJoinVideoRoom() {
           roomData.inviterId || socket.id
         );
       } catch (error) {
-        console.error('Error sending initial video state:', error);
+       
       }
     }
   } catch (error) {
-    console.error('Error joining video room:', error);
+   
     
     // Try again with a delay if it failed
     setTimeout(() => {
-      console.log('Retrying video room join...');
+     
       joinVideoRoom();
     }, 2000);
   }

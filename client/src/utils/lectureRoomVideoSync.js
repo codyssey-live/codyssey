@@ -47,7 +47,7 @@ export const emitVideoSync = (roomId, action, time, videoId, userId) => {
     serverTime: Date.now()
   });
 
-  console.log(`Emitted video ${action} at ${time} for room ${roomId}`);
+ 
 };
 
 /**
@@ -60,7 +60,7 @@ export const emitVideoSync = (roomId, action, time, videoId, userId) => {
  */
 export const applySyncCommand = (player, data, isRemoteUpdateRef, callback = null) => {
   if (!player || typeof player.getCurrentTime !== 'function') {
-    console.error('Invalid player for sync command');
+    
     return;
   }
   
@@ -71,7 +71,7 @@ export const applySyncCommand = (player, data, isRemoteUpdateRef, callback = nul
       const clientServerDiff = Date.now() - data.serverTime;
       if (clientServerDiff > 500) { // Only adjust if delay is significant
         adjustedTime += clientServerDiff / 1000;
-        console.log(`Adjusting time by ${clientServerDiff/1000}s for network delay`);
+
       }
     }
     
@@ -81,7 +81,7 @@ export const applySyncCommand = (player, data, isRemoteUpdateRef, callback = nul
     // Apply the sync action with better handling of time position
     switch (data.action) {
       case 'play':
-        console.log(`Syncing: play at ${adjustedTime}`);
+       
         
         // Force accurate seek first, then play with reliable timing
         player.seekTo(adjustedTime, true);
@@ -95,22 +95,20 @@ export const applySyncCommand = (player, data, isRemoteUpdateRef, callback = nul
           if (Math.abs(currentPos - adjustedTime) > 2) {
             if (seekCheckAttempts < 3) {
               seekCheckAttempts++;
-              console.log(`Seek verification failed on attempt ${seekCheckAttempts}. Expected: ${adjustedTime}, Got: ${currentPos}. Trying again...`);
               player.seekTo(adjustedTime, true);
               setTimeout(verifySeekAndPlay, 150);
             } else {
-              console.log(`Giving up on precise seeking after ${seekCheckAttempts} attempts. Playing now.`);
+          
               player.playVideo();
             }
           } else {
-            console.log(`Seek successful after ${seekCheckAttempts + 1} attempts. Now at ${currentPos}, expected ${adjustedTime}`);
+
             player.playVideo();
             
             // Verify playing state after a short delay
             setTimeout(() => {
               if (player.getPlayerState() !== window.YT.PlayerState.PLAYING) {
-                console.log("Play verification failed. Playing again.");
-                player.playVideo();
+
               }
             }, 300);
           }
@@ -121,7 +119,7 @@ export const applySyncCommand = (player, data, isRemoteUpdateRef, callback = nul
         break;
         
       case 'pause':
-        console.log(`Syncing: pause at ${data.time}`);
+
         
         // Ensure we pause at the exact position
         player.seekTo(data.time, true);
@@ -129,12 +127,10 @@ export const applySyncCommand = (player, data, isRemoteUpdateRef, callback = nul
         // Wait briefly to ensure seek completes
         setTimeout(() => {
           player.pauseVideo();
-          console.log('Paused at position', player.getCurrentTime());
         }, 150);
         break;
         
       case 'seek':
-        console.log(`Syncing: seek to ${data.time}`);
           // First pause the video to ensure consistent seeking behavior
         player.pauseVideo();
         
@@ -143,7 +139,7 @@ export const applySyncCommand = (player, data, isRemoteUpdateRef, callback = nul
           // Store initial state for better debugging
           const initialState = player.getPlayerState();
           const initialPos = player.getCurrentTime();
-          console.log(`Initial state before seek: state=${initialState}, position=${initialPos}, target=${data.time}`);
+
           
           // More reliable seeking with verification
           player.seekTo(data.time, true);
@@ -158,7 +154,7 @@ export const applySyncCommand = (player, data, isRemoteUpdateRef, callback = nul
             // Special handling for position 0 problem
             if (currentPos < 0.5 && data.time > 1.0) {
               // This is clearly wrong - video reset to beginning when it shouldn't have
-              console.log(`CRITICAL ERROR: Video reset to position ${currentPos} instead of ${data.time}, fixing immediately...`);
+              
               player.seekTo(data.time, true);
               // Use a longer delay for this critical fix
               setTimeout(verifySeek, 300);
@@ -170,10 +166,10 @@ export const applySyncCommand = (player, data, isRemoteUpdateRef, callback = nul
               if (seekVerifyAttempts < maxSeekAttempts) {
                 seekVerifyAttempts++;
                 const retryDelay = 150 + (seekVerifyAttempts * 50); // Progressive delay
-                console.log(`Seek verification failed on attempt ${seekVerifyAttempts}. Expected: ${data.time}, Got: ${currentPos}. Trying again in ${retryDelay}ms...`);
                 player.seekTo(data.time, true);
-                setTimeout(verifySeek, retryDelay);              } else {
-                console.log(`Still couldn't get exact seek position after ${maxSeekAttempts} attempts. Best position: ${currentPos}, expected: ${data.time}`);
+                setTimeout(verifySeek, retryDelay);
+              } else {
+               
                 // Force one final seek with a larger timeout
                 setTimeout(() => {
                   player.seekTo(data.time, true);
@@ -181,12 +177,12 @@ export const applySyncCommand = (player, data, isRemoteUpdateRef, callback = nul
                   // Final verification and cleanup
                   setTimeout(() => {
                     const finalPos = player.getCurrentTime();
-                    console.log(`Final position after all attempts: ${finalPos}, target was: ${data.time}`);
+
                   }, 300);
                 }, 300);
               }
             } else {
-              console.log(`Seek successful on attempt ${seekVerifyAttempts + 1}, now at ${currentPos}, expected: ${data.time}`);
+              
               
               // One final seek to be absolutely sure
               if (Math.abs(currentPos - data.time) > 0.5) {
@@ -205,14 +201,14 @@ export const applySyncCommand = (player, data, isRemoteUpdateRef, callback = nul
     const resetDelay = Math.min(2000, 500 + (data.time * 2));
     setTimeout(() => {
       isRemoteUpdateRef.current = false;
-      console.log('Remote update flag reset, allowing local control events');
+      
       
       // Call callback if provided
       if (callback) callback();
     }, resetDelay);
     
   } catch (error) {
-    console.error('Error applying sync command:', error);
+
     isRemoteUpdateRef.current = false;
   }
 };
@@ -233,7 +229,6 @@ export const joinVideoRoom = (socket, roomData, videoId, userName) => {
     }
 
     try {
-      console.log(`Joining video room: ${roomData.roomId} for video: ${videoId}`);
       
       // Create a promise to wait for server response
       const onSuccess = (data) => {
