@@ -16,14 +16,12 @@ const videoSyncDebounced = new Map(); // Store debounced sync functions by room
  * @param {Map} socketMap - Map of socket data
  */
 export const handleVideoControl = (socket, { roomId, action, time, videoId, userId }, io, activeRooms, socketMap) => {
-  console.log(`Video control event from ${userId || socket.id} in room ${roomId}: ${action} at ${time} for video ${videoId}`);
   
   // Make sure socket is in the room
   socket.join(roomId);
   
   // Check if this is a valid room
   if (!activeRooms.has(roomId)) {
-    console.log(`Room ${roomId} not found for video sync, creating it`);
     // Auto-create room for more flexibility
     activeRooms.set(roomId, {
       users: new Set([socket.id]),
@@ -34,7 +32,6 @@ export const handleVideoControl = (socket, { roomId, action, time, videoId, user
   // Get socket data to verify if sender is room creator
   const socketData = socketMap.get(socket.id);
   if (!socketData) {
-    console.log(`No socket data found for ${socket.id}, adding basic data`);
     // Auto-create socket data for more reliability
     socketMap.set(socket.id, {
       username: 'Unknown User',
@@ -47,11 +44,9 @@ export const handleVideoControl = (socket, { roomId, action, time, videoId, user
   const senderIsCreator = socketData?.isCreator || false;
   
   // Log permission status for debugging
-  console.log(`${socket.id} has creator status: ${senderIsCreator}, controlling video: ${action}`);
   
   // If not creator and trying to control, reject the control attempt
   if (!senderIsCreator) {
-    console.log(`WARNING: Non-creator ${socket.id} attempting to control video in room ${roomId} - rejecting control`);
     return; // Don't propagate control events from non-creators
   }
   
@@ -82,7 +77,6 @@ export const handleVideoControl = (socket, { roomId, action, time, videoId, user
     videoSyncDebounced.set(roomId, debounce((eventData, sourceSocket) => {
       // Get all clients in the room for debugging
       const roomSockets = io.sockets.adapter.rooms.get(roomId);
-      console.log(`Broadcasting video-sync to room ${roomId} with ${roomSockets ? roomSockets.size : 0} clients`);
       
       // Broadcast the sync event to all OTHER users in the room
       sourceSocket.to(roomId).emit('sync-video', eventData);
@@ -144,12 +138,10 @@ export const handleVideoControl = (socket, { roomId, action, time, videoId, user
  * @param {Map} socketMap - Map of socket data
  */
 export const handleJoinVideoRoom = (socket, { roomId, videoId, userId, username, socketId, isCreator, requestInitialState = true }, io, activeRooms, socketMap) => {
-  console.log(`${username} joining video room: ${roomId} with video: ${videoId}, socketId: ${socket.id}`);
   
   // Check if user is already in a room
   if (!activeRooms.has(roomId)) {
     // Auto-create room if it doesn't exist (more flexible approach)
-    console.log(`Room ${roomId} not active, creating it for video room join`);
     activeRooms.set(roomId, {
       users: new Set([socket.id]),
       createdAt: new Date()
@@ -186,7 +178,6 @@ export const handleJoinVideoRoom = (socket, { roomId, videoId, userId, username,
   });
   
   // Log creator status for debugging
-  console.log(`Socket ${socket.id} has creator status: ${socketMap.get(socket.id).isCreator}`);
   
   // If there's existing state for this room, send it to the new user
   if (roomVideoStates.has(roomId)) {
@@ -291,7 +282,6 @@ export const handleJoinVideoRoom = (socket, { roomId, videoId, userId, username,
  * @param {Object} io - Socket.io instance
  */
 export const handleRequestVideoState = (socket, { roomId, videoId }, io, socketMap) => {
-  console.log(`Request for video state in room ${roomId} for video ${videoId} from socket ${socket.id}`);
   
   // Get user info from socket map to determine if requestor is the creator
   const isCreator = socket.data?.isCreator || (socketMap.get(socket.id)?.isCreator === true);
@@ -348,7 +338,6 @@ export const handleRequestVideoState = (socket, { roomId, videoId }, io, socketM
         });
       }
     } else {
-      console.log(`No state found for video ${videoId} in room ${roomId}`);
       socket.emit('video-state-not-found', {
         roomId,
         videoId,
@@ -356,7 +345,6 @@ export const handleRequestVideoState = (socket, { roomId, videoId }, io, socketM
       });
     }
   } else {
-    console.log(`No video state for room ${roomId}`);
     socket.emit('video-state-not-found', {
       roomId,
       videoId,

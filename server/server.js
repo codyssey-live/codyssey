@@ -21,8 +21,6 @@ dotenv.config({ path: envPath });
 
 // Check if Resend API Key is loaded
 const resendApiKey = process.env.RESEND_API_KEY;
-console.log('RESEND_API_KEY available:', resendApiKey ? 'true' : 'false');
-console.log('RESEND_API_KEY is', resendApiKey ? 'available' : 'not available');
 
 const app = express();
 
@@ -68,7 +66,6 @@ const connectedUsers = new Map(); // Store connected users with their socket IDs
 const roomUsers = new Map(); // Store room participants with connection count
 
 io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id}`);
   
   // Store the last activity timestamps to prevent duplicate notifications
   const lastActivity = new Map();
@@ -97,14 +94,12 @@ io.on('connection', (socket) => {
     const participants = Array.from(roomUserMap.keys());
     
     // Remove all join notifications - only update the participant list without messages
-    console.log(`${username} ${isNewUser ? 'joined' : 'reconnected to'} room: ${roomId}`);
     
     // Always send the updated participant list to everyone without join messages
     io.to(roomId).emit('room_data', { participants });
   });  // Handle sending messages
   socket.on('send_message', (messageData) => {
     const { roomId, message, source } = messageData;
-    console.log(`Message in room ${roomId}: ${message}, source: ${source}`);
     
     // Broadcast to everyone in the room except sender
     socket.to(roomId).emit('receive_message', {
@@ -136,15 +131,13 @@ io.on('connection', (socket) => {
             // Get updated participants list
             const participants = Array.from(roomUserMap.keys());
             
-            // Remove user-left notifications - only update participant list
-            console.log(`${username} left room: ${roomId}`);
+            
             
             // Update participants list for everyone without leave messages
             io.to(roomId).emit('room_data', { participants });
           } else {
             // User still has other connections, just update the count
             roomUserMap.set(username, connectionsCount);
-            console.log(`${username} still has ${connectionsCount} connections to room: ${roomId}`);
           }
         }
       }
@@ -172,9 +165,6 @@ io.on('connection', (socket) => {
           // Get updated participants list
           const participants = Array.from(roomUserMap.keys());
           
-          // Remove user-left broadcast - only update participants
-          console.log(`${username} left room: ${roomId}`);
-          
           // Update participants list for everyone without leave messages
           io.to(roomId).emit('room_data', { participants });
         } else {
@@ -191,5 +181,4 @@ const PORT = process.env.PORT || 8080;
 
 // Update this to listen on the HTTP server, not the Express app
 httpServer.listen(PORT,  () => {
-  console.log(`Server running on port ${PORT}`);
 });

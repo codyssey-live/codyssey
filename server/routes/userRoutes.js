@@ -104,7 +104,6 @@ router.get('/:id', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching user:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -170,7 +169,6 @@ router.put('/:id', protect, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error updating user:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -215,7 +213,6 @@ router.post('/:id/profile-picture', protect, upload.single('profilePicture'), as
 
     // Delete the temporary file
     fs.unlink(req.file.path, (err) => {
-      if (err) console.error('Error deleting temporary file:', err);
     });
 
     // If user already has a profile picture in Cloudinary, delete it
@@ -228,7 +225,6 @@ router.post('/:id/profile-picture', protect, upload.single('profilePicture'), as
           await deleteImage(publicId);
         }
       } catch (err) {
-        console.error('Error deleting old profile picture from Cloudinary:', err);
         // Continue even if old file deletion fails
       }
     }
@@ -245,7 +241,6 @@ router.post('/:id/profile-picture', protect, upload.single('profilePicture'), as
       message: 'Profile picture updated successfully'
     });
   } catch (error) {
-    console.error('Error uploading profile picture:', error);
     res.status(500).json({
       success: false,
       message: 'Server error while uploading image',
@@ -299,7 +294,6 @@ router.delete('/:id/profile-picture', protect, async (req, res) => {
           cloudinaryDeletionStatus = 'no_match_found';
         }
       } catch (err) {
-        console.error('Error deleting profile picture from Cloudinary:', err);
         cloudinaryDeletionStatus = 'error';
         // Continue even if Cloudinary deletion fails
       }
@@ -319,7 +313,6 @@ router.delete('/:id/profile-picture', protect, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error removing profile picture:', error);
     res.status(500).json({
       success: false,
       message: 'Server error during profile picture removal',
@@ -378,7 +371,6 @@ router.post('/:id/education', protect, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error adding education:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -428,7 +420,6 @@ router.delete('/:id/education/:eduId', protect, async (req, res) => {
       message: 'Education entry deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting education:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -487,7 +478,6 @@ router.post('/:id/work-experience', protect, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error adding work experience:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -537,7 +527,6 @@ router.delete('/:id/work-experience/:workId', protect, async (req, res) => {
       message: 'Work experience entry deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting work experience:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

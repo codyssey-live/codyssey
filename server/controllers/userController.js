@@ -65,7 +65,6 @@ export const changePassword = async (req, res) => {
       message: 'Password updated successfully'
     });
   } catch (error) {
-    console.error('Error changing password:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

@@ -27,11 +27,9 @@ export const initSocket = (server) => {
     }
   });
   io.on('connection', (socket) => {
-    console.log(`User connected: ${socket.id}`);
     
     // Handle problem details sharing for collaboration rooms
     socket.on('share-problem-details', ({ roomId, problemDetails, dayId, problemId }) => {
-      console.log(`Problem details shared in room ${roomId} by ${socket.id}: ${problemDetails.title}`);
       
       if (!roomId || !problemDetails) {
         return;
@@ -53,11 +51,9 @@ export const initSocket = (server) => {
         problemId
       });
       
-      console.log(`Problem details broadcasted to room ${roomId}`);
     });
       // Handle sharing problem status updates between participants
     socket.on('share-problem-status', ({ roomId, status, dayId, problemId, problemTitle }) => {
-      console.log(`Problem status update in room ${roomId}: ${status} for problem ${problemId}`);
       
       if (!roomId || !status || !problemId) {
         return;
@@ -78,12 +74,10 @@ export const initSocket = (server) => {
         timestamp: new Date()
       });
       
-      console.log(`Problem status update broadcasted to room ${roomId}`);
     });
     
     // Handle requests for problem details from newly joined users
     socket.on('request-problem-details', ({ roomId }) => {
-      console.log(`Problem details requested in room ${roomId} by ${socket.id}`);
       
       if (!roomId) {
         return;
@@ -99,7 +93,6 @@ export const initSocket = (server) => {
           problemId: storedDetails.problemId
         });
         
-        console.log(`Problem details sent to requester ${socket.id} in room ${roomId}`);
       } else {
         // If no details are stored yet, try to find a room creator to request them from
         const roomCreator = Array.from(socketMap.entries())
@@ -107,7 +100,6 @@ export const initSocket = (server) => {
           
         if (roomCreator) {
           const [creatorSocketId] = roomCreator;
-          console.log(`Requesting problem details from room creator ${creatorSocketId}`);
           
           // Send a request to the room creator's socket
           io.to(creatorSocketId).emit('request-problem-details', {
@@ -143,7 +135,6 @@ export const initSocket = (server) => {
       
     // Handle join-room event
     socket.on('join-room', async ({ roomId, username, isCreator }) => {
-      console.log(`${username} joining room: ${roomId} (socket ${socket.id})${isCreator ? ' as CREATOR' : ''}`);
       
       // Input validation
       if (!roomId || typeof roomId !== 'string') {
@@ -224,7 +215,6 @@ export const initSocket = (server) => {
           participants
         });
       } catch (error) {
-        console.error(`Error joining room: ${error.message}`);
         socket.emit('join-room-error', {
           success: false,
           message: 'Server error while joining room'
@@ -232,7 +222,6 @@ export const initSocket = (server) => {
       }
     });      // Handle send-message event    
     socket.on('send-message', ({ roomId, message, username, messageId, source, isCode }) => {
-      console.log(`Message in room ${roomId} from ${username}: ${message}, source: ${source}`);
       
       // Create message object
       const messageData = {
@@ -251,18 +240,15 @@ export const initSocket = (server) => {
     
     // Handle lecture room specific message event
     socket.on('lecture-send-message', ({ roomId, message, username, messageId, isCode }) => {
-      console.log(`Lecture message in room ${roomId} from ${username}: ${message}`);
       
       // Make sure the socket joins the room itself if not joined already
       socket.join(roomId);
       
       // Log all sockets in the room for debugging
       const roomSockets = io.sockets.adapter.rooms.get(roomId);
-      console.log(`Room ${roomId} has ${roomSockets ? roomSockets.size : 0} sockets connected`);
       
       // Map socket IDs in room for debug
       if (roomSockets) {
-        console.log(`Socket IDs in room: ${Array.from(roomSockets).join(', ')}`);
       }
       
       // Create a standardized message object
@@ -283,12 +269,10 @@ export const initSocket = (server) => {
       io.in(roomId).emit('lecture_receive_message', messageData);
       
       // Log the broadcast
-      console.log(`Broadcasted lecture message to all ${roomSockets ? roomSockets.size : 0} clients in room ${roomId}`);
     });
     
     // Also handle underscore version for compatibility
     socket.on('lecture_send_message', ({ roomId, message, username, messageId, isCode }) => {
-      console.log(`Lecture message in room ${roomId} from ${username}: ${message} (underscore format)`);
       
       // Make sure socket is in the room
       socket.join(roomId);
@@ -310,7 +294,6 @@ export const initSocket = (server) => {
     
     // Handle message with type parameter for more flexibility
     socket.on('send-message-with-type', ({ roomId, message, username, messageId, isCode, type, socketId, source }) => {
-      console.log(`Typed message (${type}) in room ${roomId} from ${username}, source: ${source}`);
       
       // Make sure the socket joins the room
       socket.join(roomId);
@@ -338,7 +321,6 @@ export const initSocket = (server) => {
     });
       // Handle room-end requests with proper owner verification
     socket.on('end-room', async ({ roomId, username, userId, deleteCompletely = true }) => {
-      console.log(`Request to end room ${roomId} by ${username} (socket ${socket.id})`);
       
       if (!roomId || !activeRooms.has(roomId)) {
         socket.emit('end-room-error', {
@@ -362,7 +344,6 @@ export const initSocket = (server) => {
         
         // Verify that the requesting user is the creator of the room
         if (!userId || room.inviterId.toString() !== userId.toString()) {
-          console.log(`Unauthorized attempt to end room by user ${userId}, owner is ${room.inviterId}`);
           socket.emit('end-room-error', {
             success: false,
             message: 'You are not authorized to end this room'
@@ -372,7 +353,6 @@ export const initSocket = (server) => {
         
         // Delete the room after ownership verification
         await Room.findOneAndDelete({ roomId });
-        console.log(`Room ${roomId} completely deleted from database`)
         
         // Notify all users in the room
         io.to(roomId).emit('room-ended', {
@@ -405,9 +385,7 @@ export const initSocket = (server) => {
           message: 'Room deleted successfully'
         });
         
-        console.log(`Room ${roomId} ended successfully by ${username}`);
       } catch (error) {
-        console.error(`Error ending room: ${error.message}`);
         socket.emit('end-room-error', {
           success: false, 
           message: 'Server error while ending room'
@@ -417,11 +395,9 @@ export const initSocket = (server) => {
 
     // Handle leave-room event
     socket.on('leave-room', ({ roomId, username }) => {
-      console.log(`${username} leaving room: ${roomId} (socket ${socket.id})`);
       
       // Check if room exists
       if (!activeRooms.has(roomId)) {
-        console.log(`Room ${roomId} does not exist, cannot leave`);
         return;
       }
       
@@ -453,7 +429,6 @@ export const initSocket = (server) => {
           } else {
             // User still has other connections
             roomUserMap.set(username, connectionsCount);
-            console.log(`${username} still has ${connectionsCount} connections to room ${roomId}`);
           }
         }
       }
@@ -478,7 +453,6 @@ export const initSocket = (server) => {
           
           // Check if room is empty and should be deleted
           if (roomData.users.size === 0) {
-            console.log(`Room ${roomId} is empty, cleaning up`);
             activeRooms.delete(roomId);
           }
         }
@@ -498,19 +472,15 @@ export const initSocket = (server) => {
               
               // Only update the participant list
               io.to(roomId).emit('room_data', { participants });
-              
-              console.log(`${username} left room: ${roomId}`);
-              
+                            
               // If room is empty after this user left, clean it up
               if (participants.length === 0) {
-                console.log(`Room ${roomId} has no more participants, cleaning up`);
                 roomUsers.delete(roomId);
                 activeRooms.delete(roomId);
               }
             } else {
               // User still has other connections
               roomUserMap.set(username, connectionsCount);
-              console.log(`${username} still has ${connectionsCount} connections to room ${roomId}`);
             }
           }
         }
@@ -518,7 +488,6 @@ export const initSocket = (server) => {
         // Clean up socket mapping
         socketMap.delete(socket.id);
       } else {
-        console.log(`User disconnected: ${socket.id} (no user data)`);
       }
     });
   });
