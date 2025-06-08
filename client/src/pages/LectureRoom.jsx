@@ -1,22 +1,22 @@
-import { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
-import Navbar from "../components/Navbar";
-import { useRoom } from "../context/RoomContext";
-import { useNotification } from "../context/NotificationContext";
-import socket from "../socket";
+import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import { useRoom } from '../context/RoomContext';
+import { useNotification } from '../context/NotificationContext';
+import socket from '../socket';
 import {
   loadLectureMessages,
   saveLectureMessages,
-} from "../utils/lectureRoomChatPersistence";
+} from '../utils/lectureRoomChatPersistence';
 import {
   fetchAllNotes,
   createNote,
   deleteNote as deleteNoteAPI,
-} from "../utils/noteApiUtils";
-import { format } from "date-fns";
-import { AnimatePresence, motion } from "framer-motion";
-import { applySyncCommand, emitVideoSync } from "../utils/lectureRoomVideoSync";
-import { debounce } from "lodash"; // Fixed import to use named import
+} from '../utils/noteApiUtils';
+import { format } from 'date-fns';
+import { AnimatePresence, motion } from 'framer-motion';
+import { applySyncCommand, emitVideoSync } from '../utils/lectureRoomVideoSync';
+import { debounce } from 'lodash'; // Fixed import to use named import
 
 // A small delay to ensure operations don't conflict
 const SYNC_DELAY = 300;
@@ -24,11 +24,11 @@ const SYNC_DELAY = 300;
 const LectureRoom = () => {
   const location = useLocation();
   const { roomData } = useRoom();
-  const [videoUrl, setVideoUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [newMessage, setNewMessage] = useState('');
   const [isConnected, setIsConnected] = useState(false);
-  const [userName, setUserName] = useState("User");
+  const [userName, setUserName] = useState('User');
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
   const { addNotification } = useNotification();
 
@@ -44,28 +44,28 @@ const LectureRoom = () => {
   const wasPlayingBeforeTabChange = useRef(false);
 
   // Add state for notes functionality
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState('');
   const [savedNotes, setSavedNotes] = useState([]);
   const [showNotesModal, setShowNotesModal] = useState(false);
-  const [videoTitle, setVideoTitle] = useState("");
+  const [videoTitle, setVideoTitle] = useState('');
 
   // Add state for notes sorting and pagination
-  const [sortCriteria, setSortCriteria] = useState("newest"); // 'newest', 'oldest', 'videoTitle'
+  const [sortCriteria, setSortCriteria] = useState('newest'); // 'newest', 'oldest', 'videoTitle'
   const [currentPage, setCurrentPage] = useState(1);
   const notesPerPage = 5; // Number of notes to display per page
 
   // Get username from localStorage     // Enhanced initialization with improved user status verification and socket handling
   useEffect(() => {
-    const savedUsername = localStorage.getItem("roomUsername") || "User";
+    const savedUsername = localStorage.getItem('roomUsername') || 'User';
     setUserName(savedUsername);
 
     // Check if user is a room creator from history with more reliable checks
     if (roomData.roomId) {
       const creatorHistory = JSON.parse(
-        localStorage.getItem("roomCreatorHistory") || "{}"
+        localStorage.getItem('roomCreatorHistory') || '{}'
       );
       const isCreatorFromSession =
-        localStorage.getItem(`roomCreator_${roomData.roomId}`) === "true";
+        localStorage.getItem(`roomCreator_${roomData.roomId}`) === 'true';
 
       if (
         (creatorHistory[roomData.roomId] === true || isCreatorFromSession) &&
@@ -77,7 +77,7 @@ const LectureRoom = () => {
 
       // If we are the creator, make sure it's saved for future sessions
       if (roomData.isRoomCreator) {
-        localStorage.setItem(`roomCreator_${roomData.roomId}`, "true");
+        localStorage.setItem(`roomCreator_${roomData.roomId}`, 'true');
 
         // Update creator history
         const updatedCreatorHistory = {
@@ -85,7 +85,7 @@ const LectureRoom = () => {
           [roomData.roomId]: true,
         };
         localStorage.setItem(
-          "roomCreatorHistory",
+          'roomCreatorHistory',
           JSON.stringify(updatedCreatorHistory)
         );
       }
@@ -96,7 +96,7 @@ const LectureRoom = () => {
      
       socket.connect();
 
-      socket.on("connect", () => {
+      socket.on('connect', () => {
         setIsConnected(true);
         
 
@@ -106,7 +106,7 @@ const LectureRoom = () => {
         }
       });
 
-      socket.on("connect_error", (error) => {
+      socket.on('connect_error', (error) => {
         // Remove adding error message to chat
       });
     } else {
@@ -118,8 +118,8 @@ const LectureRoom = () => {
 
     // Cleanup socket connection
     return () => {
-      socket.off("connect");
-      socket.off("connect_error");
+      socket.off('connect');
+      socket.off('connect_error');
     };
   }, [roomData.roomId, roomData.isRoomCreator]);
 
@@ -133,10 +133,10 @@ const LectureRoom = () => {
         setSavedNotes(response.data);
       } else {
         
-        addNotification("Failed to load notes", "error");
+        addNotification('Failed to load notes', 'error');
       }
     } catch (error) {
-      addNotification("Error loading notes", "error");
+      addNotification('Error loading notes', 'error');
     } finally {
       setIsLoadingNotes(false);
     }
@@ -155,7 +155,7 @@ const LectureRoom = () => {
       // Try to get video title
       if (
         playerRef.current &&
-        typeof playerRef.current.getVideoData === "function"
+        typeof playerRef.current.getVideoData === 'function'
       ) {
         try {
           const videoData = playerRef.current.getVideoData();
@@ -182,7 +182,7 @@ const LectureRoom = () => {
     return match && match[2].length === 11 ? match[2] : null;
   };
   const getYouTubeEmbedUrl = (url) => {
-    if (!url) return "";
+    if (!url) return '';
 
     // Match standard YouTube, youtu.be and YouTube playlist URLs
     const regExp =
@@ -192,7 +192,7 @@ const LectureRoom = () => {
     if (match && match[2].length === 11) {
       // Standard video ID
       return `https://www.youtube.com/embed/${match[2]}?enablejsapi=1`;
-    } else if (match && match[1].includes("list=")) {
+    } else if (match && match[1].includes('list=')) {
       // Playlist
       return `https://www.youtube.com/embed/videoseries?list=${match[2]}&enablejsapi=1`;
     }
@@ -204,9 +204,9 @@ const LectureRoom = () => {
   useEffect(() => {
     // Load the YouTube IFrame API
     if (!window.YT) {
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName("script")[0];
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
       // Define the onYouTubeIframeAPIReady callback
@@ -231,16 +231,16 @@ const LectureRoom = () => {
   const getYoutubeErrorMessage = (errorCode) => {
     switch (errorCode) {
       case 2:
-        return "Invalid video ID";
+        return 'Invalid video ID';
       case 5:
-        return "Video cannot be played in the player";
+        return 'Video cannot be played in the player';
       case 100:
-        return "Video not found or removed";
+        return 'Video not found or removed';
       case 101:
       case 150:
-        return "Video owner does not allow embedding";
+        return 'Video owner does not allow embedding';
       default:
-        return "Unknown error";
+        return 'Unknown error';
     }
   };
 
@@ -251,39 +251,39 @@ const LectureRoom = () => {
 
     // Wait for the element to exist
     const checkElement = setInterval(() => {
-      const container = document.getElementById("youtube-player");
+      const container = document.getElementById('youtube-player');
 
       if (container) {
         clearInterval(checkElement);
 
         try {
           // Clear container first in case of re-initialization
-          container.innerHTML = "";
+          container.innerHTML = '';
           // Create the player with optimized settings for better sync and access control
-          const player = new window.YT.Player("youtube-player", {
-            height: "600",
-            width: "100%",
+          const player = new window.YT.Player('youtube-player', {
+            height: '600',
+            width: '100%',
             videoId: videoId,
             playerVars: {
-              autoplay: 0, // Don't autoplay until creator starts
+              'autoplay': 0, // Don't autoplay until creator starts
               // Show controls for the creator, but guests will have them visually disabled via CSS
-              controls: roomData.isRoomCreator ? 1 : 0,
-              rel: 0,
-              fs: roomData.isRoomCreator ? 1 : 0, // Fullscreen only for creator
-              modestbranding: 1,
-              enablejsapi: 1,
-              origin: window.location.origin,
-              playsinline: 1, // Better for mobile sync
-              iv_load_policy: 3, // Hide annotations for cleaner look
-              start: 0, // Always start at beginning for consistency
-              disablekb: roomData.isRoomCreator ? 0 : 1, // Disable keyboard controls for guests
+              'controls': roomData.isRoomCreator ? 1 : 0,
+              'rel': 0,
+              'fs': roomData.isRoomCreator ? 1 : 0, // Fullscreen only for creator
+              'modestbranding': 1,
+              'enablejsapi': 1,
+              'origin': window.location.origin,
+              'playsinline': 1, // Better for mobile sync
+              'iv_load_policy': 3, // Hide annotations for cleaner look
+              'start': 0, // Always start at beginning for consistency
+              'disablekb': roomData.isRoomCreator ? 0 : 1, // Disable keyboard controls for guests
             },
             events: {
-              onReady: onPlayerReady,
+              'onReady': onPlayerReady,
               // Make sure to define onPlayerStateChange before using it here
-              onStateChange: onPlayerStateChange,
-              onError: (e) => {
-               
+              'onStateChange': onPlayerStateChange,
+              'onError': (e) => {
+
                 // Remove adding error message to chat
               },
             },
@@ -361,30 +361,30 @@ const LectureRoom = () => {
         const iframe = event.target.getIframe();
 
         // Make the iframe non-interactive but allow visibility
-        iframe.style.pointerEvents = "none";
+        iframe.style.pointerEvents = 'none';
 
         // Add a transparent overlay to prevent any interaction with the player
         const playerContainer = iframe.parentElement;
         if (playerContainer) {
           // Check if overlay already exists
           let overlay = playerContainer.querySelector(
-            ".player-control-overlay"
+            '.player-control-overlay'
           );
           if (!overlay) {
-            overlay = document.createElement("div");
-            overlay.className = "player-control-overlay";
-            overlay.style.position = "absolute";
-            overlay.style.top = "0";
-            overlay.style.left = "0";
-            overlay.style.width = "100%";
-            overlay.style.height = "100%";
-            overlay.style.zIndex = "10";
-            overlay.style.cursor = "not-allowed";
+            overlay = document.createElement('div');
+            overlay.className = 'player-control-overlay';
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.zIndex = '10';
+            overlay.style.cursor = 'not-allowed';
 
             // REMOVE the overlay text message that was causing interruption
             // Keep the invisible overlay to block interactions
 
-            playerContainer.style.position = "relative";
+            playerContainer.style.position = 'relative';
             playerContainer.appendChild(overlay);
           }
         }
@@ -401,7 +401,7 @@ const LectureRoom = () => {
         }, 200); // Reduced from 500ms
       } else {
         // For creators, ensure controls are fully enabled
-        event.target.getIframe().style.pointerEvents = "auto";
+        event.target.getIframe().style.pointerEvents = 'auto';
        
 
         // Explicitly ensure the video is paused to start
@@ -451,7 +451,7 @@ const LectureRoom = () => {
           }
 
           // Use the debounced emitter to prevent excessive events
-          debouncedVideoControl("play", playTime);
+          debouncedVideoControl('play', playTime);
           break;
 
         case window.YT.PlayerState.PAUSED:
@@ -465,7 +465,7 @@ const LectureRoom = () => {
           }
 
           // Use the debounced emitter to prevent excessive events
-          debouncedVideoControl("pause", pauseTime);
+          debouncedVideoControl('pause', pauseTime);
           break;
       }
     } catch (error) {
@@ -484,7 +484,7 @@ const LectureRoom = () => {
         const timestamp = Date.now();
 
         // Send both immediate and standard sync events for redundancy
-        socket.emit("video-control", {
+        socket.emit('video-control', {
           roomId: roomData.roomId,
           action,
           time,
@@ -504,11 +504,11 @@ const LectureRoom = () => {
         });
 
         // Send state update for complete synchronization
-        socket.emit("video-state-update", {
+        socket.emit('video-state-update', {
           roomId: roomData.roomId,
           videoId: videoIdRef.current,
           currentTime: time,
-          isPlaying: action === "play",
+          isPlaying: action === 'play',
           serverTime: timestamp,
           fromCreator: true,
           immediate: true,
@@ -535,9 +535,9 @@ const LectureRoom = () => {
       }
 
       // Send immediate seek command
-      socket.emit("video-control", {
+      socket.emit('video-control', {
         roomId: roomData.roomId,
-        action: "seek",
+        action: 'seek',
         time: newTime,
         videoId: videoIdRef.current,
         userId: roomData.inviterId || socket.id,
@@ -546,7 +546,7 @@ const LectureRoom = () => {
       });
 
       // Send additional sync events for reliability
-      socket.emit("creator-seek-direct", {
+      socket.emit('creator-seek-direct', {
         roomId: roomData.roomId,
         videoId: videoIdRef.current,
         time: newTime,
@@ -555,7 +555,7 @@ const LectureRoom = () => {
       });
 
       // Also send state update
-      socket.emit("video-state-update", {
+      socket.emit('video-state-update', {
         roomId: roomData.roomId,
         videoId: videoIdRef.current,
         currentTime: newTime,
@@ -571,31 +571,31 @@ const LectureRoom = () => {
   const handleSubmitUrl = (e) => {
     e.preventDefault();
     if (!videoUrl) {
-      addNotification("Please enter a YouTube video URL", "warning");
+      addNotification('Please enter a YouTube video URL', 'warning');
       return;
     }
 
     // If in a room and not the creator, disallow changing videos
     if (roomData.inRoom && !roomData.isRoomCreator) {
       
-      addNotification("Only the room creator can change videos", "warning");
+      addNotification('Only the room creator can change videos', 'warning');
       return;
     }
 
     // Extract the video ID from the URL
     const videoId = extractVideoId(videoUrl);
     if (!videoId) {
-      addNotification("Invalid YouTube URL", "error");
+      addNotification('Invalid YouTube URL', 'error');
       return;
     }
 
     videoIdRef.current = videoId;
 
     // Force reload the iframe with autoplay
-    const videoElement = document.querySelector(".video-iframe");
+    const videoElement = document.querySelector('.video-iframe');
     if (videoElement) {
       const embedUrl = getYouTubeEmbedUrl(videoUrl);
-      videoElement.src = embedUrl + "&autoplay=1&enablejsapi=1";
+      videoElement.src = embedUrl + '&autoplay=1&enablejsapi=1';
 
       // If we're in a room, try to join the video room after loading
       if (roomData.inRoom && roomData.roomId) {
@@ -604,7 +604,7 @@ const LectureRoom = () => {
         // If creator is changing video, notify others
         if (roomData.isRoomCreator) {
           // Emit video change event to notify other users
-          socket.emit("video-change", {
+          socket.emit('video-change', {
             roomId: roomData.roomId,
             videoId: videoId,
             videoUrl: videoUrl,
@@ -633,16 +633,16 @@ const LectureRoom = () => {
           new Promise((resolve) => setTimeout(resolve, 5000)), // Timeout after 5 seconds
           new Promise((resolve) => {
             const connectHandler = () => {
-              socket.off("connect", connectHandler);
+              socket.off('connect', connectHandler);
               resolve();
             };
-            socket.on("connect", connectHandler);
+            socket.on('connect', connectHandler);
           }),
         ]);
 
         if (!socket.connected) {
          
-          throw new Error("Socket connection timed out");
+          throw new Error('Socket connection timed out');
         }
       }
 
@@ -652,28 +652,28 @@ const LectureRoom = () => {
       const joinPromise = new Promise((resolve, reject) => {
         // Set up one-time event listeners
         const onSuccess = (data) => {
-          socket.off("join-video-room-success", onSuccess);
-          socket.off("join_video_room_success", onSuccess); // Also handle underscore version
-          socket.off("join-video-room-error", onError);
-          socket.off("join_video_room_error", onError); // Also handle underscore version
+          socket.off('join-video-room-success', onSuccess);
+          socket.off('join_video_room_success', onSuccess); // Also handle underscore version
+          socket.off('join-video-room-error', onError);
+          socket.off('join_video_room_error', onError); // Also handle underscore version
           resolve(data);
         };
 
         const onError = (error) => {
-          socket.off("join-video-room-success", onSuccess);
-          socket.off("join-video-room-error", onError);
+          socket.off('join-video-room-success', onSuccess);
+          socket.off('join-video-room-error', onError);
           reject(error);
         };
 
         // Set timeout to avoid hanging
         const timeout = setTimeout(() => {
-          socket.off("join-video-room-success", onSuccess);
-          socket.off("join-video-room-error", onError);
-          reject(new Error("Join video room request timed out"));
+          socket.off('join-video-room-success', onSuccess);
+          socket.off('join-video-room-error', onError);
+          reject(new Error('Join video room request timed out'));
         }, 5000);
 
         // Set up listeners
-        socket.once("join-video-room-success", (data) => {
+        socket.once('join-video-room-success', (data) => {
           clearTimeout(timeout);
 
           // If we're not the room creator and we've received initial state data
@@ -685,7 +685,7 @@ const LectureRoom = () => {
                 // Force a sync with the initial state
                 applySyncCommand(
                   {
-                    action: data.videoState.isPlaying ? "play" : "pause",
+                    action: data.videoState.isPlaying ? 'play' : 'pause',
                     time: data.videoState.currentTime || 0,
                     videoId: data.videoState.videoId,
                     serverTime: Date.now(),
@@ -702,24 +702,24 @@ const LectureRoom = () => {
           onSuccess(data);
         });
 
-        socket.once("join-video-room-error", (error) => {
+        socket.once('join-video-room-error', (error) => {
           clearTimeout(timeout);
           onError(error);
         });
 
         // Check creator history as fallback
         const creatorHistory = JSON.parse(
-          localStorage.getItem("roomCreatorHistory") || "{}"
+          localStorage.getItem('roomCreatorHistory') || '{}'
         );
         const isCreatorFromHistory = creatorHistory[roomData.roomId] === true;
         const effectiveCreatorStatus =
           roomData.isRoomCreator || isCreatorFromHistory;
 
         // Send join request with all information - use combined creator status
-        socket.emit("join-video-room", {
+        socket.emit('join-video-room', {
           roomId: roomData.roomId,
           videoId: videoIdRef.current,
-          userId: roomData.inviterId || localStorage.getItem("userId"),
+          userId: roomData.inviterId || localStorage.getItem('userId'),
           username: userName,
           socketId: socket.id, // Include socket ID to help server tracking
           isCreator: effectiveCreatorStatus,
@@ -727,10 +727,10 @@ const LectureRoom = () => {
         });
 
         // Also use an underscore version for compatibility
-        socket.emit("join_video_room", {
+        socket.emit('join_video_room', {
           roomId: roomData.roomId,
           videoId: videoIdRef.current,
-          userId: roomData.inviterId || localStorage.getItem("userId"),
+          userId: roomData.inviterId || localStorage.getItem('userId'),
           username: userName,
           socketId: socket.id,
           isCreator: effectiveCreatorStatus,
@@ -756,13 +756,13 @@ const LectureRoom = () => {
 
           // Emit direct play/pause commands for immediate effect
           if (isPlaying) {
-            socket.emit("creator-play-video", {
+            socket.emit('creator-play-video', {
               roomId: roomData.roomId,
               videoId: videoIdRef.current,
               time: currentTime,
             });
           } else {
-            socket.emit("creator-pause-video", {
+            socket.emit('creator-pause-video', {
               roomId: roomData.roomId,
               videoId: videoIdRef.current,
               time: currentTime,
@@ -770,7 +770,7 @@ const LectureRoom = () => {
           }
 
           // Emit initial state to all participants using multiple event names for compatibility
-          socket.emit("video-state-update", {
+          socket.emit('video-state-update', {
             roomId: roomData.roomId,
             videoId: videoIdRef.current,
             currentTime: currentTime,
@@ -779,7 +779,7 @@ const LectureRoom = () => {
             fromCreator: true,
           });
 
-          socket.emit("video_state_update", {
+          socket.emit('video_state_update', {
             roomId: roomData.roomId,
             videoId: videoIdRef.current,
             currentTime: currentTime,
@@ -789,10 +789,10 @@ const LectureRoom = () => {
           });
 
           // Also send as a sync event
-          socket.emit("sync-video", {
+          socket.emit('sync-video', {
             roomId: roomData.roomId,
             videoId: videoIdRef.current,
-            action: isPlaying ? "play" : "pause",
+            action: isPlaying ? 'play' : 'pause',
             time: currentTime,
             serverTime: Date.now(),
             fromCreator: true,
@@ -800,9 +800,9 @@ const LectureRoom = () => {
           });
 
           // Direct video-control event
-          socket.emit("video-control", {
+          socket.emit('video-control', {
             roomId: roomData.roomId,
-            action: isPlaying ? "play" : "pause",
+            action: isPlaying ? 'play' : 'pause',
             time: currentTime,
             videoId: videoIdRef.current,
             userId: roomData.inviterId || socket.id,
@@ -830,7 +830,7 @@ const LectureRoom = () => {
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   // Handle sending messages
@@ -848,30 +848,30 @@ const LectureRoom = () => {
       messageId,
       timestamp: new Date(), // Ensure we have timestamp
       socketId: socket.id, // Include socket ID for better tracking
-      type: "lecture-chat", // Mark as lecture chat specifically
+      type: 'lecture-chat', // Mark as lecture chat specifically
     };
 
    
 
     // Send message via socket with lecture-specific event name - we'll rely on the server broadcast
     // for displaying the message to avoid duplicates
-    socket.emit("lecture-send-message", messageData);
+    socket.emit('lecture-send-message', messageData);
 
     // Also emit with underscore format for compatibility
-    socket.emit("lecture_send_message", messageData);
+    socket.emit('lecture_send_message', messageData);
 
     // Additionally send with the type-aware handler
-    socket.emit("send-message-with-type", messageData);
+    socket.emit('send-message-with-type', messageData);
 
     // NOTE: We no longer add the message directly to the chat - we'll get it back from the server
     // This prevents duplicate messages for the sender
 
-    setNewMessage("");
+    setNewMessage('');
   };
   // Notes related functions
   const saveNote = async () => {
     if (!notes.trim()) {
-      addNotification("Please add some notes before saving.", "info");
+      addNotification('Please add some notes before saving.', 'info');
       return;
     }
 
@@ -891,14 +891,14 @@ const LectureRoom = () => {
         // Update the local state with the new note
         setSavedNotes((prevNotes) => [response.data, ...prevNotes]);
 
-        addNotification("Note saved successfully!", "success");
+        addNotification('Note saved successfully!', 'success');
 
-        setNotes("");
+        setNotes('');
       } else {
-        addNotification(response.message || "Failed to save note", "error");
+        addNotification(response.message || 'Failed to save note', 'error');
       }
     } catch (error) {
-      addNotification("Failed to save note. Please try again.", "error");
+      addNotification('Failed to save note. Please try again.', 'error');
     }
   };
 
@@ -906,7 +906,7 @@ const LectureRoom = () => {
   const formatVideoTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const deleteNote = (noteId) => {
@@ -926,13 +926,13 @@ const LectureRoom = () => {
           setSavedNotes((prevNotes) =>
             prevNotes.filter((note) => note._id !== noteToDelete)
           );
-          addNotification("Note deleted successfully!", "success");
+          addNotification('Note deleted successfully!', 'success');
         } else {
-          addNotification(response.message || "Failed to delete note", "error");
+          addNotification(response.message || 'Failed to delete note', 'error');
         }
       } catch (error) {
       
-        addNotification("An error occurred while deleting note", "error");
+        addNotification('An error occurred while deleting note', 'error');
       }
 
       // Reset state
@@ -948,7 +948,7 @@ const LectureRoom = () => {
   };
 
   const formatDate = (dateString) => {
-    return format(new Date(dateString), "MMM d, yyyy h:mm a");
+    return format(new Date(dateString), 'MMM d, yyyy h:mm a');
   };
 
   const handlePasteNotes = async () => {
@@ -965,18 +965,18 @@ const LectureRoom = () => {
     if (!Array.isArray(notes)) return [];
 
     switch (sortCriteria) {
-      case "newest":
+      case 'newest':
         return [...notes].sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
-      case "oldest":
+      case 'oldest':
         return [...notes].sort(
           (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
         );
-      case "videoTitle":
+      case 'videoTitle':
         return [...notes].sort((a, b) => {
-          const titleA = a.videoTitle?.toLowerCase() || "";
-          const titleB = b.videoTitle?.toLowerCase() || "";
+          const titleA = a.videoTitle?.toLowerCase() || '';
+          const titleB = b.videoTitle?.toLowerCase() || '';
           return titleA.localeCompare(titleB);
         });
       default:
@@ -1036,7 +1036,7 @@ const LectureRoom = () => {
       // If player is not initialized yet, retry with increasing delay
       if (
         !playerRef.current ||
-        typeof playerRef.current.getPlayerState !== "function"
+        typeof playerRef.current.getPlayerState !== 'function'
       ) {
         
 
@@ -1052,7 +1052,7 @@ const LectureRoom = () => {
           setTimeout(() => {
             if (
               playerRef.current &&
-              typeof playerRef.current.getPlayerState === "function"
+              typeof playerRef.current.getPlayerState === 'function'
             ) {
 
               applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
@@ -1069,7 +1069,7 @@ const LectureRoom = () => {
 
       // Use debounced handler for most events, but process seek events immediately
       // Also process play/pause events immediately from the creator for faster response
-      if (data.action === "seek" || data.fromCreator) {
+      if (data.action === 'seek' || data.fromCreator) {
         // Seeks and creator actions need immediate processing
         applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
       } else {
@@ -1102,7 +1102,7 @@ const LectureRoom = () => {
 
         // Calculate any time drift with improved precision
         let adjustedTime = data.time;
-        if (data.action === "play" && data.serverTime) {
+        if (data.action === 'play' && data.serverTime) {
           const clientServerDiff = Date.now() - data.serverTime;
           // More aggressive adjustment to avoid delays
           if (clientServerDiff > 100) { // Reduced from 200ms
@@ -1116,7 +1116,7 @@ const LectureRoom = () => {
 
         // More optimized sync actions with better verification
         switch (data.action) {
-          case "play":
+          case 'play':
             // First ensure we're at the right position with verification
             player.seekTo(adjustedTime, true);
             
@@ -1153,7 +1153,7 @@ const LectureRoom = () => {
             setTimeout(verifyPlaySeek, 100);
             break;
 
-          case "pause":
+          case 'pause':
             // For pause, first pause then seek to ensure accuracy
             player.pauseVideo();
             
@@ -1182,7 +1182,7 @@ const LectureRoom = () => {
             }, 100);
             break;
 
-          case "seek":
+          case 'seek':
             // For seek operations, handle with extra care
             const verifySeek = () => {
               const currentPos = player.getCurrentTime();
@@ -1317,17 +1317,17 @@ const LectureRoom = () => {
     };
 
     // Set up listeners directly on the socket
-    socket.on("sync-video", handleVideoSync);
-    socket.on("video-control", handleVideoControl);
-    socket.on("video-state-update", handleVideoStateUpdate);
+    socket.on('sync-video', handleVideoSync);
+    socket.on('video-control', handleVideoControl);
+    socket.on('video-state-update', handleVideoStateUpdate);
 
     // Also listen to underscore versions for compatibility
-    socket.on("sync_video", handleVideoSync);
-    socket.on("video_control", handleVideoControl);
-    socket.on("video_state_update", handleVideoStateUpdate);
+    socket.on('sync_video', handleVideoSync);
+    socket.on('video_control', handleVideoControl);
+    socket.on('video_state_update', handleVideoStateUpdate);
 
     // Add special direct play/pause event handlers for more reliable sync
-    socket.on("creator-play-video", (data) => {
+    socket.on('creator-play-video', (data) => {
       
       // Force play with high priority
       if (playerRef.current && data.videoId === videoIdRef.current) {
@@ -1346,7 +1346,7 @@ const LectureRoom = () => {
       }
     });
 
-    socket.on("creator-pause-video", (data) => {
+    socket.on('creator-pause-video', (data) => {
     
       // Force pause with high priority
       if (playerRef.current && data.videoId === videoIdRef.current) {
@@ -1366,14 +1366,14 @@ const LectureRoom = () => {
 
     return () => {
       // Clean up all listeners
-      socket.off("sync-video", handleVideoSync);
-      socket.off("video-control", handleVideoControl);
-      socket.off("video-state-update", handleVideoStateUpdate);
-      socket.off("sync_video", handleVideoSync);
-      socket.off("video_control", handleVideoControl);
-      socket.off("video_state_update", handleVideoStateUpdate);
-      socket.off("creator-play-video");
-      socket.off("creator-pause-video");
+      socket.off('sync-video', handleVideoSync);
+      socket.off('video-control', handleVideoControl);
+      socket.off('video-state-update', handleVideoStateUpdate);
+      socket.off('sync_video', handleVideoSync);
+      socket.off('video_control', handleVideoControl);
+      socket.off('video_state_update', handleVideoStateUpdate);
+      socket.off('creator-play-video');
+      socket.off('creator-pause-video');
     };
   }, [
     socket.connected,
@@ -1391,7 +1391,7 @@ const LectureRoom = () => {
     // Load saved chat messages for this room and video
     const loadSavedMessages = () => {
       const storageKey = `lecture_chat_${roomData.roomId}_${
-        videoIdRef.current || "default"
+        videoIdRef.current || 'default'
       }`;
       try {
         const savedMessages = localStorage.getItem(storageKey);
@@ -1443,7 +1443,7 @@ const LectureRoom = () => {
       const existingMessageIndex = chatMessages.findIndex(
         (msg) =>
           msg.id === messageId || // Same ID
-          (msg.user === (isOurMessage ? "You" : username) &&
+          (msg.user === (isOurMessage ? 'You' : username) &&
             msg.text === message && // Same content
             Math.abs(new Date(msg.timestamp) - new Date(timestamp)) < 5000) // Within 5 sec
       );
@@ -1468,7 +1468,7 @@ const LectureRoom = () => {
       // Format the message
       const newMessage = {
         id: messageId,
-        user: isOurMessage ? "You" : username,
+        user: isOurMessage ? 'You' : username,
         text: message,
         timestamp: new Date(timestamp),
         isCode: isCode,
@@ -1487,14 +1487,14 @@ const LectureRoom = () => {
     };
 
     // Set up lecture-specific message event handlers
-    socket.on("lecture-receive-message", handleReceiveMessage);
+    socket.on('lecture-receive-message', handleReceiveMessage);
 
     // Also listen for underscore version for compatibility
-    socket.on("lecture_receive_message", handleReceiveMessage);
+    socket.on('lecture_receive_message', handleReceiveMessage);
     // Clean up
     return () => {
-      socket.off("lecture-receive-message", handleReceiveMessage);
-      socket.off("lecture_receive_message", handleReceiveMessage);
+      socket.off('lecture-receive-message', handleReceiveMessage);
+      socket.off('lecture_receive_message', handleReceiveMessage);
     };
   }, [socket.connected, roomData.inRoom, roomData.roomId, userName]);
 
@@ -1522,50 +1522,50 @@ const LectureRoom = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
+    <div className='min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white'>
       <Navbar />
 
       {/* Notification container with AnimatePresence for smooth transitions */}
-      <div className="fixed top-20 right-4 z-50 w-72 space-y-2 pointer-events-none">
+      <div className='fixed top-20 right-4 z-50 w-72 space-y-2 pointer-events-none'>
         <AnimatePresence>
           {/* Notifications will be rendered here by the NotificationContext */}
         </AnimatePresence>
       </div>
 
-      <div className="container mx-auto px-4 py-4 sm:py-8 relative z-10">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
-          <span className="bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
+      <div className='container mx-auto px-4 py-4 sm:py-8 relative z-10'>
+        <h1 className='text-2xl sm:text-3xl font-bold mb-4 sm:mb-6'>
+          <span className='bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent'>
             Watch Together
           </span>
         </h1>
-        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
+        <div className='flex flex-col lg:flex-row gap-4 sm:gap-6'>
           {/* Video Player Section */}
-          <div className="w-full lg:w-2/3">
-            <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/20 h-full">
-              <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-3 sm:pb-4">
+          <div className='w-full lg:w-2/3'>
+            <div className='bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/20 h-full'>
+              <div className='px-3 sm:px-4 pt-3 sm:pt-4 pb-3 sm:pb-4'>
                 <form
                   onSubmit={handleSubmitUrl}
-                  className="flex flex-col sm:flex-row items-center gap-2 mb-4"
+                  className='flex flex-col sm:flex-row items-center gap-2 mb-4'
                 >
-                  <div className="flex flex-grow w-full border border-white/20 rounded-lg overflow-hidden bg-[#2d3748]">
+                  <div className='flex flex-grow w-full border border-white/20 rounded-lg overflow-hidden bg-[#2d3748]'>
                     <input
-                      type="text"
+                      type='text'
                       placeholder={
                         roomData.isRoomCreator
-                          ? "YouTube URL..."
-                          : "Only creator can change videos"
+                          ? 'YouTube URL...'
+                          : 'Only creator can change videos'
                       }
-                      className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-transparent text-white placeholder-gray-400 border-none outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] text-sm"
+                      className='flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-transparent text-white placeholder-gray-400 border-none outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] text-sm'
                       value={videoUrl}
                       onChange={(e) => setVideoUrl(e.target.value)}
                       disabled={roomData.inRoom && !roomData.isRoomCreator}
                     />
                     <button
-                      type="button"
+                      type='button'
                       className={`px-3 sm:px-4 py-2 sm:py-2.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors ${
                         roomData.inRoom && !roomData.isRoomCreator
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
+                          ? 'opacity-50 cursor-not-allowed'
+                          : ''
                       }`}
                       onClick={() => {
                         if (roomData.inRoom && !roomData.isRoomCreator) return;
@@ -1575,33 +1575,33 @@ const LectureRoom = () => {
                       disabled={roomData.inRoom && !roomData.isRoomCreator}
                     >
                       <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                        xmlns='http://www.w3.org/2000/svg'
+                        className='h-4 w-4'
+                        fill='none'
+                        viewBox='0 0 24 24'
+                        stroke='currentColor'
                       >
                         <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth='2'
+                          d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'
                         />
                       </svg>
                     </button>
                   </div>
                   <button
-                    type="submit"
+                    type='submit'
                     className={`${
                       !roomData.isRoomCreator && roomData.inRoom
-                        ? "bg-gray-500 cursor-not-allowed"
-                        : "bg-[#94C3D2] hover:bg-[#7EB5C3]"
+                        ? 'bg-gray-500 cursor-not-allowed'
+                        : 'bg-[#94C3D2] hover:bg-[#7EB5C3]'
                     } text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg transition-colors shadow-md font-medium flex-shrink-0 w-full sm:w-auto mt-2 sm:mt-0`}
                     disabled={!roomData.isRoomCreator && roomData.inRoom}
                     title={
                       !roomData.isRoomCreator && roomData.inRoom
-                        ? "Only the room creator can change videos"
-                        : "Load this video"
+                        ? 'Only the room creator can change videos'
+                        : 'Load this video'
                     }
                   >
                     Watch
@@ -1611,9 +1611,9 @@ const LectureRoom = () => {
                 {renderControlStatusIndicator()}
               </div>
               {videoUrl ? (
-                <div className="w-full border-t border-white/20">
+                <div className='w-full border-t border-white/20'>
                   {/* IFrame will be replaced by the YouTube API */}
-                  <div id="youtube-player" className="video-iframe rounded-lg">
+                  <div id='youtube-player' className='video-iframe rounded-lg'>
                     {/* This is where the player will be initialized */}
                   </div>
                   {/* Status message for users */}
@@ -1621,33 +1621,33 @@ const LectureRoom = () => {
                     <div
                       className={`mt-2 p-2 text-xs sm:text-sm rounded ${
                         roomData.isRoomCreator
-                          ? "bg-green-700/50"
-                          : "bg-yellow-600/50"
+                          ? 'bg-green-700/50'
+                          : 'bg-yellow-600/50'
                       } text-center`}
                     >
                       {roomData.isRoomCreator
-                        ? "You are the room creator. Your video controls will be synced to all participants."
-                        : "Video controls are disabled. Playback is synchronized with the room creator."}
+                        ? 'You are the room creator. Your video controls will be synced to all participants.'
+                        : 'Video controls are disabled. Playback is synchronized with the room creator.'}
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-[300px] sm:h-[400px] md:h-[600px] bg-white/5 text-gray-400 border-t border-white/20">
-                  <div className="text-center p-4">
+                <div className='flex items-center justify-center h-[300px] sm:h-[400px] md:h-[600px] bg-white/5 text-gray-400 border-t border-white/20'>
+                  <div className='text-center p-4'>
                     <svg
-                      className="mx-auto h-10 sm:h-12 w-10 sm:w-12 text-white/30"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      className='mx-auto h-10 sm:h-12 w-10 sm:w-12 text-white/30'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
                     >
                       <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth='2'
+                        d='M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'
                       />
                     </svg>
-                    <p className="mt-2 text-sm sm:text-base">
+                    <p className='mt-2 text-sm sm:text-base'>
                       Enter a YouTube URL to begin watching
                     </p>
                   </div>
@@ -1657,198 +1657,198 @@ const LectureRoom = () => {
           </div>
 
           {/* Right Column - Chat and Notes */}
-          <div className="w-full lg:w-1/3 flex flex-col h-full mt-4 lg:mt-0">
+          <div className='w-full lg:w-1/3 flex flex-col h-full mt-4 lg:mt-0'>
             {/* Notes Section */}
-            <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/20 mb-4 sm:mb-6">
-              <div className="p-3 sm:p-4 border-b border-white/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
-                <h2 className="font-semibold text-white/95 text-sm sm:text-base">
+            <div className='bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/20 mb-4 sm:mb-6'>
+              <div className='p-3 sm:p-4 border-b border-white/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0'>
+                <h2 className='font-semibold text-white/95 text-sm sm:text-base'>
                   Notes
                 </h2>
-                <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
+                <div className='flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto'>
                   <button
                     onClick={handlePasteNotes}
-                    className="px-2 sm:px-4 py-1.5 sm:py-2 bg-white/10 border border-white/20 text-white/95 hover:bg-white/20 rounded-lg flex items-center shadow-sm backdrop-blur-sm transition-colors text-xs sm:text-sm flex-1 sm:flex-auto justify-center"
+                    className='px-2 sm:px-4 py-1.5 sm:py-2 bg-white/10 border border-white/20 text-white/95 hover:bg-white/20 rounded-lg flex items-center shadow-sm backdrop-blur-sm transition-colors text-xs sm:text-sm flex-1 sm:flex-auto justify-center'
                   >
                     <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-3 w-3 sm:h-4 sm:w-4 mr-1"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      xmlns='http://www.w3.org/2000/svg'
+                      className='h-3 w-3 sm:h-4 sm:w-4 mr-1'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
                     >
                       <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth='2'
+                        d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'
                       />
                     </svg>
                     Paste
                   </button>
                   <button
                     onClick={() => setShowNotesModal(true)}
-                    className="px-2 sm:px-4 py-1.5 sm:py-2 bg-white/10 border border-white/20 text-white/95 hover:bg-white/20 rounded-lg flex items-center shadow-sm backdrop-blur-sm transition-colors relative text-xs sm:text-sm flex-1 sm:flex-auto justify-center"
+                    className='px-2 sm:px-4 py-1.5 sm:py-2 bg-white/10 border border-white/20 text-white/95 hover:bg-white/20 rounded-lg flex items-center shadow-sm backdrop-blur-sm transition-colors relative text-xs sm:text-sm flex-1 sm:flex-auto justify-center'
                   >
                     <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-3 w-3 sm:h-4 sm:w-4 mr-1"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      xmlns='http://www.w3.org/2000/svg'
+                      className='h-3 w-3 sm:h-4 sm:w-4 mr-1'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
                     >
                       <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth='2'
+                        d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'
                       />
                       <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth='2'
+                        d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'
                       />
                     </svg>
                     View Saved
                     {savedNotes.length > 0 && (
-                      <span className="absolute -top-2 -right-1 sm:-right-2 bg-[#94C3D2] text-white rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-[10px] sm:text-xs">
+                      <span className='absolute -top-2 -right-1 sm:-right-2 bg-[#94C3D2] text-white rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-[10px] sm:text-xs'>
                         {savedNotes.length}
                       </span>
                     )}
                   </button>
                   <button
                     onClick={saveNote}
-                    className="px-2 sm:px-4 py-1.5 sm:py-2 bg-[#94C3D2] hover:bg-[#7EB5C3] text-white rounded-lg flex items-center transition-colors text-xs sm:text-sm flex-1 sm:flex-auto justify-center"
+                    className='px-2 sm:px-4 py-1.5 sm:py-2 bg-[#94C3D2] hover:bg-[#7EB5C3] text-white rounded-lg flex items-center transition-colors text-xs sm:text-sm flex-1 sm:flex-auto justify-center'
                   >
                     <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-3 w-3 sm:h-4 sm:w-4 mr-1"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      xmlns='http://www.w3.org/2000/svg'
+                      className='h-3 w-3 sm:h-4 sm:w-4 mr-1'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
                     >
                       <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth='2'
+                        d='M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4'
                       />
                     </svg>
                     Save Note
                   </button>
                 </div>
               </div>
-              <div className="p-0">
+              <div className='p-0'>
                 <textarea
-                  className="w-full h-full p-3 sm:p-4 font-mono text-sm bg-[#2d3748] text-white focus:outline-none block resize-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none"
+                  className='w-full h-full p-3 sm:p-4 font-mono text-sm bg-[#2d3748] text-white focus:outline-none block resize-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none'
                   style={{
-                    height: "150px",
-                    minHeight: "150px",
-                    maxHeight: "250px",
+                    height: '150px',
+                    minHeight: '150px',
+                    maxHeight: '250px',
                   }}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Take notes for this video or just general notes..."
+                  placeholder='Take notes for this video or just general notes...'
                 ></textarea>
               </div>
             </div>
 
             {/* Chat Section */}
-            <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/20 flex flex-col h-[350px] sm:h-[400px] md:h-[450px] lg:h-[500px]">
-              <div className="p-3 sm:p-4 border-b border-white/20 flex justify-between items-center">
+            <div className='bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/20 flex flex-col h-[350px] sm:h-[400px] md:h-[450px] lg:h-[500px]'>
+              <div className='p-3 sm:p-4 border-b border-white/20 flex justify-between items-center'>
                 <div>
-                  <h2 className="font-bold text-[#94c3d2] text-sm sm:text-base">
+                  <h2 className='font-bold text-[#94c3d2] text-sm sm:text-base'>
                     Room Chat
                   </h2>
-                  <p className="text-xs sm:text-sm text-white/70">
+                  <p className='text-xs sm:text-sm text-white/70'>
                     Chat with your friends while watching
                   </p>
                 </div>
                 <div
                   className={`flex items-center ${
-                    isConnected && videoUrl ? "text-green-500" : "text-red-400"
+                    isConnected && videoUrl ? 'text-green-500' : 'text-red-400'
                   }`}
                 >
                   <div
                     className={`h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full mr-1 sm:mr-2 ${
-                      isConnected && videoUrl ? "bg-green-500" : "bg-red-400"
+                      isConnected && videoUrl ? 'bg-green-500' : 'bg-red-400'
                     }`}
                   ></div>
-                  <span className="text-xs sm:text-sm">
-                    {isConnected && videoUrl ? "Connected" : "Disconnected"}
+                  <span className='text-xs sm:text-sm'>
+                    {isConnected && videoUrl ? 'Connected' : 'Disconnected'}
                   </span>
                 </div>
               </div>
 
               {/* Chat messages with responsive height */}
-              <div className="flex-1 p-3 sm:p-4 space-y-2 sm:space-y-3 bg-white/5 overflow-y-auto chat-messages">
+              <div className='flex-1 p-3 sm:p-4 space-y-2 sm:space-y-3 bg-white/5 overflow-y-auto chat-messages'>
                 {chatMessages.length === 0 ? (
-                  <div className="h-full flex items-center justify-center">
-                    <p className="text-gray-400">
+                  <div className='h-full flex items-center justify-center'>
+                    <p className='text-gray-400'>
                       No messages yet. Start the conversation!
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className='space-y-3'>
                     {chatMessages.map((message) => {
                       // Handle system messages with a different style
                       if (
-                        message.user === "System" ||
-                        message.type === "system"
+                        message.user === 'System' ||
+                        message.type === 'system'
                       ) {
                         return (
-                          <div key={message.id} className="flex justify-center">
-                            <div className="bg-indigo-900/30 text-indigo-200 px-3 py-2 text-xs rounded-lg border border-indigo-500/30 max-w-[80%] text-center">
+                          <div key={message.id} className='flex justify-center'>
+                            <div className='bg-indigo-900/30 text-indigo-200 px-3 py-2 text-xs rounded-lg border border-indigo-500/30 max-w-[80%] text-center'>
                               {message.text}
                             </div>
                           </div>
                         );
                       }
                       const isCurrentUser =
-                        message.user === "You" || message.user === userName;
+                        message.user === 'You' || message.user === userName;
                       return (
                         <div
                           key={message.id}
                           className={`flex ${
-                            isCurrentUser ? "justify-end" : "justify-start"
+                            isCurrentUser ? 'justify-end' : 'justify-start'
                           }`}
                         >
                           <div
                             className={`max-w-[85%] ${
-                              isCurrentUser ? "ml-auto" : ""
+                              isCurrentUser ? 'ml-auto' : ''
                             }`}
                           >
                             <div
                               className={`flex items-center ${
-                                isCurrentUser ? "justify-end" : "justify-start"
+                                isCurrentUser ? 'justify-end' : 'justify-start'
                               } mb-1`}
                             >
                               {!isCurrentUser && (
-                                <span className="font-medium text-sm text-white/90 mr-1">
+                                <span className='font-medium text-sm text-white/90 mr-1'>
                                   {message.user}
                                 </span>
                               )}
                               <span
                                 className={`text-xs ${
                                   isCurrentUser
-                                    ? "text-white/90 mr-2"
-                                    : "text-white/90 ml-2"
+                                    ? 'text-white/90 mr-2'
+                                    : 'text-white/90 ml-2'
                                 }`}
                               >
-                                {typeof message.timestamp === "object"
+                                {typeof message.timestamp === 'object'
                                   ? message.timestamp.toLocaleTimeString([], {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
+                                      hour: '2-digit',
+                                      minute: '2-digit',
                                     })
                                   : new Date(
                                       message.timestamp
                                     ).toLocaleTimeString([], {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
+                                      hour: '2-digit',
+                                      minute: '2-digit',
                                     })}
                               </span>
                               {isCurrentUser && (
-                                <span className="font-medium text-sm text-white/90 ml-1">
+                                <span className='font-medium text-sm text-white/90 ml-1'>
                                   You
                                 </span>
                               )}
@@ -1856,8 +1856,8 @@ const LectureRoom = () => {
                             <div
                               className={`rounded-lg px-4 py-2 ${
                                 isCurrentUser
-                                  ? "bg-[#94C3D2] text-white rounded-tr-none"
-                                  : "bg-yellow-50 text-black rounded-tl-none"
+                                  ? 'bg-[#94C3D2] text-white rounded-tr-none'
+                                  : 'bg-yellow-50 text-black rounded-tl-none'
                               }`}
                             >
                               {message.text}
@@ -1871,22 +1871,22 @@ const LectureRoom = () => {
                 )}
               </div>
 
-              <div className="p-3 sm:p-4 border-t border-white/20 bg-white/5">
+              <div className='p-3 sm:p-4 border-t border-white/20 bg-white/5'>
                 <form
                   onSubmit={handleSendMessage}
-                  className="flex items-center gap-2"
+                  className='flex items-center gap-2'
                 >
-                  <div className="flex-1 flex items-center bg-[#2d3748] border border-white/20 rounded-lg overflow-hidden">
+                  <div className='flex-1 flex items-center bg-[#2d3748] border border-white/20 rounded-lg overflow-hidden'>
                     <input
-                      type="text"
-                      placeholder="Type message..."
-                      className="flex-1 px-3 sm:px-4 py-2 bg-transparent text-white text-sm placeholder-gray-400 border-none outline-none"
+                      type='text'
+                      placeholder='Type message...'
+                      className='flex-1 px-3 sm:px-4 py-2 bg-transparent text-white text-sm placeholder-gray-400 border-none outline-none'
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                     />
                   </div>                  <button
-                    type="submit"
-                    className="bg-[#94C3D2] hover:bg-[#7EB5C3] text-white px-4 py-2 rounded-lg transition-colors"
+                    type='submit'
+                    className='bg-[#94C3D2] hover:bg-[#7EB5C3] text-white px-4 py-2 rounded-lg transition-colors'
                     disabled={!isConnected}
                   >
                     Send
@@ -1900,21 +1900,21 @@ const LectureRoom = () => {
 
       {/* Modal for viewing saved notes - Updated with sorting and pagination */}
       {showNotesModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-3xl max-h-[80vh] overflow-hidden flex flex-col border border-white/20">
-            <div className="p-4 flex justify-between items-center border-b border-white/20">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Saved Notes</h2>
+        <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50'>
+          <div className='bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-3xl max-h-[80vh] overflow-hidden flex flex-col border border-white/20'>
+            <div className='p-4 flex justify-between items-center border-b border-white/20'>
+              <h2 className='text-xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent'>Saved Notes</h2>
               <button
                 onClick={() => setShowNotesModal(false)}
-                className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-colors"
+                className='text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-colors'
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                <svg xmlns='http://www.w3.org/2000/svg' className='h-5 w-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M6 18L18 6M6 6l12 12' /></svg>
               </button>
             </div>
             
             {/* Sorting options */}
-            <div className="px-4 pt-3 pb-2 border-b border-white/20 flex flex-wrap gap-2">
-              <span className="text-white/70 mr-2 my-auto">Sort by:</span>
+            <div className='px-4 pt-3 pb-2 border-b border-white/20 flex flex-wrap gap-2'>
+              <span className='text-white/70 mr-2 my-auto'>Sort by:</span>
               <button 
                 onClick={() => setSortCriteria('newest')}
                 className={`px-3 py-1 text-sm rounded-full border ${sortCriteria === 'newest' 
@@ -1939,13 +1939,13 @@ const LectureRoom = () => {
               >
                 Video Title
               </button>
-              <div className="ml-auto text-right text-white/70 text-sm">
+              <div className='ml-auto text-right text-white/70 text-sm'>
                 {savedNotes.length} note{savedNotes.length !== 1 ? 's' : ''} total
               </div>
             </div>
             
             <div 
-              className="p-4 overflow-y-auto flex-1" 
+              className='p-4 overflow-y-auto flex-1' 
               style={{ 
                 maxHeight: 'calc(60vh - 40px)', 
                 overflowY: 'auto',
@@ -1954,41 +1954,41 @@ const LectureRoom = () => {
               }}
             >
               {isLoadingNotes ? (
-                <div className="flex justify-center items-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#94C3D2]"></div>
-                  <span className="ml-2 text-white/80">Loading notes...</span>
+                <div className='flex justify-center items-center h-32'>
+                  <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#94C3D2]'></div>
+                  <span className='ml-2 text-white/80'>Loading notes...</span>
                 </div>
               ) : savedNotes.length > 0 ? (
                 <>
-                  <ul className="space-y-4">
+                  <ul className='space-y-4'>
                     {currentNotes.map(note => (
-                      <li key={note._id} className="bg-white/10 p-4 rounded-lg border border-white/20">
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="text-xs text-white/70">
+                      <li key={note._id} className='bg-white/10 p-4 rounded-lg border border-white/20'>
+                        <div className='flex justify-between items-center mb-2'>
+                          <div className='text-xs text-white/70'>
                             {formatDate(note.createdAt)}
                           </div>
                           <div>
                             <button
                               onClick={() => deleteNote(note._id)}
-                              className="bg-red-900/50 text-red-200 border border-red-600/30 px-3 py-1 rounded font-medium hover:bg-red-900/70 transition-colors"
+                              className='bg-red-900/50 text-red-200 border border-red-600/30 px-3 py-1 rounded font-medium hover:bg-red-900/70 transition-colors'
                             >
                               Delete
                             </button>
                           </div>
                         </div>
                         {note.videoTitle && (
-                          <div className="mb-2 pb-2 border-b border-white/10">
-                            <p className="text-xs font-medium text-[#94C3D2]">Video: {note.videoTitle}</p>
+                          <div className='mb-2 pb-2 border-b border-white/10'>
+                            <p className='text-xs font-medium text-[#94C3D2]'>Video: {note.videoTitle}</p>
                           </div>
                         )}
-                        <p className="whitespace-pre-wrap text-white/95 font-medium">{note.content}</p>
+                        <p className='whitespace-pre-wrap text-white/95 font-medium'>{note.content}</p>
                       </li>
                     ))}
                   </ul>
                   
                   {/* Pagination */}
                   {savedNotes.length > notesPerPage && (
-                    <div className="flex justify-center mt-6 gap-2">
+                    <div className='flex justify-center mt-6 gap-2'>
                       <button
                         onClick={() => paginate(currentPage - 1)}
                         disabled={currentPage === 1}
@@ -1998,8 +1998,8 @@ const LectureRoom = () => {
                             : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/20'
                         }`}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                        <svg xmlns='http://www.w3.org/2000/svg' className='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M15 19l-7-7 7-7' />
                         </svg>
                       </button>
                       
@@ -2036,7 +2036,7 @@ const LectureRoom = () => {
                           (pageNumber === 2 && currentPage > 3) || 
                           (pageNumber === totalPages - 1 && currentPage < totalPages - 2)
                         ) {
-                          return <span key={pageNumber} className="px-2 py-1.5 text-white/50">...</span>;
+                          return <span key={pageNumber} className='px-2 py-1.5 text-white/50'>...</span>;
                         }
                         
                         // Hide other page numbers
@@ -2053,15 +2053,15 @@ const LectureRoom = () => {
                             : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/20'
                         }`}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                        <svg xmlns='http://www.w3.org/2000/svg' className='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M9 5l7 7-7 7' />
                         </svg>
                       </button>
                     </div>
                   )}
                 </>
               ) : (
-                <p className="text-white/60 text-center">You don't have any saved notes yet.</p>
+                <p className='text-white/60 text-center'>You don't have any saved notes yet.</p>
               )}
             </div>
           </div>
@@ -2070,24 +2070,24 @@ const LectureRoom = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirmation && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-gradient-to-b from-[#1a1a2e]/95 to-[#16213e]/95 backdrop-blur-md text-white/95 p-6 rounded-xl shadow-2xl max-w-md w-full border border-white/10">
-            <div className="border-b border-white/10 pb-3 mb-4">
-              <h3 className="text-xl font-semibold text-[#94C3D2]">Delete Note</h3>
+        <div className='fixed inset-0 backdrop-blur-sm bg-black/70 flex items-center justify-center z-50'>
+          <div className='bg-gradient-to-b from-[#1a1a2e]/95 to-[#16213e]/95 backdrop-blur-md text-white/95 p-6 rounded-xl shadow-2xl max-w-md w-full border border-white/10'>
+            <div className='border-b border-white/10 pb-3 mb-4'>
+              <h3 className='text-xl font-semibold text-[#94C3D2]'>Delete Note</h3>
             </div>
-            <p className="mb-6 text-white/90 leading-relaxed">
+            <p className='mb-6 text-white/90 leading-relaxed'>
               Are you sure you want to delete this note? This cannot be undone.
             </p>
-            <div className="flex justify-end space-x-4">
+            <div className='flex justify-end space-x-4'>
               <button 
                 onClick={handleCancelDelete} 
-                className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white/90 border border-white/10 rounded-lg transition-all duration-200"
+                className='px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white/90 border border-white/10 rounded-lg transition-all duration-200'
               >
                 Cancel
               </button>
               <button 
                 onClick={handleConfirmDelete} 
-                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white/95 rounded-lg transition-all duration-200"
+                className='px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white/95 rounded-lg transition-all duration-200'
               >
                 Delete
               </button>
