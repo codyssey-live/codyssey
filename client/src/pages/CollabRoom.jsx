@@ -65,8 +65,8 @@ const CollabRoom = () => {
   // Process function to avoid duplicates - use a Map for better tracking
   const processedMessages = useRef(new Map());
 
-  // New state for code modal
-  const [isCodeModalOpen, setIsCodeModal] = useState(false);
+  // New state for code modal - fix the state variable and setter consistency
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [modalCode, setModalCode] = useState("");
   const [modalLanguage, setModalLanguage] = useState("javascript");
   const [isModalFromCurrentUser, setIsModalFromCurrentUser] = useState(true); // Track who sent the code
@@ -117,7 +117,12 @@ const CollabRoom = () => {
     setModalCode(formattedCode);
     setModalLanguage(lang || detectCodeLanguage(formattedCode));
     setIsModalFromCurrentUser(isFromCurrentUser);
-    setIsCodeModal(true);
+    setIsCodeModalOpen(true);
+  };
+
+  // Add a specific function to close the modal for clarity
+  const closeCodeModal = () => {
+    setIsCodeModalOpen(false);
   };
 
   // Function to copy code from modal
@@ -2165,9 +2170,10 @@ const CollabRoom = () => {
                 }`}
                 title={
                   problemStatus === "solved"
+                   
                     ? "Click to reset status"
                     : "Mark as solved"
-                }
+                               }
               >
                 {statusUpdateLoading && problemStatus !== "solved" ? (
                   <>
@@ -2747,7 +2753,7 @@ const CollabRoom = () => {
                   Copy Code
                 </button>
                 <button
-                  onClick={() => setIsCodeModalOpen(false)}
+                  onClick={closeCodeModal} // Change to use the dedicated closeCodeModal function
                   className={`${
                     isModalFromCurrentUser
                       ? "text-gray-700 hover:text-gray-900"
