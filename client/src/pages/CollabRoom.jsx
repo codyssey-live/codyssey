@@ -1794,7 +1794,7 @@ const CollabRoom = () => {
       if (isInitialShare) {
        
         setChatMessages((prev) => {
-          const updated = [...prev, warningMessage];
+          const updated = [...prev];
           saveCollabMessages(roomData.roomId, updated);
           return updated;
         });
