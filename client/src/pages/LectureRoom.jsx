@@ -480,12 +480,10 @@ const LectureRoom = () => {
         if (!roomData.roomId || !socket.connected || !videoIdRef.current)
           return;
 
-        
-
         // Add timestamp for network compensation
         const timestamp = Date.now();
 
-        // Emit with high priority flag for faster processing
+        // Send both immediate and standard sync events for redundancy
         socket.emit("video-control", {
           roomId: roomData.roomId,
           action,
@@ -493,68 +491,81 @@ const LectureRoom = () => {
           videoId: videoIdRef.current,
           userId: roomData.inviterId || socket.id,
           timestamp,
-          priority: true, // Mark as high priority
+          immediate: true,
         });
 
-        // Enhanced emit to ensure synchronization works across all channels
-        // This adds redundancy to make sure all clients receive the message
-        if (action === "play" || action === "pause") {
+        // Additional sync events for reliability
+        socket.emit(`creator-${action}-video`, {
+          roomId: roomData.roomId,
+          videoId: videoIdRef.current,
+          time,
+          timestamp,
+          immediate: true,
+        });
 
-
-          // Immediately send direct command for fastest response
-          socket.emit(`creator-${action}-video`, {
-            roomId: roomData.roomId,
-            videoId: videoIdRef.current,
-            time: time,
-            timestamp: timestamp,
-            immediate: true,
-          });
-
-          socket.emit("sync-video", {
-            roomId: roomData.roomId,
-            videoId: videoIdRef.current,
-            action: action,
-            time: time,
-            serverTime: timestamp,
-            fromCreator: true,
-            forceSync: true,
-          });
-        }
+        // Send state update for complete synchronization
+        socket.emit("video-state-update", {
+          roomId: roomData.roomId,
+          videoId: videoIdRef.current,
+          currentTime: time,
+          isPlaying: action === "play",
+          serverTime: timestamp,
+          fromCreator: true,
+          immediate: true,
+        });
       },
-      50,
+      50, // Reduced debounce time for faster response
       { leading: true, trailing: false }
-    ) // Significantly reduced from 200ms for faster response
+    )
   ).current;
 
-  // More responsive seek handler
+  // More responsive seek handler with verification
   const handleSeek = useRef(
     debounce((newTime) => {
       if (!roomData.isRoomCreator || !socket.connected) return;
 
-
       const timestamp = Date.now();
 
-      // Send direct seek command for immediate response
-      socket.emit("creator-seek-direct", {
-        roomId: roomData.roomId,
-        videoId: videoIdRef.current,
-        time: newTime,
-        timestamp: timestamp,
-        immediate: true,
-      });
+      // First verify the seek locally
+      if (playerRef.current) {
+        const currentTime = playerRef.current.getCurrentTime();
+        if (Math.abs(currentTime - newTime) > 0.5) {
+          playerRef.current.seekTo(newTime, true);
+        }
+      }
 
-      // Backup with standard control events for redundancy
+      // Send immediate seek command
       socket.emit("video-control", {
         roomId: roomData.roomId,
         action: "seek",
         time: newTime,
         videoId: videoIdRef.current,
         userId: roomData.inviterId || socket.id,
-        timestamp: timestamp,
-        forceSync: true,
-        priority: true,
+        timestamp,
+        immediate: true,
       });
-    }, 50) // Reduced from 250ms to just 50ms for near-immediate response
+
+      // Send additional sync events for reliability
+      socket.emit("creator-seek-direct", {
+        roomId: roomData.roomId,
+        videoId: videoIdRef.current,
+        time: newTime,
+        timestamp,
+        immediate: true,
+      });
+
+      // Also send state update
+      socket.emit("video-state-update", {
+        roomId: roomData.roomId,
+        videoId: videoIdRef.current,
+        currentTime: newTime,
+        isPlaying: playerRef.current ? 
+          playerRef.current.getPlayerState() === window.YT.PlayerState.PLAYING : false,
+        serverTime: timestamp,
+        fromCreator: true,
+        immediate: true,
+      });
+    }, 50) // Keep low debounce time for responsive seeking
   ).current;
 
   const handleSubmitUrl = (e) => {
@@ -1077,10 +1088,8 @@ const LectureRoom = () => {
       if (!player) {
         // Retry with shorter delay if player is not ready
         if (retryCount < 3) {
-          
           setTimeout(
-            () =>
-              applySyncCommand(data, player, isRemoteUpdate, retryCount + 1),
+            () => applySyncCommand(data, player, isRemoteUpdate, retryCount + 1),
             200 * (retryCount + 1)
           );
         }
@@ -1088,116 +1097,133 @@ const LectureRoom = () => {
       }
 
       try {
+        // Set flag to prevent recursive events
+        isRemoteUpdate.current = true;
+
         // Calculate any time drift with improved precision
         let adjustedTime = data.time;
         if (data.action === "play" && data.serverTime) {
           const clientServerDiff = Date.now() - data.serverTime;
           // More aggressive adjustment to avoid delays
-          if (clientServerDiff > 200) {
-            // Reduced from 500ms
+          if (clientServerDiff > 100) { // Reduced from 200ms
             adjustedTime += clientServerDiff / 1000;
-            
           }
         }
 
-        // Set flag to prevent recursive events
-        isRemoteUpdate.current = true;
+        // Store current state before any changes
+        const initialState = player.getPlayerState();
+        const initialTime = player.getCurrentTime();
 
-        // More optimized sync actions with faster paths
+        // More optimized sync actions with better verification
         switch (data.action) {
           case "play":
-           
-
-            // Fast path for immediate response (skips verification for speed)
-            if (data.priority || data.immediate) {
-              player.seekTo(adjustedTime, true);
-              player.playVideo();
-
-              // Just verify once after a short delay
-              setTimeout(() => {
-                if (player.getPlayerState() !== window.YT.PlayerState.PLAYING) {
-                  player.playVideo();
-                }
-              }, 200);
-              return;
-            }
-
-            // Regular path with minimal delays
+            // First ensure we're at the right position with verification
             player.seekTo(adjustedTime, true);
-            setTimeout(() => {
-              player.playVideo();
-            }, 80); // Minimal delay
+            
+            // Verify seek position before playing
+            const verifyPlaySeek = () => {
+              const currentPos = player.getCurrentTime();
+              
+              // Special handling for position 0 problem
+              if (currentPos < 0.5 && adjustedTime > 1.0) {
+                // Video reset to beginning when it shouldn't have
+                player.seekTo(adjustedTime, true);
+                setTimeout(verifyPlaySeek, 200);
+                return;
+              }
+              
+              if (Math.abs(currentPos - adjustedTime) > 1.0) {
+                // Position still not correct, try seeking again
+                player.seekTo(adjustedTime, true);
+                setTimeout(verifyPlaySeek, 200);
+              } else {
+                // Position verified, now play
+                player.playVideo();
+                
+                // Verify playing state
+                setTimeout(() => {
+                  if (player.getPlayerState() !== window.YT.PlayerState.PLAYING) {
+                    player.playVideo();
+                  }
+                }, 200);
+              }
+            };
+            
+            // Start verification process
+            setTimeout(verifyPlaySeek, 100);
             break;
 
           case "pause":
-            
-
-            // Fast path for immediate response
-            if (data.priority || data.immediate) {
-              player.pauseVideo();
-              player.seekTo(data.time, true);
-              return;
-            }
-
-            // Regular path
+            // For pause, first pause then seek to ensure accuracy
             player.pauseVideo();
+            
+            // After short delay, seek and verify
             setTimeout(() => {
               player.seekTo(data.time, true);
-            }, 80);
+              
+              // Verify seek after pause
+              const verifyPauseSeek = () => {
+                const currentPos = player.getCurrentTime();
+                
+                // Handle reset to beginning issue
+                if (currentPos < 0.5 && data.time > 1.0) {
+                  player.seekTo(data.time, true);
+                  setTimeout(verifyPauseSeek, 200);
+                  return;
+                }
+                
+                if (Math.abs(currentPos - data.time) > 1.0) {
+                  player.seekTo(data.time, true);
+                  setTimeout(verifyPauseSeek, 200);
+                }
+              };
+              
+              setTimeout(verifyPauseSeek, 100);
+            }, 100);
             break;
 
           case "seek":
-           
-
-            // Fast path for immediate response
-            if (data.priority || data.immediate) {
-              const currentState = player.getPlayerState();
-              const wasPlaying = currentState === window.YT.PlayerState.PLAYING;
-
-              player.seekTo(data.time, true);
-
-              // Maintain play state after seeking
-              if (wasPlaying) {
-                setTimeout(() => player.playVideo(), 50);
+            // For seek operations, handle with extra care
+            const verifySeek = () => {
+              const currentPos = player.getCurrentTime();
+              
+              // Critical: Handle reset to beginning issue
+              if (currentPos < 0.5 && data.time > 1.0) {
+                player.seekTo(data.time, true);
+                setTimeout(verifySeek, 200);
+                return;
               }
-              return;
-            }
-
-            // Regular path
+              
+              if (Math.abs(currentPos - data.time) > 1.0) {
+                player.seekTo(data.time, true);
+                setTimeout(verifySeek, 200);
+              } else {
+                // Position verified, maintain play state
+                if (data.shouldPlay || initialState === window.YT.PlayerState.PLAYING) {
+                  player.playVideo();
+                }
+              }
+            };
+            
+            // Start seek verification
             player.seekTo(data.time, true);
-
-            // Check if we should maintain play state
-            setTimeout(() => {
-              const currentState = player.getPlayerState();
-              if (
-                currentState === window.YT.PlayerState.PLAYING ||
-                data.shouldPlay
-              ) {
-                player.playVideo();
-              }
-            }, 100);
+            setTimeout(verifySeek, 100);
             break;
         }
       } catch (error) {
-       
-
         // Retry on error with reduced delay
         if (retryCount < 3) {
           setTimeout(
-            () =>
-              applySyncCommand(data, player, isRemoteUpdate, retryCount + 1),
+            () => applySyncCommand(data, player, isRemoteUpdate, retryCount + 1),
             300 * (retryCount + 1)
           );
         }
       }
 
-      // Reset flag after a shorter delay
-      const resetDelay = Math.min(500 + adjustedTime * 3, 1500); // Reduced maximum from 3000ms
-     
-
+      // Reset flag after a delay based on operation
+      const resetDelay = Math.min(500 + adjustedTime * 2, 1500); // Reduced maximum delay
       setTimeout(() => {
         isRemoteUpdate.current = false;
-        
       }, resetDelay);
     }; // Callback for initial video state
     const handleVideoStateUpdate = (data) => {
@@ -2017,6 +2043,7 @@ const LectureRoom = () => {
                         return null;
                       })}
                       
+
                       <button
                         onClick={() => paginate(currentPage + 1)}
                         disabled={currentPage === Math.ceil(savedNotes.length / notesPerPage)}
