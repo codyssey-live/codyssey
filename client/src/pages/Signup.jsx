@@ -63,13 +63,13 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4">
       {/* Background gradient like home page section 3 */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a]"></div>
       
       {/* Animated background elements */}
       <motion.div 
-        className="absolute opacity-5 top-1/4 left-1/4 w-96 h-96 rounded-full bg-[#94C3D2]"
+        className="absolute opacity-5 top-1/4 left-1/4 w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-[#94C3D2]"
         animate={{ 
           scale: [1, 1.2, 1],
           opacity: [0.05, 0.08, 0.05]
@@ -82,7 +82,7 @@ const Signup = () => {
       />
       
       <motion.div 
-        className="absolute opacity-10 bottom-1/4 right-1/4 w-72 h-72 rounded-full bg-[#94C3D2]"
+        className="absolute opacity-10 bottom-1/4 right-1/4 w-48 sm:w-72 h-48 sm:h-72 rounded-full bg-[#94C3D2]"
         animate={{ 
           scale: [1, 1.3, 1],
           opacity: [0.1, 0.15, 0.1]
@@ -94,38 +94,37 @@ const Signup = () => {
           delay: 1
         }}
       />
-      
-      {/* Logo in the upper-left corner */}
-      <div className="absolute top-6 left-6 z-10">
-        <motion.img
-          src="/logo.svg"
-          alt="Codyssey Logo"
-          className="h-20" // Increased from h-14 to h-20
-          initial={{ y: -10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          style={{
-            filter: "drop-shadow(0 0 8px rgba(148, 195, 210, 0.6))",
-          }}
-        />
-      </div>
-
-      <motion.div 
-        className="w-full max-w-md px-6"
+        {/* Logo in the upper-left corner */}
+      <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-10">
+        <Link to="/">
+          <motion.img
+            src="/logo.svg"
+            alt="Codyssey Logo"
+            className="h-12 sm:h-16 md:h-20"
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            style={{
+              filter: "drop-shadow(0 0 8px rgba(148, 195, 210, 0.6))",
+            }}
+          />
+        </Link>
+      </div>      <motion.div 
+        className="w-full max-w-md px-4 sm:px-6 mt-10 sm:mt-0"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
         <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-white/20">
-          <div className="px-8 pt-10 pb-6">
+          <div className="px-4 sm:px-8 pt-6 sm:pt-8 md:pt-10 pb-5 sm:pb-6">
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1, duration: 0.5 }}
             >
-              <h2 className="text-2xl font-bold mb-1 text-center bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Create your account</h2>
-              <p className="text-[#94C3D2]/90 mb-6 text-center text-sm">
-                Join Codyssey and start your coding journey
+              <h2 className="text-xl sm:text-2xl font-bold mb-1 text-center bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Create your account</h2>
+              <p className="text-[#94C3D2]/90 mb-6 text-center text-xs sm:text-sm">
+                Join Codyssey to start your coding journey
               </p>
             </motion.div>
             
@@ -271,9 +270,9 @@ const Signup = () => {
             </form>
           </div>
           
-          <div className="px-8 pb-8">
+          <div className="px-4 sm:px-8 pb-6 sm:pb-8">
             <motion.p 
-              className="text-sm font-medium text-white/95 text-center tracking-wide"
+              className="text-xs sm:text-sm font-medium text-white/95 text-center tracking-wide"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8, duration: 0.4 }}

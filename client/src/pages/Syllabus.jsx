@@ -411,16 +411,17 @@ const Syllabus = () => {
     setEditDayDescription(day.description);
     setEditDayDate(new Date(day.date));
     setShowEditDayModal(true);
-  };
-
-  const handleDeleteDay = async (dayId) => {
+  };  const handleDeleteDay = async (dayId) => {
+    // First check if we can delete
     if (syllabusDays.length <= 1) {
+      setShowDeleteConfirmModal(false);
+      setDayToDelete(null);
       addNotification("Cannot delete the only study day. Please add a new day before deleting this one.", "warning");
       return;
     }
     
     try {
-      // First try to delete from the database if it has a MongoDB ID
+      // Try to delete from the database if it has a MongoDB ID
       const mongoId = syllabusDays.find(d => d.id === dayId)?._id;
       
       if (mongoId) {
@@ -445,15 +446,14 @@ const Syllabus = () => {
         setActiveTabIndex(newIndex);
       }
       
-      // Show success message immediately after updating state
+      // Only after all state updates are done, close the modal and show success message
+      setShowDeleteConfirmModal(false);
+      setDayToDelete(null);
       addNotification("Study day deleted successfully!");
     } catch (error) {
       console.error('Error deleting study day:', error);
+      // Show error notification and keep modal open on error
       addNotification(`Failed to delete study day: ${error.message}`, "error");
-    } finally {
-      // Close the confirmation modal regardless of success/failure
-      setShowDeleteConfirmModal(false);
-      setDayToDelete(null);
     }
   };
 
@@ -756,48 +756,46 @@ const Syllabus = () => {
         </div>
         
         <div className="container mx-auto px-4 py-8 relative z-10">
-          {/* Header Section */}
-          <motion.div 
-            className="flex justify-between items-center mb-8"
+          {/* Header Section */}          <motion.div 
+            className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6 sm:mb-8"
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.6 }}
           >
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
+            <div className="mb-4 sm:mb-0">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
                 {isViewingOtherUserSyllabus ? "Host's Learning Syllabus" : "DSA Learning Syllabus"}
               </h1>
               <p className="text-[#94C3D2]/80 mt-1">Plan and organize your DSA learning journey</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 w-full sm:w-auto">
               {!isViewingOtherUserSyllabus && (
                 <>
                   <button 
                     onClick={handleSaveSyllabus}
-                    className="bg-white/10 text-white/90 px-5 py-2.5 rounded-lg flex items-center shadow-sm hover:bg-white/20 transition-colors"
+                    className="bg-white/10 text-white/90 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg flex items-center shadow-sm hover:bg-white/20 transition-colors flex-1 sm:flex-auto justify-center sm:justify-start"
                     style={{ textShadow: "0 0 10px rgba(255, 255, 255, 0.3)" }}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-white/90" viewBox="0 0 20 20" fill="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 sm:h-5 w-4 sm:w-5 mr-1.5 sm:mr-2 text-white/90" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                     Save Syllabus
                   </button>
                   <button 
                     onClick={() => setShowAddDayModal(true)}
-                    className="bg-[#94C3D2] text-white px-5 py-2.5 rounded-lg flex items-center shadow-sm hover:bg-[#7EB5C3] transition-colors"
+                    className="bg-[#94C3D2] text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg flex items-center shadow-sm hover:bg-[#7EB5C3] transition-colors flex-1 sm:flex-auto justify-center sm:justify-start"
                     style={{ textShadow: "0 0 10px rgba(255, 255, 255, 0.3)" }}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-white" viewBox="0 0 20 20" fill="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 sm:h-5 w-4 sm:w-5 mr-1.5 sm:mr-2 text-white" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                     </svg>
                     Add Study Day
                   </button>
                 </>
-              )}
-              {isViewingOtherUserSyllabus && (
-                <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4 rounded-md" role="alert">
-                  <p className="font-bold">Viewing Room Host's Syllabus</p>
-                  <p>You're viewing the syllabus of the room host. You cannot make changes to this syllabus.</p>
+              )}              {isViewingOtherUserSyllabus && (
+                <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-3 sm:p-4 mb-4 rounded-md w-full" role="alert">
+                  <p className="font-bold text-sm sm:text-base">Viewing Room Host's Syllabus</p>
+                  <p className="text-xs sm:text-sm">You're viewing the syllabus of the room host. You cannot make changes to this syllabus.</p>
                 </div>
               )}
             </div>
@@ -830,14 +828,13 @@ const Syllabus = () => {
           ) : (
             <>
               {/* Tab Navigation */}
-              {syllabusDays.length > 0 && (
-                <motion.div 
+              {syllabusDays.length > 0 && (                <motion.div 
                   className="mb-6 border-b border-white/20 relative"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3, duration: 0.6 }}
                 >
-                  <div className="flex space-x-1 overflow-x-auto py-1 px-0.5" 
+                  <div className="flex space-x-1 overflow-x-auto py-1 px-0.5 -mx-2 px-2" 
                       style={{ 
                         scrollbarWidth: 'thin',
                         scrollbarColor: 'rgba(255, 255, 255, 0.3) transparent',
@@ -852,7 +849,7 @@ const Syllabus = () => {
                             setActiveTabIndex(index);
                           }}
                           className={`
-                            px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap flex-shrink-0
+                            px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap flex-shrink-0
                             ${activeTabIndex === index 
                               ? 'border-b-2 border-[#94C3D2] text-white/95 bg-white/10 backdrop-blur-sm' 
                               : 'text-white/95 hover:text-white hover:bg-white/5'}
@@ -860,7 +857,7 @@ const Syllabus = () => {
                         >
                           <div className="flex items-center">
                             <span>{day.title}</span>
-                            <span className="ml-2 bg-white/10 text-white/95 text-xs px-2 py-0.5 rounded-full border border-white/20">
+                            <span className="ml-2 bg-white/10 text-white/95 text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full border border-white/20 hidden sm:inline-flex">
                               {format(new Date(day.date), "MMM d")}
                             </span>
                           </div>
@@ -880,27 +877,26 @@ const Syllabus = () => {
               >
                 {selectedDay ? (
                   <div>
-                    {/* Day Header */}
-                    <div className="flex justify-between items-start mb-8">
+                    {/* Day Header */}                    <div className="flex flex-col sm:flex-row justify-between items-start mb-6 sm:mb-8 gap-4">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">{selectedDay.title}</h2>
-                          <span className="bg-[#94C3D2]/20 text-[#94C3D2] text-sm px-2.5 py-1 rounded-full border border-[#94C3D2]/30">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">{selectedDay.title}</h2>
+                          <span className="bg-[#94C3D2]/20 text-[#94C3D2] text-xs sm:text-sm px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-[#94C3D2]/30">
                             {format(new Date(selectedDay.date), "MMM d, yyyy")}
                           </span>
                         </div>
-                        <p className="text-white/95 mt-1">{selectedDay.description}</p>
+                        <p className="text-white/95 mt-1 text-sm sm:text-base">{selectedDay.description}</p>
                       </div>
                       {!isViewingOtherUserSyllabus && (
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 w-full sm:w-auto">
                           <button 
-                            className="text-white bg-[#94C3D2] hover:bg-[#7EB5C3] font-medium rounded-lg text-sm px-4 py-2 transition-colors shadow-sm"
+                            className="text-white bg-[#94C3D2] hover:bg-[#7EB5C3] font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 transition-colors shadow-sm flex-1 sm:flex-auto"
                             onClick={() => openEditDayModal(selectedDay)}
                           >
                             Edit Day
                           </button>
                           <button 
-                            className="bg-red-500/80 hover:bg-red-600/80 font-medium rounded-lg text-sm px-4 py-2 transition-colors shadow-sm"
+                            className="bg-red-500/80 hover:bg-red-600/80 font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 transition-colors shadow-sm flex-1 sm:flex-auto"
                             onClick={() => confirmDeleteDay(selectedDay)}
                             style={{color: "white"}}
                           >
@@ -917,10 +913,10 @@ const Syllabus = () => {
                         {!isViewingOtherUserSyllabus && (
                           <button 
                             onClick={() => setShowAddProblemModal(true)}
-                            className="bg-white/10 text-white/95 px-3 py-2 text-sm rounded-lg border border-white/20 hover:bg-white/20 transition-colors shadow-sm backdrop-blur-sm flex items-center"
+                            className="bg-white/10 text-white/95 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border border-white/20 hover:bg-white/20 transition-colors shadow-sm backdrop-blur-sm flex items-center"
                             style={{ textShadow: "0 0 10px rgba(255, 255, 255, 0.3)" }}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 text-[#94C3D2]" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-[#94C3D2]" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                             </svg>
                             Add Problem
@@ -935,36 +931,36 @@ const Syllabus = () => {
                               {getPaginatedItems(selectedDay.problems, problemsPage, itemsPerPage).map((problem) => (
                                 <div 
                                   key={problem.id || problem._id}
-                                  className="flex items-center justify-between p-4 bg-white/10 rounded-lg border border-white/20 hover:bg-white/15 transition-all"
+                                  className="flex items-center justify-between p-3 sm:p-4 bg-white/10 rounded-lg border border-white/20 hover:bg-white/15 transition-all"
                                 >
                                   <div className="flex-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <h4 className="font-medium text-white/95">{problem.title}</h4>
-                                      <span className={`text-xs px-2 py-0.5 rounded-full ${difficultyColors[problem.difficulty]}`}>
+                                    <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                                      <h4 className="font-medium text-white/95 text-sm sm:text-base">{problem.title}</h4>
+                                      <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${difficultyColors[problem.difficulty]}`}>
                                         {problem.difficulty}
                                       </span>
-                                      <span className="text-xs bg-white/10 text-white/75 px-2 py-0.5 rounded-full border border-white/20">
+                                      <span className="text-xs bg-white/10 text-white/75 px-1.5 sm:px-2 py-0.5 rounded-full border border-white/20">
                                         {problem.platform}
                                       </span>
                                     </div>
-                                    <div className="mt-2 flex items-center gap-3">                                      <Link 
+                                    <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-3">                                      
+                                      <Link 
                                         to="/collab-room" 
                                         state={{ 
                                           problemLink: problem.url,
                                           problemId: problem.id || problem._id,
                                           dayId: selectedDay.id || selectedDay._id,
                                           status: problem.status || 'unsolved',
-                                          updateTimestamp: true, // Flag to indicate dateAdded should be updated
-                                          isCreator: true, // Mark as room creator when navigating from syllabus
-                                          // Include full problem details for better synchronization
+                                          updateTimestamp: true,
+                                          isCreator: true,
                                           problemTitle: problem.title,
                                           difficulty: problem.difficulty,
                                           platform: problem.platform,
                                           url: problem.url
                                         }}
-                                        className="text-sm text-white bg-[#94C3D2] hover:bg-[#7EB5C3] px-3 py-1.5 rounded-lg flex items-center transition-colors shadow-sm"
+                                        className="text-xs sm:text-sm text-white bg-[#94C3D2] hover:bg-[#7EB5C3] px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg flex items-center transition-colors shadow-sm"
                                       >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                       </svg>
                                         Collaborate
@@ -973,11 +969,11 @@ const Syllabus = () => {
                                         href={problem.url} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
-                                        className="text-sm text-white/80 hover:text-white flex items-center gap-1"
+                                        className="text-xs sm:text-sm text-white/80 hover:text-white flex items-center gap-1"
                                       >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                        </svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
                                         View Problem
                                       </a>
                                     </div>
@@ -985,9 +981,9 @@ const Syllabus = () => {
                                   {!isViewingOtherUserSyllabus && (
                                     <button 
                                       onClick={() => handleDeleteProblem(problem.id || problem._id)}
-                                      className="p-1.5 text-red-600 hover:text-red-700 transition-colors"
+                                      className="p-1 sm:p-1.5 text-red-600 hover:text-red-700 transition-colors"
                                     >
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
                                         <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                                     </svg>
                                     </button>
@@ -1006,7 +1002,7 @@ const Syllabus = () => {
                             )}
                           </>
                         ) : (
-                          <div className="text-center py-8 text-white/70 bg-white/5 rounded-lg">
+                          <div className="text-center py-6 sm:py-8 text-white/70 bg-white/5 rounded-lg text-sm sm:text-base">
                             <p>No problems added yet. Click "Add Problem" to get started.</p>
                           </div>
                         )}
@@ -1020,10 +1016,10 @@ const Syllabus = () => {
                         {!isViewingOtherUserSyllabus && (
                           <button 
                             onClick={() => setShowAddResourceModal(true)}
-                            className="bg-white/10 text-white/95 px-3 py-2 text-sm rounded-lg border border-white/20 hover:bg-white/20 transition-colors shadow-sm backdrop-blur-sm flex items-center"
+                            className="bg-white/10 text-white/95 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border border-white/20 hover:bg-white/20 transition-colors shadow-sm backdrop-blur-sm flex items-center"
                             style={{ textShadow: "0 0 10px rgba(255, 255, 255, 0.3)" }}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 text-[#94C3D2]" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-[#94C3D2]" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                             </svg>
                             Add Video
@@ -1048,7 +1044,7 @@ const Syllabus = () => {
                                   className="flex items-center justify-between p-4 bg-white/10 rounded-lg border border-white/20 hover:bg-white/15 transition-all"
                                 >
                                   <div className="flex-1 flex items-center gap-3">
-                                    <div className="h-9 w-9 rounded-md flex items-center justify-center bg-red-900/30 text-red-300 border border-red-500/30">
+                                    <div className="h-9 w-9 rounded-md flex items-center justify-center bg-red-900/50 text-red-300 border border-red-500/30">
                                       {getResourceIcon('video')}
                                     </div>
                                     <div>
@@ -1139,13 +1135,11 @@ const Syllabus = () => {
               </motion.div>
             </>
           )}
-        </div>
-
-        {/* Add Day Modal */}
+        </div>        {/* Add Day Modal */}
         {showAddDayModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
             <motion.div 
-              className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+              className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 border border-white/20 overflow-hidden relative"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.3 }}
@@ -1466,6 +1460,107 @@ const Syllabus = () => {
                     className="w-full bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all py-2.5 rounded-lg text-white font-medium shadow-lg"
                   >
                     Add Video
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+        
+        {/* Edit Day Modal */}
+        {showEditDayModal && (
+          <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div 
+              className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Edit Study Day</h3>
+                <button
+                  onClick={() => setShowEditDayModal(false)}
+                  className="text-white/80 hover:text-white transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="space-y-5">
+                <div>
+                  <label htmlFor="edit-day-title" className="block text-sm font-medium text-[#94C3D2] mb-1.5">
+                    Title
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <input
+                      id="edit-day-title"
+                      type="text"
+                      placeholder="e.g., Array Fundamentals"
+                      className="w-full pl-10 pr-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                      value={editDayTitle}
+                      onChange={(e) => setEditDayTitle(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="edit-day-description" className="block text-sm font-medium text-[#94C3D2] mb-1.5">
+                    Description
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                      </svg>
+                    </div>
+                    <input
+                      id="edit-day-description"
+                      type="text"
+                      placeholder="A short description of the topic"
+                      className="w-full pl-10 pr-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                      value={editDayDescription}
+                      onChange={(e) => setEditDayDescription(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#94C3D2] mb-1.5">
+                    Date
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="date"
+                      id="edit-day-date"
+                      className="w-full pl-10 pr-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 appearance-none"
+                      value={editDayDate.toISOString().split('T')[0]}
+                      onChange={(e) => setEditDayDate(new Date(e.target.value))}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditDayModal(false)}
+                    className="px-4 py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleEditDay}
+                    className="w-full bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all py-2.5 rounded-lg text-white font-medium shadow-lg"
+                  >
+                    Save Changes
                   </button>
                 </div>
               </div>

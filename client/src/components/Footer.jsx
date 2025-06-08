@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 
 const Footer = () => {
   const [showModal, setShowModal] = useState(false);
@@ -64,27 +65,16 @@ const Footer = () => {
     setSubmitError('');
     
     try {
-      // Make API call to the contact endpoint
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: contactForm.name,
-          email: contactForm.email,
-          subject: contactForm.subject || 'Contact Form Submission',
-          message: contactForm.message
-        })
+      const response = await axios.post('/api/contact', {
+        name: contactForm.name,
+        email: contactForm.email,
+        subject: contactForm.subject || 'Contact Form Submission',
+        message: contactForm.message
       });
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
+      if (response.status !== 200) {
+        throw new Error(response.data.message || 'Something went wrong');
       }
-      
-     
       
       // Success!
       setSubmitSuccess(true);
@@ -104,7 +94,7 @@ const Footer = () => {
       }, 5000);
       
     } catch (error) {
-      setSubmitError(error.message || 'Failed to send message. Please try again later.');
+      setSubmitError(error.response?.data?.message || 'Failed to send message. Please try again later.');
     } finally {
       setIsSubmitting(false);
     }
@@ -112,11 +102,11 @@ const Footer = () => {
 
   return (
     <footer className="bg-gray-50 py-6 text-center text-gray-500 mt-auto border-t border-gray-100">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <p className="text-sm">© {new Date().getFullYear()} Codyssey. All rights reserved</p>
         
         {isHomePage && (
-          <div className="flex justify-center mt-4 space-x-6">
+          <div className="flex flex-col sm:flex-row justify-center mt-4 space-y-3 sm:space-y-0 sm:space-x-6">
             <button 
               onClick={() => setShowModal(true)}
               className="text-sm text-gray-500 hover:text-[#dbeafe] transition-colors focus:outline-none"
@@ -134,17 +124,17 @@ const Footer = () => {
         )}
       </div>
 
-      {/* Developer Modal - Updated to match application style */}
+      {/* Developer Modal - Updated to be responsive */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div 
-            className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-2xl p-6 border border-white/20 overflow-hidden relative"
+            className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-2xl p-4 sm:p-6 border border-white/20 overflow-hidden relative"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Meet the Developers</h3>
+              <h3 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Meet the Developers</h3>
               <button
                 onClick={() => setShowModal(false)}
                 className="text-white/80 hover:text-white transition-colors"
@@ -155,11 +145,11 @@ const Footer = () => {
               </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-4">
               {developers.map((dev, index) => (
                 <motion.div 
                   key={index}
-                  className="bg-white/10 rounded-xl p-5 shadow-sm border border-white/20"
+                  className="bg-white/10 rounded-xl p-4 sm:p-5 shadow-sm border border-white/20"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1, duration: 0.4 }}
@@ -209,17 +199,17 @@ const Footer = () => {
         </div>
       )}
 
-      {/* Contact Modal */}
+      {/* Contact Modal - Made responsive */}
       {showContactModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div 
-            className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-xl p-6 border border-white/20 overflow-hidden relative"
+            className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-xl p-4 sm:p-6 border border-white/20 overflow-hidden relative"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-3xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Contact Us</h3>
+              <h3 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Contact Us</h3>
               <button
                 onClick={() => {
                   setShowContactModal(false);
@@ -236,7 +226,7 @@ const Footer = () => {
             
             {submitSuccess ? (
               <motion.div 
-                className="text-center py-10"
+                className="text-center py-8 sm:py-10"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
@@ -250,7 +240,7 @@ const Footer = () => {
                 <p className="text-white/70">Thank you for reaching out. We'll get back to you soon.</p>
               </motion.div>
             ) : (
-              <form onSubmit={handleSubmitContact} className="space-y-5">
+              <form onSubmit={handleSubmitContact} className="space-y-4 sm:space-y-5">
                 <div className="text-left">
                   <label htmlFor="name" className="block text-base font-medium text-[#94C3D2] mb-1">Name </label>
                   <input
@@ -301,7 +291,7 @@ const Footer = () => {
                     onChange={handleInputChange}
                     placeholder="Your message here..."
                     rows="5"
-                    className="w-full px-4 py-2.5 bg-[#2d3748] outline-none  rounded-lg text-white text-base placeholder-gray-400 focus:ring-0 focus:border-[#94C3D2] resize-none"
+                    className="w-full px-4 py-2.5 bg-[#2d3748] outline-none rounded-lg text-white text-base placeholder-gray-400 focus:ring-0 focus:border-[#94C3D2] resize-none"
                     required
                   ></textarea>
                 </div>
@@ -316,7 +306,7 @@ const Footer = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className={`px-6 py-2.5 bg-[#94C3D2] text-white rounded-lg flex items-center transition-colors shadow-lg text-lg
+                    className={`px-6 py-2.5 bg-[#94C3D2] text-white rounded-lg flex items-center transition-colors shadow-lg text-base sm:text-lg
                     ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#7EB5C3]'}`}
                   >
                     {isSubmitting ? (
@@ -329,7 +319,6 @@ const Footer = () => {
                       </>
                     ) : (
                       <>
-                        {/* Updated telegram icon to match the reference image */}
                         <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z" />
                         </svg>

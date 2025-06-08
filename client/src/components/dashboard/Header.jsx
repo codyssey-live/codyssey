@@ -2,21 +2,21 @@ import { Link } from 'react-router-dom';
 
 const Header = ({ userName, onCreateRoom, onJoinRoom }) => {
   return (
-    <div className="py-6 px-6 md:px-10">
+    <div className="py-4 sm:py-6 px-4 sm:px-6 md:px-10">
       <div className="container mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Welcome, {userName}!</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Welcome, {userName}!</h1>
             <p className="text-[#94C3D2]/80 mt-1">Track your progress and manage your DSA journey</p>
           </div>
           
-          <div className="flex space-x-3 mt-4 md:mt-0">
+          <div className="flex flex-col sm:flex-row sm:space-x-3 space-y-2 sm:space-y-0 w-full sm:w-auto mt-4 sm:mt-0">
             <button 
               onClick={() => {
                 console.log("Create Room button clicked in Header");
                 if (onCreateRoom) onCreateRoom();
               }}
-              className="bg-white/10 border border-white/20 text-white/95 hover:bg-white/20 px-4 py-2.5 rounded-lg flex items-center shadow-sm backdrop-blur-sm transition-colors"
+              className="bg-white/10 border border-white/20 text-white/95 hover:bg-white/20 px-4 py-2.5 rounded-lg flex items-center justify-center sm:justify-start shadow-sm backdrop-blur-sm transition-colors"
               style={{ textShadow: "0 0 10px rgba(255, 255, 255, 0.3)" }}
             >
               <span className="flex items-center"> 
@@ -32,7 +32,7 @@ const Header = ({ userName, onCreateRoom, onJoinRoom }) => {
                 console.log("Join Room button clicked in Header");
                 if (onJoinRoom) onJoinRoom();
               }}
-              className="bg-[#94C3D2] text-white px-4 py-2.5 rounded-lg hover:bg-[#7EB5C3] transition-colors shadow-sm flex items-center"
+              className="bg-[#94C3D2] text-white px-4 py-2.5 rounded-lg hover:bg-[#7EB5C3] transition-colors shadow-sm flex items-center justify-center sm:justify-start"
               style={{ textShadow: "0 0 10px rgba(255, 255, 255, 0.3)" }}
             >
               <span className="flex items-center">

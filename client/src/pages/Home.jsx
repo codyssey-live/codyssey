@@ -132,11 +132,9 @@ const Home = () => {
               x: mousePosition.x * -20,
               y: mousePosition.y * -20,
             }}
-          />
-
-          {/* Poetic Headline */}
+          />          {/* Poetic Headline */}
           <motion.h1
-            className="text-4xl md:text-6xl font-bold mb-6 text-white tracking-tight"
+            className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 text-white tracking-tight px-3 sm:px-0"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
@@ -144,10 +142,8 @@ const Home = () => {
             <span className="bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
               Where Code Flows and Minds Converge
             </span>
-          </motion.h1>
-
-          <motion.p
-            className="text-lg md:text-xl text-[#94C3D2]/90 mb-10 max-w-2xl mx-auto"
+          </motion.h1>          <motion.p
+            className="text-base sm:text-lg md:text-xl text-[#94C3D2]/90 mb-6 sm:mb-10 max-w-2xl mx-auto px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1, duration: 0.8 }}
@@ -266,8 +262,7 @@ const Home = () => {
               Code Together, Grow Together
             </span>
           </motion.h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4 max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 px-4 max-w-6xl mx-auto">
             {codeSnippets.map((snippet, index) => (
               <motion.div
                 key={index}
@@ -352,9 +347,8 @@ const Home = () => {
               Your path to mastering DSA concepts — together
             </p>
           </motion.div>
-          
-          {/* Cards Container */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Cards Container */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8 px-4">
             {/* Card 1: DSA Learning Syllabus */}
             <motion.div 
               className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 shadow-sm overflow-hidden"

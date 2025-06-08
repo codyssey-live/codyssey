@@ -7,6 +7,7 @@ import { useRoom } from '../context/RoomContext';
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const [userData, setUserData] = useState({ name: 'User', email: 'Email' });
@@ -136,6 +137,10 @@ const Navbar = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
   // Navigation items
   const navItems = [
     { name: "Dashboard", path: "/dashboard" },
@@ -188,7 +193,7 @@ const Navbar = () => {
               </Link>
             </div>
             
-            {/* Tubelight Navigation Menu */}
+            {/* Tubelight Navigation Menu - Hidden on mobile */}
             <div className="hidden md:block ml-10">
               <motion.div 
                 className="bg-[#1a2234] flex items-center backdrop-blur-md rounded-full px-2 py-1 shadow-lg border border-white/5"
@@ -266,6 +271,86 @@ const Navbar = () => {
             </div>
           </div>
           
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={toggleMobileMenu}
+              className="flex items-center justify-center p-2 rounded-full bg-[#1a2234] text-[#94c3d2] shadow-sm hover:shadow-md transition-all transform hover:scale-105 w-10 h-10 mr-2"
+              aria-label="Mobile menu"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className="h-6 w-6" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+            
+            {/* User menu button on mobile */}
+            <div className="relative">
+              <button 
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center justify-center p-2 rounded-full bg-[#1a2234] text-[#94c3d2] shadow-sm hover:shadow-md transition-all transform hover:scale-105 w-10 h-10"
+                aria-label="User menu"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </button>
+              <AnimatePresence>
+                {isDropdownOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="origin-top-right absolute right-0 mt-2 w-48 rounded-2xl shadow-xl bg-white/20 backdrop-blur-md ring-1 ring-black/5 z-50 overflow-hidden border border-white/40"
+                  >
+                    <div className="py-1">
+                      {userMenuItems.map((item, index) => (
+                        <div key={index} className={index === 0 ? "border-b border-white/10" : ""}>
+                          {item.path ? (
+                            <Link
+                              to={item.path}
+                              className="block px-4 py-3 text-sm text-white/90 hover:bg-white/20"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <div className="flex items-center">
+                                {item.icon}
+                                {item.name}
+                              </div>
+                            </Link>
+                          ) : (
+                            <button
+                              className="block w-full text-left px-4 py-3 text-sm hover:bg-white/20"
+                              onClick={() => {
+                                item.action();
+                                setIsDropdownOpen(false);
+                              }}
+                            >
+                              <div className="flex items-center text-red-600">
+                                {item.icon}
+                                {item.name}
+                              </div>
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+          
+          {/* Desktop User Menu */}
           <div className="hidden md:block">
             <div className="relative">
               <button 
@@ -324,6 +409,39 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile Navigation Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="md:hidden bg-[#1a2234] overflow-hidden border-t border-white/10"
+          >
+            <div className="px-3 py-4 space-y-1">
+              {navItems.map((item, index) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link
+                    key={index}
+                    to={item.path}
+                    className={`block px-4 py-3 rounded-md text-base font-medium ${
+                      isActive 
+                        ? 'text-[#94c3d2] bg-[#94C3D2]/15' 
+                        : 'text-white/80 hover:bg-white/10'
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

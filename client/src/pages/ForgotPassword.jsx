@@ -137,41 +137,39 @@ const ForgotPassword = () => {
           delay: 1
         }}
       />
-      
-      {/* Logo in the upper-left corner */}
-      <div className="absolute top-6 left-6 z-10">
-        <motion.img
-          src="/logo.svg"
-          alt="Codyssey Logo"
-          className="h-20"
-          initial={{ y: -10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          style={{
-            filter: "drop-shadow(0 0 8px rgba(148, 195, 210, 0.6))",
-          }}
-        />
-      </div>
-
-      <motion.div 
-        className="w-full max-w-md px-6"
+        {/* Logo in the upper-left corner */}
+      <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-10">
+        <Link to="/">
+          <motion.img
+            src="/logo.svg"
+            alt="Codyssey Logo"
+            className="h-12 sm:h-16 md:h-20"
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            style={{
+              filter: "drop-shadow(0 0 8px rgba(148, 195, 210, 0.6))",
+            }}
+          />
+        </Link>
+      </div>      <motion.div 
+        className="w-full max-w-md px-4 sm:px-6 mt-10 sm:mt-0"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
         <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-white/20">
-          <div className="px-8 pt-10 pb-6">            <motion.div
+          <div className="px-4 sm:px-8 pt-6 sm:pt-8 md:pt-10 pb-5 sm:pb-6"><motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1, duration: 0.5 }}
-            >
-              <h2 className="text-2xl font-bold mb-1 text-center bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
+            >              <h2 className="text-xl sm:text-2xl font-bold mb-1 text-center bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
                 {step === 1 && "Reset Password"}
                 {step === 2 && "Verify Code"}
                 {step === 3 && "Create New Password"}
                 
               </h2>
-              <p className="text-[#94C3D2]/90 mb-6 text-center text-sm">
+              <p className="text-[#94C3D2]/90 mb-4 sm:mb-6 text-center text-xs sm:text-sm">
                 {step === 1 && "Enter your email to receive a verification code"}
                 {step === 2 && "Enter the 6-digit code sent to your email"}
                 
