@@ -54,7 +54,6 @@ const Signup = () => {
     } catch (err) {
       // Extract error message from the response
       const errorMessage = err.response?.data?.message || 'An error occurred during signup. Please try again.';
-      console.error('Signup error:', errorMessage);
       
       // Set the error state
       setError(errorMessage);

@@ -1803,16 +1803,7 @@ const CollabRoom = () => {
       // If this is a deliberate share attempt (not automatic), show warning to room creator
       const isInitialShare = !hasSharedProblemDetails;
       if (isInitialShare) {
-        const warningMessage = {
-          id: `warning-${Date.now()}`,
-          user: "System",
-          text: `Unable to share problem details: the problem title "${
-            details.title || "Unknown"
-          }" appears to be a placeholder. Please select a valid problem from the syllabus before sharing.`,
-          timestamp: new Date(),
-          type: "warning",
-        };
-
+       
         setChatMessages((prev) => {
           const updated = [...prev, warningMessage];
           saveCollabMessages(roomData.roomId, updated);
@@ -2735,7 +2726,7 @@ const CollabRoom = () => {
             >
               <h3
                 className={`text-lg font-medium ${
-                  isModalFromCurrentUser ? "text-gray-900" : "text-gray-900"
+                  isModalFromCurrentUser ? "text-white/90" : "text-gray-900"
                 }`}
               >
                 Code - {modalLanguage.toUpperCase()}
@@ -2752,11 +2743,13 @@ const CollabRoom = () => {
                 >
                   Copy Code
                 </button>
+                {/* Fix the close button to use a direct function reference rather than inline function */}
                 <button
-                  onClick={closeCodeModal} // Change to use the dedicated closeCodeModal function
+                  type="button"
+                  onClick={() => setIsCodeModalOpen(false)}
                   className={`${
                     isModalFromCurrentUser
-                      ? "text-gray-700 hover:text-gray-900"
+                      ? "text-gray-500 hover:text-white"
                       : "text-gray-700 hover:text-gray-900"
                   }`}
                 >

@@ -43,7 +43,6 @@ export const protect = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
     return res.status(401).json({
       success: false,
       message: 'Not authorized, token failed'

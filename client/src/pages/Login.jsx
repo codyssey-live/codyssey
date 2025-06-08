@@ -74,7 +74,6 @@ const Login = () => {
     } catch (err) {
       // Extract error message from the response
       const errorMessage = err.response?.data?.message || 'An error occurred during login. Please try again.';
-      console.error('Login error:', errorMessage);
       setError(errorMessage);
     } finally {
       setLoading(false);

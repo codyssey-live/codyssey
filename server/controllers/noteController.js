@@ -22,7 +22,6 @@ export const getNotes = async (req, res) => {
       data: notes
     });
   } catch (error) {
-    console.error('Error getting notes:', error);
     res.status(500).json({
       success: false,
       message: 'Server error while fetching notes',
@@ -70,7 +69,6 @@ export const createNote = async (req, res) => {
       data: note
     });
   } catch (error) {
-    console.error('Error creating note:', error);
     res.status(500).json({
       success: false,
       message: 'Server error while creating note',
@@ -117,7 +115,6 @@ export const deleteNote = async (req, res) => {
       data: {}
     });
   } catch (error) {
-    console.error('Error deleting note:', error);
     res.status(500).json({
       success: false,
       message: 'Server error while deleting note',

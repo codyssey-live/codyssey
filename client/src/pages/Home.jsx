@@ -19,7 +19,6 @@ const Home = () => {
         const user = await fetchCurrentUser();
         setIsAuthenticated(!!user);
       } catch (error) {
-        console.error('Authentication check failed:', error);
         setIsAuthenticated(false);
       }
     };

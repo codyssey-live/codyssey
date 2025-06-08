@@ -40,7 +40,6 @@ export const uploadImage = async (filePath, options = {}) => {
     const result = await cloudinary.uploader.upload(filePath, uploadOptions);
     return result;
   } catch (error) {
-    console.error('Error uploading to Cloudinary:', error);
     throw new Error(`Cloudinary upload failed: ${error.message}`);
   }
 };
@@ -55,7 +54,6 @@ export const deleteImage = async (publicId) => {
     const result = await cloudinary.uploader.destroy(publicId);
     return result;
   } catch (error) {
-    console.error('Error deleting from Cloudinary:', error);
     throw new Error(`Cloudinary deletion failed: ${error.message}`);
   }
 };
