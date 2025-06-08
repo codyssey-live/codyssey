@@ -253,7 +253,7 @@ const Dashboard = () => {
         addNotification(error.response?.data?.message || "Failed to create room", "error");
       }
     } catch (error) {
-      
+      addNotification("Failed to create room", "error");
     } finally {
       setCreatingRoom(false);
     }

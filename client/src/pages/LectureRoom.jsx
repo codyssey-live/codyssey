@@ -136,7 +136,7 @@ const LectureRoom = () => {
         addNotification("Failed to load notes", "error");
       }
     } catch (error) {
-      
+      addNotification("Error loading notes", "error");
     } finally {
       setIsLoadingNotes(false);
     }
@@ -211,7 +211,10 @@ const LectureRoom = () => {
 
       // Define the onYouTubeIframeAPIReady callback
       window.onYouTubeIframeAPIReady = () => {
-       
+        // Initialize the player if we have a video ID
+        if (videoIdRef.current) {
+          initializePlayer(videoIdRef.current);
+        } 
       };
     } else if (window.YT && window.YT.Player && videoIdRef.current) {
       // If the API is already loaded, initialize immediately
@@ -884,7 +887,7 @@ const LectureRoom = () => {
         addNotification(response.message || "Failed to save note", "error");
       }
     } catch (error) {
-      
+      addNotification("Failed to save note. Please try again.", "error");
     }
   };
 
@@ -1250,16 +1253,16 @@ const LectureRoom = () => {
         // Use longer timeout for reliability
         setTimeout(() => {
           if (data.isPlaying) {
-           
+            player.playVideo();
 
             // Double-check playing state after a short delay
             setTimeout(() => {
               if (player.getPlayerState() !== window.YT.PlayerState.PLAYING) {
-                
+                player.playVideo();
               }
             }, 1000);
           } else {
-            
+            player.pauseVideo();
           }
 
           // Reset flag after a delay
@@ -1403,7 +1406,8 @@ const LectureRoom = () => {
 
       // Skip if we've already processed this exact message
       if (processedMessages.has(messageId)) {
-        
+        return;
+
       }
 
       // Check if this is our own message coming back to us
@@ -1420,7 +1424,7 @@ const LectureRoom = () => {
 
       // If we find it in our history, don't show it twice
       if (existingMessageIndex !== -1) {
-        
+        return;
       }
 
       

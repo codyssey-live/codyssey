@@ -2584,16 +2584,15 @@ const CollabRoom = () => {
                   onSubmit={handleSendMessage}
                   className="flex items-center gap-2"
                 >
-                  <div className="flex-1 flex items-center bg-[#2d3748] border border-white/20 rounded-lg overflow-hidden">
+                  <div className="flex-1 flex items-center bg-[#2d3748] border border-white/20 rounded-lg overflow-hidden min-w-0">
                     {isCodeMessage ? (
                       <textarea
                         placeholder="Type or paste your code here..."
-                        className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none resize-none"
+                        className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none resize-none min-w-0"
                         style={{ height: "42px", overflow: "auto" }}
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={(e) => {
-                          // Allow tab key for indentation in code
                           if (e.key === "Tab") {
                             e.preventDefault();
                             const start = e.target.selectionStart;
@@ -2604,7 +2603,6 @@ const CollabRoom = () => {
                                 "  " +
                                 value.substring(end)
                             );
-                            // Set cursor position after the inserted tab
                             setTimeout(() => {
                               e.target.selectionStart = e.target.selectionEnd =
                                 start + 2;
@@ -2618,7 +2616,7 @@ const CollabRoom = () => {
                       <input
                         type="text"
                         placeholder="Type message..."
-                        className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none"
+                        className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none min-w-0"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={handleMessageKeyDown}
@@ -2628,16 +2626,10 @@ const CollabRoom = () => {
                       type="button"
                       onClick={() => {
                         setIsCodeMessage(!isCodeMessage);
-                        setNewMessage(""); // Clear message when switching modes
+                        setNewMessage("");
                       }}
-                      className={`px-2 mx-2 ${
-                        isCodeMessage ? "text-[#94C3D2]" : "text-white/95"
-                      } hover:text-[#94C3D2] transition-colors`}
-                      title={
-                        isCodeMessage
-                          ? "Currently in code mode"
-                          : "Click to send code"
-                      }
+                      className="px-3 py-2 flex-shrink-0 text-white/95 hover:text-[#94C3D2] transition-colors"
+                      title={isCodeMessage ? "Currently in code mode" : "Click to send code"}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -2657,7 +2649,7 @@ const CollabRoom = () => {
                   </div>
                   <button
                     type="submit"
-                    className="bg-[#94C3D2] text-white px-6 py-2.5 rounded-lg hover:bg-[#7EB5C3] transition-colors shadow-md font-medium"
+                    className="flex-shrink-0 bg-[#94C3D2] text-white px-4 sm:px-6 py-2.5 rounded-lg hover:bg-[#7EB5C3] transition-colors shadow-md font-medium whitespace-nowrap"
                   >
                     Send
                   </button>

@@ -108,7 +108,7 @@ export const applySyncCommand = (player, data, isRemoteUpdateRef, callback = nul
             // Verify playing state after a short delay
             setTimeout(() => {
               if (player.getPlayerState() !== window.YT.PlayerState.PLAYING) {
-
+                player.playVideo();
               }
             }, 300);
           }
