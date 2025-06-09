@@ -316,59 +316,65 @@ const LectureRoom = () => {
 
   // Improved player setup with less intrusive controls overlay
   const onPlayerReady = (event) => {
-    if (!event.target) return;
+  if (!event.target) return;
 
-    // Double check the player reference
-    if (!playerRef.current) {
-      playerRef.current = event.target;
-    }
+  // Set player reference
+  if (!playerRef.current) {
+    playerRef.current = event.target;
+  }
 
-    // Setup an interval for checking time progress for creator only
-    if (roomData.isRoomCreator) {
-      // Track the last reported position to detect seeks
-      let lastReportedTime = event.target.getCurrentTime();
-      let lastPlayerState = event.target.getPlayerState();
+  // ✅ Set videoIdRef when ready
+  const currentUrl = roomData.videoUrl || ""; // or however you're getting the video
+  const match = currentUrl.match(/[?&]v=([^&#]*)/);
+  const id = match?.[1] || null;
+  if (id) {
+    videoIdRef.current = id;
+  } else {
+    console.warn("videoIdRef not set – invalid URL?", currentUrl);
+  }
 
-      // More frequent check interval for better responsiveness
-      const seekDetectionInterval = setInterval(() => {
-        if (!playerRef.current) {
-          clearInterval(seekDetectionInterval);
-          return;
-        }
+  // ✅ Optional: Set a flag to track readiness
+  setPlayerReady(true); // Only if you're tracking readiness state
 
-        try {
-          const currentTime = playerRef.current.getCurrentTime();
-          const currentState = playerRef.current.getPlayerState();
+  // Creator-only seek tracking
+  if (roomData.isRoomCreator) {
+    let lastReportedTime = event.target.getCurrentTime();
+    let lastPlayerState = event.target.getPlayerState();
 
-          // If we're playing, check if position jumped more than expected
-          if (
-            lastPlayerState === window.YT.PlayerState.PLAYING &&
-            currentState === window.YT.PlayerState.PLAYING
-          ) {
-            // Tighter tolerance for detection
-            const expectedMaxTime = lastReportedTime + 2.5; // Reduced tolerance
+    const seekDetectionInterval = setInterval(() => {
+      if (!playerRef.current) {
+        clearInterval(seekDetectionInterval);
+        return;
+      }
 
-            // If time jumped forward too much or backward at all while playing
-            if (
-              currentTime > expectedMaxTime ||
-              currentTime < lastReportedTime - 0.5
-            ) {
-              // Treat as manual seek and sync others
-              handleSeek.current(currentTime);
-            }
+      try {
+        const currentTime = playerRef.current.getCurrentTime();
+        const currentState = playerRef.current.getPlayerState();
+
+        const expectedMaxTime = lastReportedTime + 2.5;
+
+        if (
+          lastPlayerState === window.YT.PlayerState.PLAYING &&
+          currentState === window.YT.PlayerState.PLAYING &&
+          (currentTime > expectedMaxTime || currentTime < lastReportedTime - 0.5)
+        ) {
+          // Manual seek detected – emit to others
+          if (handleSeek.current) {
+            handleSeek.current(currentTime);
           }
-
-          // Update tracked values
-          lastReportedTime = currentTime;
-          lastPlayerState = currentState;
-        } catch (e) {
-          // Ignore errors during interval
         }
-      }, 1500);
 
-      // Store interval for cleanup
-      return () => clearInterval(seekDetectionInterval);
-    }
+        lastReportedTime = currentTime;
+        lastPlayerState = currentState;
+      } catch (err) {
+        console.warn("Seek detection error:", err);
+      }
+    }, 1500);
+
+    // ✅ Optional: store in ref if you want to clean up elsewhere
+    seekIntervalRef.current = seekDetectionInterval;
+  
+};
 
     // Enhanced initialization for better sync
     if (roomData.inRoom && roomData.roomId && videoIdRef.current) {
