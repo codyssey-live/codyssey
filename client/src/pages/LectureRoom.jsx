@@ -243,11 +243,19 @@ const LectureRoom = () => {
         return 'Unknown error';
     }
   };
-
-  // Initialize the YouTube player
+  // Initialize the YouTube player with proper cleanup and error handling
   const initializePlayer = (videoId) => {
     if (!videoId) return;
 
+    // Clean up any existing player first
+    if (playerRef.current) {
+      try {
+        playerRef.current.destroy();
+      } catch (e) {
+        // Ignore destroy errors
+      }
+      playerRef.current = null;
+    }
 
     // Wait for the element to exist
     const checkElement = setInterval(() => {
@@ -259,54 +267,61 @@ const LectureRoom = () => {
         try {
           // Clear container first in case of re-initialization
           container.innerHTML = '';
-          // Create the player with optimized settings for better sync and access control
+
+          // Create player with ready callback that sets the reference
           const player = new window.YT.Player('youtube-player', {
             height: '600',
             width: '100%',
             videoId: videoId,
             playerVars: {
-              'autoplay': 0, // Don't autoplay until creator starts
-              // Show controls for the creator, but guests will have them visually disabled via CSS
+              'autoplay': 0,
               'controls': roomData.isRoomCreator ? 1 : 0,
               'rel': 0,
-              'fs': roomData.isRoomCreator ? 1 : 0, // Fullscreen only for creator
+              'fs': roomData.isRoomCreator ? 1 : 0,
               'modestbranding': 1,
               'enablejsapi': 1,
               'origin': window.location.origin,
-              'playsinline': 1, // Better for mobile sync
-              'iv_load_policy': 3, // Hide annotations for cleaner look
-              'start': 0, // Always start at beginning for consistency
-              'disablekb': roomData.isRoomCreator ? 0 : 1, // Disable keyboard controls for guests
+              'playsinline': 1,
+              'iv_load_policy': 3,
+              'start': 0,
+              'disablekb': roomData.isRoomCreator ? 0 : 1,
             },
             events: {
-              'onReady': onPlayerReady,
-              // Make sure to define onPlayerStateChange before using it here
+              'onReady': (event) => {
+                // Store reference and call onPlayerReady only when we're sure it's ready
+                playerRef.current = event.target;
+                onPlayerReady(event);
+              },
               'onStateChange': onPlayerStateChange,
               'onError': (e) => {
-
-                // Remove adding error message to chat
+                console.warn('YouTube player error:', getYoutubeErrorMessage(e.data));
               },
             },
           });
+
+          // Only set ref if player creation was successful
+          if (!playerRef.current) {
+            playerRef.current = player;
+          }
         } catch (error) {
-         
-          return;
+          console.error('Failed to initialize YouTube player:', error);
+          playerRef.current = null;
         }
-
-        playerRef.current = player;
-
-        // Add extra debug output
-       
       }
     }, 200);
+
+    // Cleanup interval if component unmounts
+    return () => clearInterval(checkElement);
   };
 
   // Improved player setup with less intrusive controls overlay
   const onPlayerReady = (event) => {
-  
+    if (!event.target) return;
 
-    // Store the player for later use
-    playerRef.current = event.target;
+    // Double check the player reference
+    if (!playerRef.current) {
+      playerRef.current = event.target;
+    }
 
     // Setup an interval for checking time progress for creator only
     if (roomData.isRoomCreator) {
@@ -338,7 +353,6 @@ const LectureRoom = () => {
               currentTime > expectedMaxTime ||
               currentTime < lastReportedTime - 0.5
             ) {
-             
               // Treat as manual seek and sync others
               handleSeek.current(currentTime);
             }
@@ -348,9 +362,12 @@ const LectureRoom = () => {
           lastReportedTime = currentTime;
           lastPlayerState = currentState;
         } catch (e) {
-         
+          // Ignore errors during interval
         }
-      }, 1500); // Reduced interval for better responsiveness (from 3000ms)
+      }, 1500);
+
+      // Store interval for cleanup
+      return () => clearInterval(seekDetectionInterval);
     }
 
     // Enhanced initialization for better sync
@@ -367,9 +384,7 @@ const LectureRoom = () => {
         const playerContainer = iframe.parentElement;
         if (playerContainer) {
           // Check if overlay already exists
-          let overlay = playerContainer.querySelector(
-            '.player-control-overlay'
-          );
+          let overlay = playerContainer.querySelector('.player-control-overlay');
           if (!overlay) {
             overlay = document.createElement('div');
             overlay.className = 'player-control-overlay';
@@ -381,36 +396,29 @@ const LectureRoom = () => {
             overlay.style.zIndex = '10';
             overlay.style.cursor = 'not-allowed';
 
-            // REMOVE the overlay text message that was causing interruption
-            // Keep the invisible overlay to block interactions
-
             playerContainer.style.position = 'relative';
             playerContainer.appendChild(overlay);
           }
         }
 
-       
-
         // Force player to be paused initially to prevent auto-start mismatch
         event.target.pauseVideo();
 
-        // Reduced delay before joining video room for faster synchronization
+        // Join the video room with reduced delay
         setTimeout(() => {
-          // Then join the video room for sync
           joinVideoRoom();
-        }, 200); // Reduced from 500ms
+        }, 200);
       } else {
         // For creators, ensure controls are fully enabled
         event.target.getIframe().style.pointerEvents = 'auto';
-       
 
-        // Explicitly ensure the video is paused to start
+        // Ensure video is paused to start
         event.target.pauseVideo();
 
-        // Join the video room after ensuring the video is paused (with reduced delay)
+        // Join video room with reduced delay
         setTimeout(() => {
           joinVideoRoom();
-        }, 150); // Reduced from 300ms
+        }, 150);
       }
     }
 
@@ -421,7 +429,7 @@ const LectureRoom = () => {
         setVideoTitle(videoData.title);
       }
     } catch (err) {
-     
+      // Ignore video title errors
     }
   };
 
@@ -992,21 +1000,19 @@ const LectureRoom = () => {
 
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
   // Reset to first page when sort criteria changes
   useEffect(() => {
     setCurrentPage(1);
   }, [sortCriteria]);
-  // Handle video sync messages from server with enhanced debouncing
+
+  // Handle video sync messages from server with enhanced debouncing  
   useEffect(() => {
     if (!socket.connected || !roomData.inRoom) {
       return undefined;
     }
 
-    
-
     // Create debounced handler that will prevent too many sync events in a short time
-    const debouncedSyncHandler = useRef(debounce(
+    const debouncedSyncHandler = debounce(
       (data) => {
         // Process the sync command with reliability checks
         if (playerRef.current) {
@@ -1015,7 +1021,7 @@ const LectureRoom = () => {
       },
       150,
       { leading: true, trailing: true, maxWait: 300 }
-    )).current;
+    );
 
     // Enhanced callback for video sync events with exponential backoff
     const handleVideoSync = (data) => {
