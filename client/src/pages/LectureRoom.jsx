@@ -1006,133 +1006,132 @@ const LectureRoom = () => {
     
 
     // Create debounced handler that will prevent too many sync events in a short time
-    // This helps prevent video glitches when multiple sync events arrive close together
-    const debouncedSyncHandler = debounce(
+    const debouncedSyncHandler = useRef(debounce(
       (data) => {
-
-
-        // Process the sync command
-        applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
+        // Process the sync command with reliability checks
+        if (playerRef.current) {
+          applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
+        }
       },
       150,
       { leading: true, trailing: true, maxWait: 300 }
-    ); // Process first and last event in a burst
+    )).current;
 
-    // Callback for video sync events
-   // Callback for video sync events
-const handleVideoSync = (data) => {
-  // Skip if we're the room creator and not asked to force sync
-  if (
-    roomData.isRoomCreator &&
-    !data.isRequestedUpdate &&
-    !data.forceSync
-  ) {
-    return;
-  }
+    // Enhanced callback for video sync events with exponential backoff
+    const handleVideoSync = (data) => {
+      // Skip if we're the room creator and not asked to force sync
+      if (roomData.isRoomCreator && !data.isRequestedUpdate && !data.forceSync) {
+        return;
+      }
 
-  // If player is not ready, retry with exponential backoff
-  if (
-    !playerRef.current ||
-    typeof playerRef.current.getPlayerState !== "function"
-  ) {
-    const attemptSync = (attempt = 1, maxAttempts = 5) => {
-      if (attempt > maxAttempts) return;
+      // If player is not ready, retry with exponential backoff
+      if (!playerRef.current || typeof playerRef.current.getPlayerState !== "function") {
+        const attemptSync = (attempt = 1, maxAttempts = 5) => {
+          if (attempt > maxAttempts) return;
 
-      const delay = Math.min(1000 * Math.pow(1.5, attempt - 1), 5000);
-      setTimeout(() => {
-        if (
-          playerRef.current &&
-          typeof playerRef.current.getPlayerState === "function"
-        ) {
-          applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
-        } else {
-          attemptSync(attempt + 1, maxAttempts);
-        }
-      }, delay);
+          const delay = Math.min(1000 * Math.pow(1.5, attempt - 1), 5000);
+          setTimeout(() => {
+            if (playerRef.current && typeof playerRef.current.getPlayerState === "function") {
+              applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
+            } else {
+              attemptSync(attempt + 1, maxAttempts);
+            }
+          }, delay);
+        };
+
+        attemptSync(1);
+        return;
+      }
+
+      // Make sure video IDs match
+      if (data.videoId !== videoIdRef.current) {
+        return;
+      }
+
+      // Fast-path for seek and creator actions
+      if (data.action === "seek" || data.fromCreator) {
+        applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
+      } else {
+        debouncedSyncHandler(data);
+      }
     };
 
-    attemptSync(1);
-    return;
-  }
+    // Function to apply sync commands to the player
+    const applySyncCommand = (data, player, isRemoteUpdate, retryCount = 0) => {
+      if (data.videoId !== videoIdRef.current) return;
 
-  // Fast-path for seek and creator actions
-  if (data.action === "seek" || data.fromCreator) {
-    applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
-  } else {
-    debouncedSyncHandler(data);
-  }
-};
-
-// Function to apply sync commands to the player
-const applySyncCommand = (data, player, isRemoteUpdate, retryCount = 0) => {
-  if (data.videoId !== videoIdRef.current) return;
-  if (!player) {
-    if (retryCount < 3) {
-      setTimeout(() => {
-        applySyncCommand(data, player, isRemoteUpdate, retryCount + 1);
-      }, 200 * (retryCount + 1));
-    }
-    return;
-  }
-
-  let adjustedTime = data.time;
-  if (data.action === "play" && data.serverTime) {
-    const drift = Date.now() - data.serverTime;
-    if (drift > 200) {
-      adjustedTime += drift / 1000;
-    }
-  }
-
-  isRemoteUpdate.current = true;
-
-  try {
-    switch (data.action) {
-      case "play":
-        player.seekTo(adjustedTime, true);
-        setTimeout(() => {
-          player.playVideo();
-          setTimeout(() => {
-            if (player.getPlayerState() !== window.YT.PlayerState.PLAYING) {
-              player.playVideo(); // retry
-            }
-          }, 200);
-        }, 50);
-        break;
-
-      case "pause":
-        player.seekTo(data.time, true);
-        setTimeout(() => {
-          player.pauseVideo();
-        }, 50);
-        break;
-
-      case "seek":
-        const wasPlaying =
-          player.getPlayerState() === window.YT.PlayerState.PLAYING;
-        player.seekTo(data.time, true);
-        if (wasPlaying || data.shouldPlay) {
-          setTimeout(() => {
-            player.playVideo();
-          }, 50);
+      let adjustedTime = data.time;
+      // Calculate drift compensation for play actions
+      if (data.action === "play" && data.serverTime) {
+        const drift = Date.now() - data.serverTime;
+        if (drift > 200) {
+          adjustedTime += drift / 1000;
         }
-        break;
+      }
 
-      default:
-        break;
-    }
-  } catch (err) {
-    if (retryCount < 3) {
-      setTimeout(() => {
-        applySyncCommand(data, player, isRemoteUpdate, retryCount + 1);
-      }, 300 * (retryCount + 1));
-    }
-  }
+      try {
+        // Set flag to prevent recursive events
+        isRemoteUpdate.current = true;
 
-  // Reset flag after delay
-  setTimeout(() => {
-    isRemoteUpdate.current = false;
-  }, 800);
-};// Callback for initial video state
+        switch (data.action) {
+          case "play":
+            // Always seek before playing
+            player.seekTo(adjustedTime, true);
+            
+            // Wait for seek to complete before playing
+            setTimeout(() => {
+              player.playVideo();
+              
+              // Retry play if it failed
+              setTimeout(() => {
+                if (player.getPlayerState() !== window.YT.PlayerState.PLAYING) {
+                  player.playVideo();
+                }
+              }, 300);
+            }, 150);
+            break;
+
+          case "pause":
+            // Always seek before pausing
+            player.seekTo(adjustedTime, true);
+            setTimeout(() => {
+              player.pauseVideo();
+            }, 150);
+            break;
+
+          case "seek":
+            const wasPlaying = player.getPlayerState() === window.YT.PlayerState.PLAYING;
+            player.seekTo(adjustedTime, true);
+
+            // Maintain playing state after seek if needed
+            if (wasPlaying || data.shouldPlay) {
+              setTimeout(() => {
+                player.playVideo();
+              }, 150);
+            }
+            break;
+
+          default:
+            break;
+        }
+
+        // Reset flag after a reasonable delay (1.2 seconds)
+        setTimeout(() => {
+          isRemoteUpdate.current = false;
+        }, 1200);
+
+      } catch (err) {
+        // Retry on error with exponential backoff
+        if (retryCount < 3) {
+          setTimeout(() => {
+            applySyncCommand(data, player, isRemoteUpdate, retryCount + 1);
+          }, 300 * (retryCount + 1));
+        }
+        isRemoteUpdate.current = false;
+      }
+    };
+
+    // Callback for initial video state
     const handleVideoStateUpdate = (data) => {
 
 
@@ -1222,58 +1221,57 @@ const handleVideoControl = (data) => {
 };
 
 // Set up listeners directly on the socket
-socket.on("sync-video", handleVideoSync);
-socket.on("video-control", handleVideoControl);
-socket.on("video-state-update", handleVideoStateUpdate);
+    socket.on("sync-video", handleVideoSync);
+    socket.on("video-control", handleVideoControl);
+    socket.on("video-state-update", handleVideoStateUpdate);
 
-// Also listen to underscore versions for compatibility
-socket.on("sync_video", handleVideoSync);
-socket.on("video_control", handleVideoControl);
-socket.on("video_state_update", handleVideoStateUpdate);
+    // Also listen to underscore versions for compatibility
+    socket.on("sync_video", handleVideoSync);
+    socket.on("video_control", handleVideoControl);
+    socket.on("video_state_update", handleVideoStateUpdate);
 
-// Play event handler with improved sync
-socket.on("creator-play-video", (data) => {
-  if (playerRef.current && data.videoId === videoIdRef.current) {
-    isRemoteUpdateRef.current = true;
+    // Creator-specific events with enhanced handling
+    socket.on("creator-play-video", (data) => {
+      if (playerRef.current && data.videoId === videoIdRef.current) {
+        isRemoteUpdateRef.current = true;
+        // Always seek first for accuracy
+        playerRef.current.seekTo(data.time, true);
+        setTimeout(() => {
+          playerRef.current.playVideo();
+          // Reset after delay
+          setTimeout(() => {
+            isRemoteUpdateRef.current = false;
+          }, 1200);
+        }, 150);
+      }
+    });
 
-    // Step 1: Seek to correct time
-    playerRef.current.seekTo(data.time, true);
+    socket.on("creator-pause-video", (data) => {
+      if (playerRef.current && data.videoId === videoIdRef.current) {
+        isRemoteUpdateRef.current = true;
+        // Always seek first for accuracy
+        playerRef.current.seekTo(data.time, true);
+        setTimeout(() => {
+          playerRef.current.pauseVideo();
+          // Reset after delay
+          setTimeout(() => {
+            isRemoteUpdateRef.current = false;
+          }, 1200);
+        }, 150);
+      }
+    });
 
-    // Step 2: Then play after delay
-    setTimeout(() => {
-      playerRef.current.playVideo();
-      isRemoteUpdateRef.current = false;
-    }, 200);
-  }
-});
-
-// Pause event handler with improved sync
-socket.on("creator-pause-video", (data) => {
-  if (playerRef.current && data.videoId === videoIdRef.current) {
-    isRemoteUpdateRef.current = true;
-
-    // Step 1: Seek to correct time
-    playerRef.current.seekTo(data.time, true);
-
-    // Step 2: Then pause after delay
-    setTimeout(() => {
-      playerRef.current.pauseVideo();
-      isRemoteUpdateRef.current = false;
-    }, 200);
-  }
-});
-
-// Cleanup all listeners
-return () => {
-  socket.off("sync-video", handleVideoSync);
-  socket.off("video-control", handleVideoControl);
-  socket.off("video-state-update", handleVideoStateUpdate);
-  socket.off("sync_video", handleVideoSync);
-  socket.off("video_control", handleVideoControl);
-  socket.off("video_state_update", handleVideoStateUpdate);
-  socket.off("creator-play-video");
-  socket.off("creator-pause-video");
-}; 
+    // Cleanup all listeners to prevent memory leaks
+    return () => {
+      socket.off("sync-video", handleVideoSync);
+      socket.off("video-control", handleVideoControl);
+      socket.off("video-state-update", handleVideoStateUpdate);
+      socket.off("sync_video", handleVideoSync);
+      socket.off("video_control", handleVideoControl);
+      socket.off("video_state_update", handleVideoStateUpdate);
+      socket.off("creator-play-video");
+      socket.off("creator-pause-video");
+    };
   }, [
     socket.connected,
     roomData.inRoom,
