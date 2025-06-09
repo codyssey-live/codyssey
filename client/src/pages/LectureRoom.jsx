@@ -1524,20 +1524,24 @@ const handleVideoControl = (data) => {
                   {/* IFrame will be replaced by the YouTube API */}
                   <div id='youtube-player' className='video-iframe rounded-lg'>
                     {/* This is where the player will be initialized */}
-                  </div>
-                  {/* Status message for users */}
+                  </div>                  {/* Status message for users */}
                   {roomData.inRoom && (
-                    <div
-                      className={`mt-2 p-2 text-xs sm:text-sm rounded ${
-                        roomData.isRoomCreator
-                          ? 'bg-green-700/50'
-                          : 'bg-yellow-600/50'
-                      } text-center`}
-                    >
-                      {roomData.isRoomCreator
-                        ? 'You are the room creator. Your video controls will be synced to all participants.'
-                        : 'Video controls are disabled. Playback is synchronized with the room creator.'}
-                    </div>
+                    <>
+                      <div
+                        className={`mt-2 p-2 text-xs sm:text-sm rounded ${
+                          roomData.isRoomCreator
+                            ? 'bg-green-700/50'
+                            : 'bg-yellow-600/50'
+                        } text-center`}
+                      >
+                        {roomData.isRoomCreator
+                          ? 'You are the room creator. Your video controls will be synced to all participants.'
+                          : 'Video controls are disabled. Playback is synchronized with the room creator.'}
+                      </div>
+                      <div className="mt-1 p-2 text-xs sm:text-sm rounded bg-blue-900/50 text-blue-200 text-center border border-blue-500/30">
+                        Note: If you face any sync issues, please refresh the page
+                      </div>
+                    </>
                   )}
                 </div>
               ) : (
