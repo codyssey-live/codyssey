@@ -804,7 +804,7 @@ const LectureRoom = () => {
             roomId: roomData.roomId,
             action: isPlaying ? 'play' : 'pause',
             time: currentTime,
-            videoId: videoIdRef.current,
+            videoId: videoIdRef.current.getCurrentTime(),
             userId: roomData.inviterId || socket.id,
             fromCreator: true,
             forceSync: true,
