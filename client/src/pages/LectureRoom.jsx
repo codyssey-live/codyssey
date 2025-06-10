@@ -243,19 +243,11 @@ const LectureRoom = () => {
         return 'Unknown error';
     }
   };
-  // Initialize the YouTube player with proper cleanup and error handling
+
+  // Initialize the YouTube player
   const initializePlayer = (videoId) => {
     if (!videoId) return;
 
-    // Clean up any existing player first
-    if (playerRef.current) {
-      try {
-        playerRef.current.destroy();
-      } catch (e) {
-        // Ignore destroy errors
-      }
-      playerRef.current = null;
-    }
 
     // Wait for the element to exist
     const checkElement = setInterval(() => {
@@ -267,114 +259,99 @@ const LectureRoom = () => {
         try {
           // Clear container first in case of re-initialization
           container.innerHTML = '';
-
-          // Create player with ready callback that sets the reference
+          // Create the player with optimized settings for better sync and access control
           const player = new window.YT.Player('youtube-player', {
             height: '600',
             width: '100%',
             videoId: videoId,
             playerVars: {
-              'autoplay': 0,
+              'autoplay': 0, // Don't autoplay until creator starts
+              // Show controls for the creator, but guests will have them visually disabled via CSS
               'controls': roomData.isRoomCreator ? 1 : 0,
               'rel': 0,
-              'fs': roomData.isRoomCreator ? 1 : 0,
+              'fs': roomData.isRoomCreator ? 1 : 0, // Fullscreen only for creator
               'modestbranding': 1,
               'enablejsapi': 1,
               'origin': window.location.origin,
-              'playsinline': 1,
-              'iv_load_policy': 3,
-              'start': 0,
-              'disablekb': roomData.isRoomCreator ? 0 : 1,
+              'playsinline': 1, // Better for mobile sync
+              'iv_load_policy': 3, // Hide annotations for cleaner look
+              'start': 0, // Always start at beginning for consistency
+              'disablekb': roomData.isRoomCreator ? 0 : 1, // Disable keyboard controls for guests
             },
             events: {
-              'onReady': (event) => {
-                // Store reference and call onPlayerReady only when we're sure it's ready
-                playerRef.current = event.target;
-                onPlayerReady(event);
-              },
+              'onReady': onPlayerReady,
+              // Make sure to define onPlayerStateChange before using it here
               'onStateChange': onPlayerStateChange,
               'onError': (e) => {
-                console.warn('YouTube player error:', getYoutubeErrorMessage(e.data));
+
+                // Remove adding error message to chat
               },
             },
           });
-
-          // Only set ref if player creation was successful
-          if (!playerRef.current) {
-            playerRef.current = player;
-          }
         } catch (error) {
-          console.error('Failed to initialize YouTube player:', error);
-          playerRef.current = null;
+         
+          return;
         }
+
+        playerRef.current = player;
+
+        // Add extra debug output
+       
       }
     }, 200);
-
-    // Cleanup interval if component unmounts
-    return () => clearInterval(checkElement);
   };
 
   // Improved player setup with less intrusive controls overlay
   const onPlayerReady = (event) => {
-  if (!event.target) return;
+  
 
-  // Set player reference
-  if (!playerRef.current) {
+    // Store the player for later use
     playerRef.current = event.target;
-  }
 
-  // ✅ Set videoIdRef when ready
-  const currentUrl = roomData.videoUrl || ""; // or however you're getting the video
-  const match = currentUrl.match(/[?&]v=([^&#]*)/);
-  const id = match?.[1] || null;
-  if (id) {
-    videoIdRef.current = id;
-  } else {
-    console.warn("videoIdRef not set – invalid URL?", currentUrl);
-  }
+    // Setup an interval for checking time progress for creator only
+    if (roomData.isRoomCreator) {
+      // Track the last reported position to detect seeks
+      let lastReportedTime = event.target.getCurrentTime();
+      let lastPlayerState = event.target.getPlayerState();
 
-  // ✅ Optional: Set a flag to track readiness
-  setPlayerReady(true); // Only if you're tracking readiness state
-
-  // Creator-only seek tracking
-  if (roomData.isRoomCreator) {
-    let lastReportedTime = event.target.getCurrentTime();
-    let lastPlayerState = event.target.getPlayerState();
-
-    const seekDetectionInterval = setInterval(() => {
-      if (!playerRef.current) {
-        clearInterval(seekDetectionInterval);
-        return;
-      }
-
-      try {
-        const currentTime = playerRef.current.getCurrentTime();
-        const currentState = playerRef.current.getPlayerState();
-
-        const expectedMaxTime = lastReportedTime + 2.5;
-
-        if (
-          lastPlayerState === window.YT.PlayerState.PLAYING &&
-          currentState === window.YT.PlayerState.PLAYING &&
-          (currentTime > expectedMaxTime || currentTime < lastReportedTime - 0.5)
-        ) {
-          // Manual seek detected – emit to others
-          if (handleSeek.current) {
-            handleSeek.current(currentTime);
-          }
+      // More frequent check interval for better responsiveness
+      const seekDetectionInterval = setInterval(() => {
+        if (!playerRef.current) {
+          clearInterval(seekDetectionInterval);
+          return;
         }
 
-        lastReportedTime = currentTime;
-        lastPlayerState = currentState;
-      } catch (err) {
-        console.warn("Seek detection error:", err);
-      }
-    }, 1500);
+        try {
+          const currentTime = playerRef.current.getCurrentTime();
+          const currentState = playerRef.current.getPlayerState();
 
-    // ✅ Optional: store in ref if you want to clean up elsewhere
-    seekIntervalRef.current = seekDetectionInterval;
-  
-};
+          // If we're playing, check if position jumped more than expected
+          if (
+            lastPlayerState === window.YT.PlayerState.PLAYING &&
+            currentState === window.YT.PlayerState.PLAYING
+          ) {
+            // Tighter tolerance for detection
+            const expectedMaxTime = lastReportedTime + 2.5; // Reduced tolerance
+
+            // If time jumped forward too much or backward at all while playing
+            if (
+              currentTime > expectedMaxTime ||
+              currentTime < lastReportedTime - 0.5
+            ) {
+             
+              // Treat as manual seek and sync others
+              handleSeek.current(currentTime);
+            }
+          }
+
+          // Update tracked values
+          lastReportedTime = currentTime;
+          lastPlayerState = currentState;
+        } catch (e) {
+         
+        }
+      }, 1500); // Reduced interval for better responsiveness (from 3000ms)
+    }
 
     // Enhanced initialization for better sync
     if (roomData.inRoom && roomData.roomId && videoIdRef.current) {
@@ -390,7 +367,9 @@ const LectureRoom = () => {
         const playerContainer = iframe.parentElement;
         if (playerContainer) {
           // Check if overlay already exists
-          let overlay = playerContainer.querySelector('.player-control-overlay');
+          let overlay = playerContainer.querySelector(
+            '.player-control-overlay'
+          );
           if (!overlay) {
             overlay = document.createElement('div');
             overlay.className = 'player-control-overlay';
@@ -402,29 +381,36 @@ const LectureRoom = () => {
             overlay.style.zIndex = '10';
             overlay.style.cursor = 'not-allowed';
 
+            // REMOVE the overlay text message that was causing interruption
+            // Keep the invisible overlay to block interactions
+
             playerContainer.style.position = 'relative';
             playerContainer.appendChild(overlay);
           }
         }
 
+       
+
         // Force player to be paused initially to prevent auto-start mismatch
         event.target.pauseVideo();
 
-        // Join the video room with reduced delay
+        // Reduced delay before joining video room for faster synchronization
         setTimeout(() => {
+          // Then join the video room for sync
           joinVideoRoom();
-        }, 200);
+        }, 200); // Reduced from 500ms
       } else {
         // For creators, ensure controls are fully enabled
         event.target.getIframe().style.pointerEvents = 'auto';
+       
 
-        // Ensure video is paused to start
+        // Explicitly ensure the video is paused to start
         event.target.pauseVideo();
 
-        // Join video room with reduced delay
+        // Join the video room after ensuring the video is paused (with reduced delay)
         setTimeout(() => {
           joinVideoRoom();
-        }, 150);
+        }, 150); // Reduced from 300ms
       }
     }
 
@@ -435,7 +421,7 @@ const LectureRoom = () => {
         setVideoTitle(videoData.title);
       }
     } catch (err) {
-      // Ignore video title errors
+     
     }
   };
 
@@ -818,7 +804,7 @@ const LectureRoom = () => {
             roomId: roomData.roomId,
             action: isPlaying ? 'play' : 'pause',
             time: currentTime,
-            videoId: videoIdRef.current.getCurrentTime(),
+            videoId: videoIdRef.current,
             userId: roomData.inviterId || socket.id,
             fromCreator: true,
             forceSync: true,
@@ -1006,46 +992,72 @@ const LectureRoom = () => {
 
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   // Reset to first page when sort criteria changes
   useEffect(() => {
     setCurrentPage(1);
   }, [sortCriteria]);
-
-  // Handle video sync messages from server with enhanced debouncing  
+  // Handle video sync messages from server with enhanced debouncing
   useEffect(() => {
     if (!socket.connected || !roomData.inRoom) {
       return undefined;
     }
 
+    
+
     // Create debounced handler that will prevent too many sync events in a short time
+    // This helps prevent video glitches when multiple sync events arrive close together
     const debouncedSyncHandler = debounce(
       (data) => {
-        // Process the sync command with reliability checks
-        if (playerRef.current) {
-          applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
-        }
+
+
+        // Process the sync command
+        applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
       },
       150,
       { leading: true, trailing: true, maxWait: 300 }
-    );
+    ); // Process first and last event in a burst
 
-    // Enhanced callback for video sync events with exponential backoff
+    // Callback for video sync events
     const handleVideoSync = (data) => {
-      // Skip if we're the room creator and not asked to force sync
-      if (roomData.isRoomCreator && !data.isRequestedUpdate && !data.forceSync) {
+     
+
+      // Don't process if this is our own message and we're the creator
+      // But allow processing if it's explicitly marked as a creator request
+      if (
+        roomData.isRoomCreator &&
+        !data.isRequestedUpdate &&
+        !data.forceSync
+      ) {
+      
         return;
       }
 
-      // If player is not ready, retry with exponential backoff
-      if (!playerRef.current || typeof playerRef.current.getPlayerState !== "function") {
-        const attemptSync = (attempt = 1, maxAttempts = 5) => {
-          if (attempt > maxAttempts) return;
+      // If player is not initialized yet, retry with increasing delay
+      if (
+        !playerRef.current ||
+        typeof playerRef.current.getPlayerState !== 'function'
+      ) {
+        
 
-          const delay = Math.min(1000 * Math.pow(1.5, attempt - 1), 5000);
+        // Use exponential backoff for retries
+        const attemptSync = (attempt = 1, maxAttempts = 5) => {
+          if (attempt > maxAttempts) {
+            
+            return;
+          }
+
+          const delay = Math.min(1000 * Math.pow(1.5, attempt - 1), 5000); // Exponential up to 5 seconds
+         
           setTimeout(() => {
-            if (playerRef.current && typeof playerRef.current.getPlayerState === "function") {
+            if (
+              playerRef.current &&
+              typeof playerRef.current.getPlayerState === 'function'
+            ) {
+
               applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
             } else {
+              // Try again with increasing delay
               attemptSync(attempt + 1, maxAttempts);
             }
           }, delay);
@@ -1055,95 +1067,165 @@ const LectureRoom = () => {
         return;
       }
 
-      // Make sure video IDs match
-      if (data.videoId !== videoIdRef.current) {
-        return;
-      }
-
-      // Fast-path for seek and creator actions
-      if (data.action === "seek" || data.fromCreator) {
+      // Use debounced handler for most events, but process seek events immediately
+      // Also process play/pause events immediately from the creator for faster response
+      if (data.action === 'seek' || data.fromCreator) {
+        // Seeks and creator actions need immediate processing
         applySyncCommand(data, playerRef.current, isRemoteUpdateRef);
       } else {
+        // Other events can be debounced
         debouncedSyncHandler(data);
       }
     };
 
     // Function to apply sync commands to the player
     const applySyncCommand = (data, player, isRemoteUpdate, retryCount = 0) => {
-      if (data.videoId !== videoIdRef.current) return;
+      // Check if we're syncing the same video
+      if (data.videoId !== videoIdRef.current) {
+        return;
+      }
 
-      let adjustedTime = data.time;
-      // Calculate drift compensation for play actions
-      if (data.action === "play" && data.serverTime) {
-        const drift = Date.now() - data.serverTime;
-        if (drift > 200) {
-          adjustedTime += drift / 1000;
+      if (!player) {
+        // Retry with shorter delay if player is not ready
+        if (retryCount < 3) {
+          setTimeout(
+            () => applySyncCommand(data, player, isRemoteUpdate, retryCount + 1),
+            200 * (retryCount + 1)
+          );
         }
+        return;
       }
 
       try {
         // Set flag to prevent recursive events
         isRemoteUpdate.current = true;
 
+        // Calculate any time drift with improved precision
+        let adjustedTime = data.time;
+        if (data.action === 'play' && data.serverTime) {
+          const clientServerDiff = Date.now() - data.serverTime;
+          // More aggressive adjustment to avoid delays
+          if (clientServerDiff > 100) { // Reduced from 200ms
+            adjustedTime += clientServerDiff / 1000;
+          }
+        }
+
+        // Store current state before any changes
+        const initialState = player.getPlayerState();
+        const initialTime = player.getCurrentTime();
+
+        // More optimized sync actions with better verification
         switch (data.action) {
-          case "play":
-            // Always seek before playing
+          case 'play':
+            // First ensure we're at the right position with verification
             player.seekTo(adjustedTime, true);
             
-            // Wait for seek to complete before playing
-            setTimeout(() => {
-              player.playVideo();
+            // Verify seek position before playing
+            const verifyPlaySeek = () => {
+              const currentPos = player.getCurrentTime();
               
-              // Retry play if it failed
-              setTimeout(() => {
-                if (player.getPlayerState() !== window.YT.PlayerState.PLAYING) {
+              // Special handling for position 0 problem
+              if (currentPos < 0.5 && adjustedTime > 1.0) {
+                // Video reset to beginning when it shouldn't have
+                player.seekTo(adjustedTime, true);
+                setTimeout(verifyPlaySeek, 200);
+                return;
+              }
+              
+              if (Math.abs(currentPos - adjustedTime) > 1.0) {
+                // Position still not correct, try seeking again
+                player.seekTo(adjustedTime, true);
+                setTimeout(verifyPlaySeek, 200);
+              } else {
+                // Position verified, now play
+                player.playVideo();
+                
+                // Verify playing state
+                setTimeout(() => {
+                  if (player.getPlayerState() !== window.YT.PlayerState.PLAYING) {
+                    player.playVideo();
+                  }
+                }, 200);
+              }
+            };
+            
+            // Start verification process
+            setTimeout(verifyPlaySeek, 100);
+            break;
+
+          case 'pause':
+            // For pause, first pause then seek to ensure accuracy
+            player.pauseVideo();
+            
+            // After short delay, seek and verify
+            setTimeout(() => {
+              player.seekTo(data.time, true);
+              
+              // Verify seek after pause
+              const verifyPauseSeek = () => {
+                const currentPos = player.getCurrentTime();
+                
+                // Handle reset to beginning issue
+                if (currentPos < 0.5 && data.time > 1.0) {
+                  player.seekTo(data.time, true);
+                  setTimeout(verifyPauseSeek, 200);
+                  return;
+                }
+                
+                if (Math.abs(currentPos - data.time) > 1.0) {
+                  player.seekTo(data.time, true);
+                  setTimeout(verifyPauseSeek, 200);
+                }
+              };
+              
+              setTimeout(verifyPauseSeek, 100);
+            }, 100);
+            break;
+
+          case 'seek':
+            // For seek operations, handle with extra care
+            const verifySeek = () => {
+              const currentPos = player.getCurrentTime();
+              
+              // Critical: Handle reset to beginning issue
+              if (currentPos < 0.5 && data.time > 1.0) {
+                player.seekTo(data.time, true);
+                setTimeout(verifySeek, 200);
+                return;
+              }
+              
+              if (Math.abs(currentPos - data.time) > 1.0) {
+                player.seekTo(data.time, true);
+                setTimeout(verifySeek, 200);
+              } else {
+                // Position verified, maintain play state
+                if (data.shouldPlay || initialState === window.YT.PlayerState.PLAYING) {
                   player.playVideo();
                 }
-              }, 300);
-            }, 150);
-            break;
-
-          case "pause":
-            // Always seek before pausing
-            player.seekTo(adjustedTime, true);
-            setTimeout(() => {
-              player.pauseVideo();
-            }, 150);
-            break;
-
-          case "seek":
-            const wasPlaying = player.getPlayerState() === window.YT.PlayerState.PLAYING;
-            player.seekTo(adjustedTime, true);
-
-            // Maintain playing state after seek if needed
-            if (wasPlaying || data.shouldPlay) {
-              setTimeout(() => {
-                player.playVideo();
-              }, 150);
-            }
-            break;
-
-          default:
+              }
+            };
+            
+            // Start seek verification
+            player.seekTo(data.time, true);
+            setTimeout(verifySeek, 100);
             break;
         }
-
-        // Reset flag after a reasonable delay (1.2 seconds)
-        setTimeout(() => {
-          isRemoteUpdate.current = false;
-        }, 1200);
-
-      } catch (err) {
-        // Retry on error with exponential backoff
+      } catch (error) {
+        // Retry on error with reduced delay
         if (retryCount < 3) {
-          setTimeout(() => {
-            applySyncCommand(data, player, isRemoteUpdate, retryCount + 1);
-          }, 300 * (retryCount + 1));
+          setTimeout(
+            () => applySyncCommand(data, player, isRemoteUpdate, retryCount + 1),
+            300 * (retryCount + 1)
+          );
         }
-        isRemoteUpdate.current = false;
       }
-    };
 
-    // Callback for initial video state
+      // Reset flag after a delay based on operation
+      const resetDelay = Math.min(500 + adjustedTime * 2, 1500); // Reduced maximum delay
+      setTimeout(() => {
+        isRemoteUpdate.current = false;
+      }, resetDelay);
+    }; // Callback for initial video state
     const handleVideoStateUpdate = (data) => {
 
 
@@ -1221,68 +1303,77 @@ const LectureRoom = () => {
       }
     };
 
-// Video control event - more reliable for initial sync
-const handleVideoControl = (data) => {
-  // Convert to sync format and process
-  handleVideoSync({
-    videoId: data.videoId,
-    action: data.action,
-    time: data.time,
-    serverTime: Date.now(),
-  });
-};
+    // Video control event - more reliable for initial sync
+    const handleVideoControl = (data) => {
+    
 
-// Set up listeners directly on the socket
-    socket.on("sync-video", handleVideoSync);
-    socket.on("video-control", handleVideoControl);
-    socket.on("video-state-update", handleVideoStateUpdate);
+      // Convert to sync format and process
+      handleVideoSync({
+        videoId: data.videoId,
+        action: data.action,
+        time: data.time,
+        serverTime: Date.now(),
+      });
+    };
+
+    // Set up listeners directly on the socket
+    socket.on('sync-video', handleVideoSync);
+    socket.on('video-control', handleVideoControl);
+    socket.on('video-state-update', handleVideoStateUpdate);
 
     // Also listen to underscore versions for compatibility
-    socket.on("sync_video", handleVideoSync);
-    socket.on("video_control", handleVideoControl);
-    socket.on("video_state_update", handleVideoStateUpdate);
+    socket.on('sync_video', handleVideoSync);
+    socket.on('video_control', handleVideoControl);
+    socket.on('video_state_update', handleVideoStateUpdate);
 
-    // Creator-specific events with enhanced handling
-    socket.on("creator-play-video", (data) => {
+    // Add special direct play/pause event handlers for more reliable sync
+    socket.on('creator-play-video', (data) => {
+      
+      // Force play with high priority
       if (playerRef.current && data.videoId === videoIdRef.current) {
         isRemoteUpdateRef.current = true;
-        // Always seek first for accuracy
+
+        // Ensure we're at the right position first
         playerRef.current.seekTo(data.time, true);
+
         setTimeout(() => {
           playerRef.current.playVideo();
-          // Reset after delay
+
           setTimeout(() => {
             isRemoteUpdateRef.current = false;
-          }, 1200);
-        }, 150);
+          }, 1000);
+        }, 200);
       }
     });
 
-    socket.on("creator-pause-video", (data) => {
+    socket.on('creator-pause-video', (data) => {
+    
+      // Force pause with high priority
       if (playerRef.current && data.videoId === videoIdRef.current) {
         isRemoteUpdateRef.current = true;
-        // Always seek first for accuracy
-        playerRef.current.seekTo(data.time, true);
+        playerRef.current.pauseVideo();
+
         setTimeout(() => {
-          playerRef.current.pauseVideo();
-          // Reset after delay
+          // Ensure we're at the right position
+          playerRef.current.seekTo(data.time, true);
+
           setTimeout(() => {
             isRemoteUpdateRef.current = false;
-          }, 1200);
-        }, 150);
+          }, 500);
+        }, 100);
       }
     });
 
-    // Cleanup all listeners to prevent memory leaks
     return () => {
-      socket.off("sync-video", handleVideoSync);
-      socket.off("video-control", handleVideoControl);
-      socket.off("video-state-update", handleVideoStateUpdate);
-      socket.off("sync_video", handleVideoSync);
-      socket.off("video_control", handleVideoControl);
-      socket.off("video_state_update", handleVideoStateUpdate);
-      socket.off("creator-play-video");
-      socket.off("creator-pause-video");
+      // Clean up all listeners
+      socket.off('sync-video', handleVideoSync);
+      socket.off('video-control', handleVideoControl);
+      socket.off('video-state-update', handleVideoStateUpdate);
+      socket.off('sync_video', handleVideoSync);
+      socket.off('video_control', handleVideoControl);
+      socket.off('video_state_update', handleVideoStateUpdate);
+      socket.off('creator-play-video');
+      socket.off('creator-pause-video');
     };
   }, [
     socket.connected,
@@ -1524,24 +1615,20 @@ const handleVideoControl = (data) => {
                   {/* IFrame will be replaced by the YouTube API */}
                   <div id='youtube-player' className='video-iframe rounded-lg'>
                     {/* This is where the player will be initialized */}
-                  </div>                  {/* Status message for users */}
+                  </div>
+                  {/* Status message for users */}
                   {roomData.inRoom && (
-                    <>
-                      <div
-                        className={`mt-2 p-2 text-xs sm:text-sm rounded ${
-                          roomData.isRoomCreator
-                            ? 'bg-green-700/50'
-                            : 'bg-yellow-600/50'
-                        } text-center`}
-                      >
-                        {roomData.isRoomCreator
-                          ? 'You are the room creator. Your video controls will be synced to all participants.'
-                          : 'Video controls are disabled. Playback is synchronized with the room creator.'}
-                      </div>
-                      <div className="mt-1 p-2 text-xs sm:text-sm rounded bg-blue-900/50 text-blue-200 text-center border border-blue-500/30">
-                        Note: If you face any sync issues, please refresh the page
-                      </div>
-                    </>
+                    <div
+                      className={`mt-2 p-2 text-xs sm:text-sm rounded ${
+                        roomData.isRoomCreator
+                          ? 'bg-green-700/50'
+                          : 'bg-yellow-600/50'
+                      } text-center`}
+                    >
+                      {roomData.isRoomCreator
+                        ? 'You are the room creator. Your video controls will be synced to all participants.'
+                        : 'Video controls are disabled. Playback is synchronized with the room creator.'}
+                    </div>
                   )}
                 </div>
               ) : (
