@@ -107,12 +107,12 @@ const Footer = () => {
         
         {isHomePage && (
           <div className="flex flex-col sm:flex-row justify-center mt-4 space-y-3 sm:space-y-0 sm:space-x-6">
-            <button 
+            {/* <button 
               onClick={() => setShowModal(true)}
               className="text-sm text-gray-500 hover:text-[#dbeafe] transition-colors focus:outline-none"
             >
               Meet the Developers
-            </button>
+            </button> */}
             
             <button
               onClick={() => setShowContactModal(true)} 
@@ -124,7 +124,7 @@ const Footer = () => {
         )}
       </div>
 
-      {/* Developer Modal - Updated to be responsive */}
+      {/* Developer Modal - Updated to be responsive
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div 
@@ -197,7 +197,7 @@ const Footer = () => {
             </div>
           </motion.div>
         </div>
-      )}
+      )} */}
 
       {/* Contact Modal - Made responsive */}
       {showContactModal && (
