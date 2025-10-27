@@ -7,10 +7,11 @@ const apiURL = process.env.NODE_ENV === 'production'
 // Create an axios instance with default configurations
 const apiClient = axios.create({
   baseURL: `${apiURL}/api`,
+  withCredentials: true,
+  timeout: 10000, 
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Important for cookies/auth
 });
 
 // Add a request interceptor to include authentication token if available

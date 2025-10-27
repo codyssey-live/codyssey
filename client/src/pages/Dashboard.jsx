@@ -63,18 +63,15 @@ const Dashboard = () => {
       try {
         setIsLoading(true);
         
-        // Fetch user profile
+        // Show dashboard immediately with loading states
         const user = await fetchCurrentUser();
-        let userId = null;
         
         if (user) {
-          userId = user._id || user.id;
-          localStorage.setItem("userName", user.name || "User");
-          localStorage.setItem("userId", userId);
-        
-          // Fetch all syllabus problems for this user
+          // Load data in background
+          const userId = user._id || user.id;
           const result = await fetchUserSyllabusProblems(userId);
           
+          // Update UI as data arrives
           if (result.success && result.data) {
             const userProblems = result.data;
             setAllProblems(userProblems);
@@ -139,19 +136,13 @@ const Dashboard = () => {
           }
         }
       } catch (err) {
-       
-        addNotification("Failed to load your problem data", "error");
+        addNotification("Failed to load data. Please refresh.", "error");
       } finally {
         setIsLoading(false);
       }
     };
 
     getUserData();
-    
-    // Clean up any accidental room creation flags
-    return () => {
-      localStorage.removeItem('autoCreateRoom');
-    };
   }, []);
   // Filter problems based on active tab
   useEffect(() => {
@@ -1430,7 +1421,7 @@ const Dashboard = () => {
                               strokeLinecap="round" 
                               strokeLinejoin="round" 
                               strokeWidth={2} 
-                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v-1M8 16a2 2 0 002 2h2a2 2 0 002-2M8 16a2 2 0 012-2h2a2 2 0 012 2"
                             />
                           </svg>
                         )}

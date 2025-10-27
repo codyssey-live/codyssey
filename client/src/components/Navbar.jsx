@@ -19,9 +19,10 @@ const Navbar = () => {
   
   // Fetch user data from the API - run this early and with higher priority
   useEffect(() => {
+    // Don't block navbar render
+    setLoading(false); // Set immediately
+    
     const getUserData = async () => {
-      setLoading(true);
-      
       try {
         const user = await fetchCurrentUser();
         if (user) {
@@ -31,25 +32,11 @@ const Navbar = () => {
           });
         }
       } catch (err) {
-        // Handle error (e.g., show notification)
-      } finally {
-        setLoading(false);
+        // Silently fail - navbar still works
       }
     };
     
-    // Add high priority to this fetch
-    const fetchData = async () => {
-      try {
-        await Promise.race([
-          getUserData(),
-          new Promise(resolve => setTimeout(resolve, 3000)) // 3 second timeout fallback
-        ]);
-      } catch (error) {
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
+    getUserData(); // Load in background
   }, []);
   
   // Check for active room when component mounts and when localStorage changes
