@@ -24,7 +24,6 @@ syllabusSchema.pre('save', function(next) {
     try {
       this.userId = new mongoose.Types.ObjectId(this.userId);
     } catch (err) {
-      console.error('Error converting userId to ObjectId:', err);
     }
   }
   next();
@@ -36,7 +35,6 @@ syllabusSchema.pre('findOne', function(next) {
     try {
       this._conditions.userId = new mongoose.Types.ObjectId(this._conditions.userId);
     } catch (err) {
-      console.error('Error converting query userId to ObjectId:', err);
     }
   }
   next();

@@ -34,7 +34,6 @@ const Room = () => {  const { roomId } = useParams();
     // Try to load saved messages first
     const savedMessages = loadMessages(roomId);
     if (savedMessages && savedMessages.length > 0) {
-      console.log('Loaded saved messages from localStorage:', savedMessages.length);
       return savedMessages;
     }
     // Fall back to the welcome message if no saved messages
@@ -54,7 +53,6 @@ const Room = () => {  const { roomId } = useParams();
   const [userId, setUserId] = useState(null);
   // Define early to avoid undefined function references
   const handleLeaveRoom = () => {
-    console.log("Leaving room", roomId);
     
     // Set a flag in localStorage to indicate this is an intentional leave
     localStorage.setItem('intentionalLeave', 'true');
@@ -86,10 +84,8 @@ const Room = () => {  const { roomId } = useParams();
           const creatorHistory = JSON.parse(localStorage.getItem('roomCreatorHistory') || '{}');
           creatorHistory[roomId] = true;
           localStorage.setItem('roomCreatorHistory', JSON.stringify(creatorHistory));
-          console.log(`Saved creator status for room ${roomId} before leaving`);
         }
       } catch (error) {
-        console.error('Error parsing room info in handleLeaveRoom:', error);
       }
     }
     
@@ -104,7 +100,6 @@ const Room = () => {  const { roomId } = useParams();
     addNotification('You have left the room', 'info');
   };  // Handle room ending - modified to delete the room directly
   const handleEndRoom = () => {
-    console.log(`Ending room ${roomId} (with deletion)`);
     
     // Get the current user ID from localStorage
     const userId = localStorage.getItem('userId');
@@ -123,14 +118,12 @@ const Room = () => {  const { roomId } = useParams();
       
       // Listen for success response
       socketRef.current.once('end-room-success', (data) => {
-        console.log("Room ended successfully:", data);
         
         // Clean up room data - local cleanup only, server event will handle notification
         cleanupAfterRoomEnd(roomId, userName, true);
       });
       
       socketRef.current.once('end-room-error', (data) => {
-        console.error("Error ending room:", data);
         addNotification(data.message || "Failed to end room", "error");
       });
     } else {
@@ -187,21 +180,18 @@ const Room = () => {  const { roomId } = useParams();
 
   // Check if user has a valid room session with time validation
   useEffect(() => {
-    console.log("Validating room session for:", roomId);
     
     const validateRoomSession = () => {      // First check if this room was previously ended
       const endedRooms = JSON.parse(localStorage.getItem('endedRooms') || '[]');
       if (endedRooms.includes(roomId)) {
-        console.log("Room was previously ended");
+    
         addNotification("This room has been ended and is no longer available", "error");
         navigate('/dashboard');
         return false;
       }
       
       const roomInfo = localStorage.getItem('roomInfo');
-      console.log("Room info from localStorage:", roomInfo);
         if (!roomInfo) {
-        console.log("No room info found - direct URL access attempt");
         addNotification("Direct room access is not allowed. Please join through the dashboard.", "error");
         navigate('/dashboard');
         return false;
@@ -209,14 +199,12 @@ const Room = () => {  const { roomId } = useParams();
       
       try {
         const parsedInfo = JSON.parse(roomInfo);
-        console.log("Parsed room info:", parsedInfo);
-        
+       
         // Check if the room session has expired (24 hours)
         const createdOrJoinedAt = new Date(parsedInfo.createdAt || parsedInfo.joinedAt).getTime();
         const currentTime = new Date().getTime();
         const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
           if (currentTime - createdOrJoinedAt > SESSION_DURATION) {
-          console.log("Room session expired");
           setRoomSessionExpired(true);
           addNotification("Your room session has expired. Please create or join a new room.", "error");
           handleLeaveRoom();
@@ -224,7 +212,6 @@ const Room = () => {  const { roomId } = useParams();
         }
           // Check if this is the requested room
         if (parsedInfo.roomId !== roomId) {
-          console.log("Room ID mismatch - attempting to access unauthorized room");
           addNotification("You don't have access to this room", "error");
           navigate('/dashboard');
           return false;
@@ -238,7 +225,6 @@ const Room = () => {  const { roomId } = useParams();
         // Room creator is determined by comparing current user ID with the room inviterId
         const isCreator = parsedInfo.inviterId === currentUserId;
         setIsRoomCreator(isCreator);
-        console.log("User is room creator:", isCreator, "Current user ID:", currentUserId, "Room inviter ID:", parsedInfo.inviterId);
         
         // Update roomInfo with the correct creator status based on user ID
         parsedInfo.isCreator = isCreator;
@@ -246,7 +232,6 @@ const Room = () => {  const { roomId } = useParams();
         
         // If we have inviterId, update context
         if (parsedInfo.inviterId) {
-          console.log("Setting room data in context with inviterId:", parsedInfo.inviterId);
           setRoomData({
             inRoom: true,
             roomId: roomId,
@@ -260,7 +245,6 @@ const Room = () => {  const { roomId } = useParams();
         
         return true;
       } catch (error) {
-        console.error('Error parsing room info:', error);
         navigate('/dashboard');
         return false;
       }
@@ -278,7 +262,6 @@ const Room = () => {  const { roomId } = useParams();
           setUserId(user._id);
         }
       } catch (err) {
-        console.error('Failed to fetch user ID:', err);
       }
     };
     
@@ -294,7 +277,6 @@ const Room = () => {  const { roomId } = useParams();
     
     // Track internal navigation vs. page refresh
     const handleInternalNavigation = () => {
-      console.log('Internal navigation detected');
       localStorage.setItem('internalNavigation', 'true');
     };
     
@@ -330,7 +312,6 @@ const Room = () => {  const { roomId } = useParams();
           localStorage.setItem('roomUsername', guestName);
         }
       } catch (err) {
-        console.error('Failed to fetch user data:', err);
         if (savedUsername) {
           username = savedUsername;
         } else {
@@ -343,7 +324,6 @@ const Room = () => {  const { roomId } = useParams();
       
       // Set the username in state
       setUserName(username);
-      console.log(`Using username: ${username}`);
       
       // Now handle socket connection
       handleSocketConnection(username);
@@ -352,7 +332,6 @@ const Room = () => {  const { roomId } = useParams();
     const handleSocketConnection = (username) => {
       // Ensure socket is disconnected before reconnecting to prevent duplicates
       if (socket.connected) {
-        console.log('Socket already connected, disconnecting first to prevent duplicate');
         socket.disconnect();
       }
       
@@ -362,7 +341,6 @@ const Room = () => {  const { roomId } = useParams();
       // Define setup function
       const setupOnce = () => {
         // Changed this line to provide more context about the socket ID
-        console.log(`[Socket] Connected with socket ID: ${socket.id}, setting up for user: ${username}`);
         setupConnection(username);
         socket.off('connect', setupOnce); // Remove listener after first connection
       };
@@ -375,10 +353,8 @@ const Room = () => {  const { roomId } = useParams();
       socket.on('debug', (data) => {
         // Filter out or explain connection messages that contain socket IDs
         if (data && typeof data === 'string' && data.includes('User connected:')) {
-          console.log('[Socket Debug] Connection event from server side, can be ignored');
           return;
         }
-        console.log('[Socket Debug]', data);
       });
     };
 
@@ -387,7 +363,7 @@ const Room = () => {  const { roomId } = useParams();
     return () => {
       // Clean up event listeners
       if (socketRef.current) {
-        console.log('Cleaning up socket event listeners');        socketRef.current.off('user-joined');
+        socketRef.current.off('user-joined');
         socketRef.current.off('user_joined');
         socketRef.current.off('receive-message');
         socketRef.current.off('receive_message');
@@ -399,7 +375,6 @@ const Room = () => {  const { roomId } = useParams();
         
         // Only send leave event for actual component unmount, not page refresh or internal navigation
         if (userName && roomId && !isRefreshing.current && !localStorage.getItem('internalNavigation')) {
-          console.log(`Leaving room ${roomId} as ${userName} - actual leave`);
           socketRef.current.emit('leave-room', { 
             roomId, 
             username: userName,
@@ -427,7 +402,6 @@ const Room = () => {  const { roomId } = useParams();
   const shownJoinMessages = useRef(new Set()); // Track users we've already shown join messages for
   
   const setupConnection = (username) => {    if (!socketRef.current) {
-      console.error('Socket not initialized');
       setLoading(false);
       addNotification("Couldn't connect to chat server", "error");
       return;
@@ -442,9 +416,7 @@ const Room = () => {  const { roomId } = useParams();
     socketRef.current.off('user_left');
     socketRef.current.off('room_data');
     socketRef.current.off('debug'); // Also clear debug listeners
-    
-    console.log(`[Socket] Joining room ${roomId} as ${username} with socket ID: ${socketRef.current.id}`);
-    
+        
     // First time joining flag - use this to differentiate between first join and refreshes
     const firstTimeJoining = !localStorage.getItem(`joined_${roomId}`);
       // Check if this user is a room creator from history
@@ -470,9 +442,7 @@ const Room = () => {  const { roomId } = useParams();
     
     // Listen for direct room data events to update participants
     socketRef.current.on('room_data', (data) => {
-      console.log('Room data event received:', data);
       if (data.participants) {
-        console.log('Setting participants from room_data:', data.participants);
         
         // Filter out any 'User' entries that aren't the current user's name
         // And ensure the current user is included properly
@@ -483,14 +453,12 @@ const Room = () => {  const { roomId } = useParams();
         // Remove duplicates by creating a Set and converting back to array
         const uniqueParticipants = [...new Set(filteredParticipants)];
         
-        console.log('Filtered participants:', uniqueParticipants);
         setParticipants(uniqueParticipants);
       }
     });
 
     // Add listeners for user-joined and user-left events to properly track participants
     socketRef.current.on('user-joined', (data) => {
-      console.log('User joined event received:', data);
       if (data.username) {
         setParticipants(prev => {
           // Only add if not already in the list
@@ -503,7 +471,6 @@ const Room = () => {  const { roomId } = useParams();
     });
     
     socketRef.current.on('user-left', (data) => {
-      console.log('User left event received:', data);
       if (data.username) {
         setParticipants(prev => prev.filter(name => name !== data.username));
       }
@@ -511,7 +478,6 @@ const Room = () => {  const { roomId } = useParams();
 
     // For compatibility, also listen to underscore versions
     socketRef.current.on('user_joined', (data) => {
-      console.log('User joined event (underscore) received:', data);
       if (data.username) {
         setParticipants(prev => {
           if (!prev.includes(data.username)) {
@@ -523,7 +489,6 @@ const Room = () => {  const { roomId } = useParams();
     });
     
     socketRef.current.on('user_left', (data) => {
-      console.log('User left event (underscore) received:', data);
       if (data.username) {
         setParticipants(prev => prev.filter(name => name !== data.username));
       }
@@ -531,11 +496,9 @@ const Room = () => {  const { roomId } = useParams();
 
     // Listen for messages from other users with deduplication
     socketRef.current.on('receive-message', (data) => {
-      console.log('Received message event:', data);
       
       // Filter out collab room messages
       if (data.source === "collab-room") {
-        console.log('Ignoring message from collab room');
         return;
       }
       
@@ -552,11 +515,9 @@ const Room = () => {  const { roomId } = useParams();
     
     // Also listen for the underscore version of events
     socketRef.current.on('receive_message', (data) => {
-      console.log('Received message (underscore format):', data);
       
       // Filter out collab room messages
       if (data.source === "collab-room") {
-        console.log('Ignoring message from collab room');
         return;
       }
       
@@ -571,7 +532,6 @@ const Room = () => {  const { roomId } = useParams();
       }
     });    // Setup for room-ended event - update to use common cleanup
     socketRef.current.on('room-ended', (data) => {
-      console.log("Room ended event received:", data);
       
       // Check if this was triggered by the current user ending the room
       const isEndingByCurrentUser = localStorage.getItem('endingRoomByUser') === 'true';
@@ -584,7 +544,6 @@ const Room = () => {  const { roomId } = useParams();
     });
     
     setLoading(false);
-    console.log('Socket connection setup complete');
   };
 
   // Component cleanup effect to reset the join message tracking when component unmounts
@@ -612,7 +571,6 @@ const Room = () => {  const { roomId } = useParams();
         timestamp: new Date()
       }]);
     } else {
-      console.log('Duplicate system message filtered:', text);
     }
   };
 
@@ -669,8 +627,6 @@ const Room = () => {  const { roomId } = useParams();
       messageId, // Add message ID to allow deduplication
       source: 'room-chat' // Add source to distinguish from collab room messages
     };
-
-    console.log('Sending message:', messageData);
     
     // Send message using the correct event name
     socketRef.current.emit('send-message', messageData);
@@ -695,7 +651,6 @@ const Room = () => {  const { roomId } = useParams();
         setTimeout(() => setCopySuccess(false), 3000);
       })
       .catch(err => {
-        console.error('Failed to copy room ID:', err);
         addNotification('Failed to copy room ID', 'error');
       });
   };
@@ -708,7 +663,6 @@ const Room = () => {  const { roomId } = useParams();
         setTimeout(() => setInviteLinkCopied(false), 3000);
       })
       .catch(err => {
-        console.error('Failed to copy room ID:', err);
         addNotification('Failed to copy room code', 'error');
       });
   };
@@ -727,7 +681,6 @@ const Room = () => {  const { roomId } = useParams();
     try {
       const userId = localStorage.getItem('userId');
       if (!userId) {
-        console.log('Cannot verify room creator status: no user ID available');
         setIsRoomCreator(false);
         return;
       }
@@ -740,7 +693,6 @@ const Room = () => {  const { roomId } = useParams();
         
         // Check if current user is the room creator by comparing IDs
         const isCreator = userId === inviterId.toString();
-        console.log('Room creator verification:', { userId, inviterId, isCreator });
         
         // Update the state and localStorage
         setIsRoomCreator(isCreator);
@@ -755,7 +707,6 @@ const Room = () => {  const { roomId } = useParams();
         }
       }
     } catch (error) {
-      console.error('Failed to verify room creator status:', error);
       setIsRoomCreator(false);
     }
   };

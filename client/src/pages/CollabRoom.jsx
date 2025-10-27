@@ -65,8 +65,8 @@ const CollabRoom = () => {
   // Process function to avoid duplicates - use a Map for better tracking
   const processedMessages = useRef(new Map());
 
-  // New state for code modal
-  const [isCodeModalOpen, setIsCodeModal] = useState(false);
+  // New state for code modal - fix the state variable and setter consistency
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [modalCode, setModalCode] = useState("");
   const [modalLanguage, setModalLanguage] = useState("javascript");
   const [isModalFromCurrentUser, setIsModalFromCurrentUser] = useState(true); // Track who sent the code
@@ -117,7 +117,12 @@ const CollabRoom = () => {
     setModalCode(formattedCode);
     setModalLanguage(lang || detectCodeLanguage(formattedCode));
     setIsModalFromCurrentUser(isFromCurrentUser);
-    setIsCodeModal(true);
+    setIsCodeModalOpen(true);
+  };
+
+  // Add a specific function to close the modal for clarity
+  const closeCodeModal = () => {
+    setIsCodeModalOpen(false);
   };
 
   // Function to copy code from modal
@@ -135,7 +140,9 @@ const CollabRoom = () => {
           }, 1500);
         }
       })
-      .catch((err) => console.error("Could not copy code: ", err));
+      .catch((err) => {
+        // Handle error (e.g., show notification)
+      });
   };
   useEffect(() => {
     // Initialize problem information from location state
@@ -361,9 +368,7 @@ const CollabRoom = () => {
               problem.title === "LeetCode Problem" ||
               problem.title === "Problem"
             ) {
-              console.warn(
-                "API returned placeholder problem data, trying alternative fetch"
-              );
+              
               throw new Error("API returned placeholder data");
             }
 
@@ -401,7 +406,7 @@ const CollabRoom = () => {
           const userId = localStorage.getItem("userId");
 
           if (!userId) {
-            console.error("No user ID found in local storage");
+            
             throw new Error("User ID not available");
           }
           // Get user's whole syllabus and extract the problem
@@ -417,7 +422,7 @@ const CollabRoom = () => {
           const studyDay = syllabus.studyDays.find((day) => day._id === dayId);
 
           if (!studyDay) {
-            console.error("Study day not found in syllabus:", dayId);
+           
             throw new Error("Study day not found");
           }
 
@@ -431,7 +436,7 @@ const CollabRoom = () => {
           );
 
           if (!problem) {
-            console.error("Problem not found in study day");
+            
             throw new Error("Problem not found in study day");
           }
 
@@ -465,8 +470,7 @@ const CollabRoom = () => {
           setIsLoadingProblem(false);
           return;
         } catch (syllabusError) {
-          console.error("Error fetching from syllabus:", syllabusError);
-
+          
           // Third approach: Try the syllabusApiUtils as the final resort
           try {
           
@@ -524,7 +528,7 @@ const CollabRoom = () => {
             // If we reach here, we couldn't get the problem details
             throw new Error("Problem not found in study day data");
           } catch (utilsError) {
-            console.error("All fetch attempts failed:", utilsError);
+           
             useFallbackProblemDetails();
           }
         }
@@ -571,7 +575,7 @@ const CollabRoom = () => {
         }
       }
     } catch (error) {
-      console.error("Error fetching problem details:", error);
+     
       setProblemFetchError(error.message || "Failed to load problem details");
       useFallbackProblemDetails();
     } finally {
@@ -688,7 +692,7 @@ const CollabRoom = () => {
         return "Coding Problem";
       }
     } catch (err) {
-      console.error("Error parsing URL:", err);
+      
     }
 
     return "Coding Problem";
@@ -721,7 +725,7 @@ const CollabRoom = () => {
 
       return null;
     } catch (error) {
-      console.error("Error detecting platform from URL:", error);
+      
       return null;
     }
   }; // Modified handleStatusChange to use our handleUpdateProblemStatus function
@@ -733,10 +737,7 @@ const CollabRoom = () => {
 
       // Validate required parameters
       if (!dayId || !problemId) {
-        console.error("Missing required parameters for status update", {
-          dayId,
-          problemId,
-        });
+        
         setStatusUpdateError(
           "Missing problem information. Please try again from the syllabus page."
         );
@@ -765,7 +766,7 @@ const CollabRoom = () => {
         });
       }
     } catch (error) {
-      console.error("Error in handleStatusChange:", error);
+      
       // Error handling is already done in handleUpdateProblemStatus
     }
   };
@@ -813,7 +814,7 @@ const CollabRoom = () => {
             }
           }
         } catch (error) {
-          console.error("Error fetching problem status:", error);
+          
           // Don't show error to user, just use localStorage value if available
         }
       }
@@ -841,7 +842,7 @@ const CollabRoom = () => {
       if (response.success) {
         
       } else {
-        console.error("Failed to update problem status:", response.message);
+      
       }
     }
   };
@@ -865,7 +866,7 @@ const CollabRoom = () => {
       if (response.success) {
       
       } else {
-        console.error("Failed to update problem status:", response.message);
+      
       }
     }
   };
@@ -971,7 +972,7 @@ const CollabRoom = () => {
         ]);
       }
     } catch (err) {
-      console.error("Failed to paste code: ", err);
+     
     }
   };
 
@@ -984,8 +985,7 @@ const CollabRoom = () => {
         addNotification("Code copied to clipboard!", "success");
       })
       .catch((err) => {
-        console.error("Could not copy code: ", err);
-        // Show error notification
+      
         addNotification("Failed to copy to clipboard", "error");
       });
   };
@@ -1191,7 +1191,7 @@ const CollabRoom = () => {
     const handleProblemStatus = (data) => {
 
       if (!data || !data.status || !data.problemId) {
-        console.warn("Received invalid problem status update");
+        
         return;
       }
 
@@ -1240,7 +1240,7 @@ const CollabRoom = () => {
     const handleProblemDetails = (data) => {
 
       if (!data || !data.problemDetails) {
-        console.warn("Received invalid problem details");
+        
         return;
       }
 
@@ -1275,10 +1275,7 @@ const CollabRoom = () => {
       const shouldAcceptData = isValidData || hasUsableDetails || hasValidIds;
 
       if (!shouldAcceptData) {
-        console.warn(
-          "Received problem details contain only placeholder data without valid IDs:",
-          receivedDetails
-        );
+        
 
         // If we already have better details, don't replace them
         const currentDetailsValid =
@@ -1641,7 +1638,7 @@ const CollabRoom = () => {
   // Handle updating problem status
   const handleUpdateProblemStatus = async (newStatus) => {
     if (!problemId || !dayId) {
-      console.error("Cannot update status: Problem details not available");
+     
       return;
     }
 
@@ -1678,7 +1675,7 @@ const CollabRoom = () => {
         // Persist the status in localStorage by problem ID
         localStorage.setItem(`problem_status_${problemId}`, newStatus);
       } else {
-        console.error("Failed to update problem status:", result.message);
+
         setStatusUpdateError(result.message);
         setTimeout(() => setStatusUpdateError(null), 3000);
 
@@ -1692,7 +1689,7 @@ const CollabRoom = () => {
         }
       }
     } catch (error) {
-      console.error("Error updating problem status:", error);
+      
       setStatusUpdateError("An error occurred while updating status");
       setTimeout(() => setStatusUpdateError(null), 3000);
     } finally {
@@ -1762,13 +1759,13 @@ const CollabRoom = () => {
     }
 
     if (!details) {
-      console.warn("Cannot share undefined problem details");
+      
       return;
     }
 
     // Validate the problem details object before sending
     if (typeof details !== "object") {
-      console.warn("Problem details must be an object");
+      
       return;
     }
 
@@ -1790,26 +1787,14 @@ const CollabRoom = () => {
       details.title.toLowerCase() === "unknown";
 
     if (isPurelyPlaceholder && !dayId && !problemId) {
-      console.warn(
-        "Not sharing placeholder problem details without IDs:",
-        details.title
-      );
+     
 
       // If this is a deliberate share attempt (not automatic), show warning to room creator
       const isInitialShare = !hasSharedProblemDetails;
       if (isInitialShare) {
-        const warningMessage = {
-          id: `warning-${Date.now()}`,
-          user: "System",
-          text: `Unable to share problem details: the problem title "${
-            details.title || "Unknown"
-          }" appears to be a placeholder. Please select a valid problem from the syllabus before sharing.`,
-          timestamp: new Date(),
-          type: "warning",
-        };
-
+       
         setChatMessages((prev) => {
-          const updated = [...prev, warningMessage];
+          const updated = [...prev];
           saveCollabMessages(roomData.roomId, updated);
           return updated;
         });
@@ -1828,7 +1813,6 @@ const CollabRoom = () => {
         (!details.url || details.url === "");
 
       if (hasAllPlaceholderValues) {
-        console.warn("Not sharing details with all placeholder values");
         return;
       }
     }
@@ -2031,7 +2015,7 @@ const CollabRoom = () => {
             Code Collaboration Room
           </h1>
         </div>          {/* Problem Information Card with status buttons integrated - only display if a valid problem is selected from syllabus */}
-        {(dayId && problemId && !hasPlaceholderTitle(problemDetails.title)) && (
+        {(location.state?.problemId && dayId && problemId && !hasPlaceholderTitle(problemDetails.title)) && (
           <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6 mb-6">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
               <div>
@@ -2165,9 +2149,10 @@ const CollabRoom = () => {
                 }`}
                 title={
                   problemStatus === "solved"
+                   
                     ? "Click to reset status"
                     : "Mark as solved"
-                }
+                               }
               >
                 {statusUpdateLoading && problemStatus !== "solved" ? (
                   <>
@@ -2599,16 +2584,15 @@ const CollabRoom = () => {
                   onSubmit={handleSendMessage}
                   className="flex items-center gap-2"
                 >
-                  <div className="flex-1 flex items-center bg-[#2d3748] border border-white/20 rounded-lg overflow-hidden">
+                  <div className="flex-1 flex items-center bg-[#2d3748] border border-white/20 rounded-lg overflow-hidden min-w-0">
                     {isCodeMessage ? (
                       <textarea
                         placeholder="Type or paste your code here..."
-                        className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none resize-none"
+                        className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none resize-none min-w-0"
                         style={{ height: "42px", overflow: "auto" }}
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={(e) => {
-                          // Allow tab key for indentation in code
                           if (e.key === "Tab") {
                             e.preventDefault();
                             const start = e.target.selectionStart;
@@ -2619,7 +2603,6 @@ const CollabRoom = () => {
                                 "  " +
                                 value.substring(end)
                             );
-                            // Set cursor position after the inserted tab
                             setTimeout(() => {
                               e.target.selectionStart = e.target.selectionEnd =
                                 start + 2;
@@ -2633,7 +2616,7 @@ const CollabRoom = () => {
                       <input
                         type="text"
                         placeholder="Type message..."
-                        className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none"
+                        className="flex-1 px-4 py-2.5 bg-transparent text-white placeholder-gray-400 outline-none focus:ring-[#94C3D2] focus:border-[#94C3D2] border-none min-w-0"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={handleMessageKeyDown}
@@ -2643,16 +2626,10 @@ const CollabRoom = () => {
                       type="button"
                       onClick={() => {
                         setIsCodeMessage(!isCodeMessage);
-                        setNewMessage(""); // Clear message when switching modes
+                        setNewMessage("");
                       }}
-                      className={`px-2 mx-2 ${
-                        isCodeMessage ? "text-[#94C3D2]" : "text-white/95"
-                      } hover:text-[#94C3D2] transition-colors`}
-                      title={
-                        isCodeMessage
-                          ? "Currently in code mode"
-                          : "Click to send code"
-                      }
+                      className="px-3 py-2 flex-shrink-0 text-white/95 hover:text-[#94C3D2] transition-colors"
+                      title={isCodeMessage ? "Currently in code mode" : "Click to send code"}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -2672,7 +2649,7 @@ const CollabRoom = () => {
                   </div>
                   <button
                     type="submit"
-                    className="bg-[#94C3D2] text-white px-6 py-2.5 rounded-lg hover:bg-[#7EB5C3] transition-colors shadow-md font-medium"
+                    className="flex-shrink-0 bg-[#94C3D2] text-white px-4 sm:px-6 py-2.5 rounded-lg hover:bg-[#7EB5C3] transition-colors shadow-md font-medium whitespace-nowrap"
                   >
                     Send
                   </button>
@@ -2729,7 +2706,7 @@ const CollabRoom = () => {
             >
               <h3
                 className={`text-lg font-medium ${
-                  isModalFromCurrentUser ? "text-gray-900" : "text-gray-900"
+                  isModalFromCurrentUser ? "text-white/90" : "text-gray-900"
                 }`}
               >
                 Code - {modalLanguage.toUpperCase()}
@@ -2746,11 +2723,13 @@ const CollabRoom = () => {
                 >
                   Copy Code
                 </button>
+                {/* Fix the close button to use a direct function reference rather than inline function */}
                 <button
+                  type="button"
                   onClick={() => setIsCodeModalOpen(false)}
                   className={`${
                     isModalFromCurrentUser
-                      ? "text-gray-700 hover:text-gray-900"
+                      ? "text-gray-500 hover:text-white"
                       : "text-gray-700 hover:text-gray-900"
                   }`}
                 >

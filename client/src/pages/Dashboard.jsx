@@ -139,7 +139,7 @@ const Dashboard = () => {
           }
         }
       } catch (err) {
-        console.error("Error fetching user data:", err);
+       
         addNotification("Failed to load your problem data", "error");
       } finally {
         setIsLoading(false);
@@ -186,11 +186,6 @@ const Dashboard = () => {
     }
   }, [activeTab, allProblems]);
 
-  // Generate a mock userId for demo
-  const mockUserId = "user123";
-
-  const BASE_URL = window.location.origin;
-  // IMPORTANT DEBUG: Add console logs to track the flow
   const handleCreateRoomClick = () => { 
     // Log authentication state for debugging
     const token = localStorage.getItem('token');
@@ -254,11 +249,10 @@ const Dashboard = () => {
           addNotification("Room created successfully!", "success");
         }
       } catch (error) {
-        console.error("Error from server:", error.response?.data || error);
+       
         addNotification(error.response?.data?.message || "Failed to create room", "error");
       }
     } catch (error) {
-      console.error("Error creating room:", error);
       addNotification("Failed to create room", "error");
     } finally {
       setCreatingRoom(false);
@@ -288,7 +282,7 @@ const Dashboard = () => {
         setTimeout(() => setCopySuccess(false), 3000);
       })
       .catch((err) => {
-        console.error("Failed to copy room ID: ", err);
+      
         addNotification("Failed to copy room code", "error");
       });
   };
@@ -413,12 +407,12 @@ const Dashboard = () => {
         if (error.response && error.response.status === 404) {
           setJoinError("Room not found or is no longer active");
         } else {
-          console.error("Error joining room:", error);
+          
           setJoinError("Error validating room. Please try again.");
         }
       }
     } catch (error) {
-      console.error("Error in join room process:", error);
+     
       setJoinError("Invalid room code or connection issue");
     }
   };
@@ -436,18 +430,51 @@ const Dashboard = () => {
     }
   };
 
+  // Share and copy functions for problem links
+  const handleCopyProblemLink = (problem) => {
+    const link = problem.link || problem.url;
+    navigator.clipboard
+      .writeText(link)
+      .then(() => {
+        addNotification("Problem link copied to clipboard!", "success");
+      })
+      .catch((err) => {
+
+        addNotification("Failed to copy problem link", "error");
+      });
+  };
+
+  const handleShareProblem = (problem) => {
+    const title = problem.title;
+    const link = problem.link || problem.url;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `Coding Problem: ${title}`,
+        text: `Check out this coding problem: ${title}`,
+        url: link
+      })
+      .catch(err => {
+        // Fallback to copy if share fails
+        handleCopyProblemLink(problem);
+      });
+    } else {
+      // Fallback for browsers that don't support native sharing
+      handleCopyProblemLink(problem);
+    }
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#334155] to-[#0f172a] text-white">
       <Navbar />
-      <div className="container mx-auto px-4 py-8 relative z-10">
-        <motion.div
-          className="flex justify-between items-center mb-8"
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 relative z-10">        <motion.div
+          className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6 }}
         >
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
               Welcome, {userData.name}!
             </h1>
             <p className="text-[#94C3D2]/80 mt-1">
@@ -455,36 +482,35 @@ const Dashboard = () => {
             </p>
           </div>
 
-          <div className="flex gap-4">
-            <button
+          <div className="flex gap-2 sm:gap-4 mt-4 sm:mt-0 w-full sm:w-auto">            <button
               onClick={handleCreateRoomClick}
-              className="bg-white/10 border border-white/20 text-white/95 hover:bg-white/20 px-4 py-2.5 rounded-lg flex items-center shadow-sm backdrop-blur-sm transition-colors"
+              className="bg-white/10 border border-white/20 text-white/95 hover:bg-white/20 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg flex items-center shadow-sm backdrop-blur-sm transition-colors flex-1 sm:flex-auto justify-center sm:justify-start"
               style={{ textShadow: "0 0 10px rgba(255, 255, 255, 0.3)" }}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2 text-[#94C3D2]"
+                className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 text-[#94C3D2]"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
                 <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
               </svg>
-              Create Room
+              <span className="text-sm sm:text-base">Create Room</span>
             </button>
             <button
               onClick={() => setShowJoinModal(true)}
-              className="bg-[#94C3D2] text-white px-5 py-2.5 rounded-lg flex items-center shadow-sm hover:bg-[#7EB5C3] transition-colors"
+              className="bg-[#94C3D2] text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg flex items-center shadow-sm hover:bg-[#7EB5C3] transition-colors flex-1 sm:flex-auto justify-center"
               style={{ textShadow: "0 0 10px rgba(255, 255, 255, 0.3)" }}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
+                className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
                 <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 002-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
               </svg>
-              Join Room
+              <span className="text-sm sm:text-base">Join Room</span>
             </button>
           </div>
         </motion.div>
@@ -496,10 +522,8 @@ const Dashboard = () => {
           transition={{ delay: 0.3, duration: 0.6 }}
         >
           Your Dashboard
-        </motion.h2>
-
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
+        </motion.h2>        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
@@ -1043,14 +1067,14 @@ const Dashboard = () => {
         </motion.div>
 
         <motion.div
-          className="mb-6 flex space-x-2"
+          className="mb-6 flex flex-wrap gap-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.6 }}
         >
           <button
             onClick={() => setActiveTab("recent")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
               activeTab === "recent"
                 ? "bg-[#94C3D2] text-white shadow"
                 : "bg-white/10 text-white/80 hover:bg-white/20"
@@ -1060,7 +1084,7 @@ const Dashboard = () => {
           </button>
           <button
             onClick={() => setActiveTab("solved")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
               activeTab === "solved"
                 ? "bg-[#94C3D2] text-white shadow"
                 : "bg-white/10 text-white/80 hover:bg-white/20"
@@ -1070,7 +1094,7 @@ const Dashboard = () => {
           </button>
           <button
             onClick={() => setActiveTab("unsolved")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
               activeTab === "unsolved"
                 ? "bg-[#94C3D2] text-white shadow"
                 : "bg-white/10 text-white/80 hover:bg-white/20"
@@ -1080,7 +1104,7 @@ const Dashboard = () => {
           </button>
           <button
             onClick={() => setActiveTab("solveLater")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
               activeTab === "solveLater"
                 ? "bg-[#94C3D2] text-white shadow"
                 : "bg-white/10 text-white/80 hover:bg-white/20"
@@ -1096,18 +1120,18 @@ const Dashboard = () => {
           transition={{ delay: 0.6, duration: 0.6 }}
         >
           {isLoading ? (
-            <div className="bg-white/10 rounded-xl p-10 text-center backdrop-blur-md border border-white/20">
+            <div className="bg-white/10 rounded-xl p-6 sm:p-10 text-center backdrop-blur-md border border-white/20 mx-4 sm:mx-0">
               <div className="animate-pulse flex flex-col items-center">
-                <div className="h-12 w-12 rounded-full bg-white/30 mb-4"></div>
-                <div className="h-4 w-48 bg-white/30 rounded mb-3"></div>
-                <div className="h-3 w-32 bg-white/20 rounded"></div>
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-white/30 mb-3 sm:mb-4"></div>
+                <div className="h-3 sm:h-4 w-36 sm:w-48 bg-white/30 rounded mb-2 sm:mb-3"></div>
+                <div className="h-2 sm:h-3 w-24 sm:w-32 bg-white/20 rounded"></div>
               </div>
             </div>
           ) : problems.length === 0 ? (
-            <div className="bg-white/10 rounded-xl p-10 text-center backdrop-blur-md border border-white/20">
+            <div className="bg-white/10 rounded-xl p-6 sm:p-10 text-center backdrop-blur-md border border-white/20 mx-4 sm:mx-0">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-12 w-12 text-white/60 mx-auto mb-4"
+                className="h-10 w-10 sm:h-12 sm:w-12 text-white/60 mx-auto mb-3 sm:mb-4"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -1119,10 +1143,10 @@ const Dashboard = () => {
                   d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                 />
               </svg>
-              <p className="text-white/95 font-medium">
+              <p className="text-white/95 font-medium text-sm sm:text-base">
                 No problems found in this category.
               </p>
-              <p className="text-white/70 text-sm mt-1">
+              <p className="text-white/70 text-xs sm:text-sm mt-1">
                 {allProblems.length === 0 
                   ? "Add problems in the Syllabus page to see them here."
                   : "Try changing your filter."
@@ -1131,60 +1155,61 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
-              <div className="bg-white/10 rounded-xl overflow-hidden backdrop-blur-md border border-white/20 p-4">
+              <div className="hidden sm:block bg-white/10 rounded-xl overflow-hidden backdrop-blur-md border border-white/20 p-4 mx-4 sm:mx-0">
                 <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-white/95 uppercase tracking-wider">
-                  <div className="col-span-4 md:col-span-5">Title</div>
-                  <div className="col-span-3 md:col-span-2">Platform</div>
-                  <div className="col-span-3 md:col-span-2">Date Added</div>
-                  <div className="col-span-2 md:col-span-2">Status</div>
-                  <div className="hidden md:block md:col-span-1">Actions</div>
+                  <div className="col-span-5">Title</div>
+                  <div className="col-span-2">Platform</div>
+                  <div className="col-span-2">Date Added</div>
+                  <div className="col-span-2">Status</div>
+                  <div className="col-span-1">Actions</div>
                 </div>
-              </div>
-
-              {problems.map((problem) => (
+              </div>              {problems.map((problem) => (
                 <div
                   key={problem.id || problem._id}
-                  className="bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4 transition-all duration-300"
+                  className="bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-3 sm:p-4 transition-all duration-300 mx-4 sm:mx-0"
                 >
-                  <div className="grid grid-cols-12 gap-4 items-center">
-                    <div className="col-span-4 md:col-span-5">
+                  <div className="sm:grid sm:grid-cols-12 sm:gap-4 sm:items-center">
+                    <div className="sm:col-span-5 mb-2 sm:mb-0">
                       <a
                         href={problem.link || problem.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-medium text-white/95 hover:text-[#94C3D2] hover:underline transition-colors"
+                        className="font-medium text-white/95 hover:text-[#94C3D2] hover:underline transition-colors text-sm sm:text-base"
                       >
                         {problem.title}
                       </a>
-                      {problem.difficulty && (
-                        <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${
-                          problem.difficulty.toLowerCase() === 'easy' ? 'bg-green-900/40 text-green-200' :
-                          problem.difficulty.toLowerCase() === 'medium' ? 'bg-yellow-900/40 text-yellow-200' :
-                          'bg-red-900/40 text-red-200'
-                        }`}>
-                          {problem.difficulty}
-                        </span>
-                      )}
                     </div>
-
-                    <div className="col-span-3 md:col-span-2">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white/10 text-white/80 border border-white/20">
-                        {problem.platform}
+                    <div className="flex justify-between sm:justify-start items-center mb-2 sm:mb-0 sm:col-span-2">
+                      <div className="sm:hidden text-xs text-white/60">Platform:</div>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          problem.platform?.toLowerCase() === "leetcode"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : problem.platform?.toLowerCase() === "codeforces"
+                            ? "bg-red-100 text-red-800"
+                            : problem.platform?.toLowerCase() === "hackerrank"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
+                        {problem.platform || "Other"}
                       </span>
                     </div>
-
-                    <div className="col-span-3 md:col-span-2 text-sm text-white/70">
-                      {problem.dateAdded}
+                    <div className="flex justify-between sm:justify-start items-center mb-2 sm:mb-0 sm:col-span-2">
+                      <div className="sm:hidden text-xs text-white/60">Added:</div>
+                      <span className="text-xs sm:text-sm text-white/70">
+                        {problem.dateAdded}
+                      </span>
                     </div>
-
-                    <div className="col-span-2 md:col-span-2">
+                    <div className="flex justify-between sm:justify-start items-center mb-2 sm:mb-0 sm:col-span-2">
+                      <div className="sm:hidden text-xs text-white/60">Status:</div>
                       <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                           problem.status === "solved"
-                            ? "bg-green-900/50 text-green-200 border border-green-600/30"
+                            ? "bg-green-100 text-green-800"
                             : problem.status === "unsolved"
-                            ? "bg-red-900/50 text-red-200 border border-red-600/30"
-                            : "bg-yellow-900/50 text-yellow-200 border border-yellow-600/30"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
                         }`}
                       >
                         {problem.status === "solveLater"
@@ -1193,122 +1218,71 @@ const Dashboard = () => {
                             problem.status.slice(1)}
                       </span>
                     </div>
-
-                    <div className="hidden md:flex md:col-span-1 justify-end space-x-3">
-                      <button
-                        className="text-blue-400 hover:text-blue-300 transition-colors p-1.5 hover:bg-white/10 rounded-full"
-                        title="Copy Link"
-                        onClick={() => {
-                          navigator.clipboard.writeText(problem.link || problem.url);
-                          toast.success("Problem link copied to clipboard!");
-                        }}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
+                    <div className="flex sm:justify-start justify-end sm:col-span-1">
+                      <div className="flex space-x-2">
+                        <a
+                          href={problem.link || problem.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#94C3D2] hover:text-[#7EB5C3] transition-colors"
+                          title="Open problem"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-                          />
-                        </svg>
-                      </button>
-                      <button
-                        className="text-green-400 hover:text-green-300 transition-colors p-1.5 hover:bg-white/10 rounded-full"
-                        title="Share"
-                        onClick={() => {
-                          if (navigator.share) {
-                            navigator.share({
-                              title: problem.title,
-                              text: `Check out this problem: ${problem.title}`,
-                              url: problem.link || problem.url
-                            });
-                          } else {
-                            navigator.clipboard.writeText(problem.link || problem.url);
-                            toast.success("Problem link copied to clipboard!");
-                          }
-                        }}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 sm:h-5 sm:w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                          </svg>
+                        </a>
+                        <button
+                          onClick={() => handleCopyProblemLink(problem)}
+                          className="text-blue-400 hover:text-blue-500 transition-colors"
+                          title="Copy link"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-
-                    {/* Mobile actions - only visible on small screens */}
-                    <div className="col-span-12 flex md:hidden justify-end mt-2 space-x-4">
-                      <button
-                        className="text-blue-400 hover:text-blue-300 transition-colors flex items-center"
-                        title="Copy Link"
-                        onClick={() => {
-                          navigator.clipboard.writeText(problem.link || problem.url);
-                          toast.success("Problem link copied to clipboard!");
-                        }}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 mr-1"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 sm:h-5 sm:w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleShareProblem(problem)}
+                          className="text-green-400 hover:text-green-500 transition-colors"
+                          title="Share"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"
-                          />
-                        </svg>
-                        Copy
-                      </button>
-                      <button
-                        className="text-green-400 hover:text-green-300 transition-colors flex items-center"
-                        title="Share"
-                        onClick={() => {
-                          if (navigator.share) {
-                            navigator.share({
-                              title: problem.title,
-                              text: `Check out this problem: ${problem.title}`,
-                              url: problem.link || problem.url
-                            });
-                          } else {
-                            navigator.clipboard.writeText(problem.link || problem.url);
-                            toast.success("Problem link copied to clipboard!");
-                          }
-                        }}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 mr-1"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                          />
-                        </svg>
-                        Share
-                      </button>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 sm:h-5 sm:w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1322,21 +1296,17 @@ const Dashboard = () => {
       {showInviteModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div
-            className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+            className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 border border-white/20 overflow-hidden relative"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
+              <h3 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
                 Create Room
               </h3>
               <button
-                onClick={() => {
-                  setShowInviteModal(false);
-                  setRoomCreated(false);
-                  setRoomId("");
-                }}
+                onClick={() => setShowInviteModal(false)}
                 className="text-white/80 hover:text-white transition-colors"
               >
                 <svg
@@ -1355,18 +1325,21 @@ const Dashboard = () => {
                 </svg>
               </button>
             </div>
+            
             <div className="space-y-4">
               {!roomCreated ? (
-                <div className="flex justify-center">
+                <div className="flex justify-center pt-4">
                   <button
                     onClick={handleCreateRoom}
                     disabled={creatingRoom}
-                    className="px-6 py-2.5 bg-[#94C3D2] text-white rounded-lg hover:bg-[#7EB5C3] transition-colors shadow-lg flex items-center"
+                    className={`px-4 sm:px-6 py-2 sm:py-2.5 w-full bg-[#94C3D2] text-white rounded-lg ${
+                      creatingRoom ? "opacity-75" : "hover:bg-[#7EB5C3]"
+                    } transition-colors shadow-lg flex items-center justify-center text-sm sm:text-base`}
                   >
                     {creatingRoom ? (
                       <>
                         <svg
-                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5 text-white"
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
                           viewBox="0 0 24 24"
@@ -1391,7 +1364,7 @@ const Dashboard = () => {
                       <>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 mr-2"
+                          className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -1424,11 +1397,11 @@ const Dashboard = () => {
                         id="invite-link"
                         readOnly
                         value={generateInviteCode()}
-                        className="w-full pl-4 pr-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-l-lg focus:outline-none text-gray-100"
+                        className="w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-l-lg focus:outline-none text-gray-100 text-sm sm:text-base"
                       />
                       <button
                         onClick={handleCopyLink}
-                        className="px-4 py-2.5 bg-[#94C3D2] text-white rounded-r-lg hover:bg-[#7EB5C3] transition-colors focus:outline-none"
+                        className="px-3 sm:px-4 py-2 sm:py-2.5 bg-[#94C3D2] text-white rounded-r-lg hover:bg-[#7EB5C3] transition-colors focus:outline-none"
                       >
                         {copySuccess ? (
                           <svg
@@ -1464,7 +1437,7 @@ const Dashboard = () => {
                       </button>
                     </div>
                     {copySuccess && (
-                      <p className="mt-2 text-sm text-green-400">
+                      <p className="mt-2 text-xs sm:text-sm text-green-400">
                         Room code copied to clipboard!
                       </p>
                     )}
@@ -1474,11 +1447,11 @@ const Dashboard = () => {
                   <div className="flex justify-center py-2">
                     <button
                       onClick={handleOpenRoom}
-                      className="px-6 py-2.5 bg-[#94C3D2] text-white rounded-lg hover:bg-[#7EB5C3] transition-colors shadow-lg flex items-center"
+                      className="px-4 sm:px-6 py-2 sm:py-2.5 w-full bg-[#94C3D2] text-white rounded-lg hover:bg-[#7EB5C3] transition-colors shadow-lg flex items-center justify-center text-sm sm:text-base"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 mr-2"
+                        className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -1493,26 +1466,26 @@ const Dashboard = () => {
                       Open Room
                     </button>
                   </div>
-                  <div className="border-t border-gray-600/30 pt-4">
-                    <p className="text-sm text-white/70 mb-3">
+                  <div className="border-t border-gray-600/30 pt-3 sm:pt-4">
+                    <p className="text-xs sm:text-sm text-white/70 mb-2 sm:mb-3">
                       Or share code directly via:
                     </p>
-                    <div className="flex space-x-3">
+                    <div className="flex space-x-2 sm:space-x-3">
                       <button
                         onClick={shareOnWhatsApp}
-                        className="flex-1 py-2.5 bg-[#25D366] text-white/90 rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center"
+                        className="flex-1 py-2 sm:py-2.5 bg-[#25D366] text-white/90 rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center text-xs sm:text-sm"
                       >
-                        <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <svg className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                           <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.48 2 2 6.48 2 12C2 13.9 2.5 15.68 3.35 17.22L2.05 22L6.97 20.76C8.44 21.54 10.15 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C10.42 20 8.93 19.58 7.63 18.81L7.27 18.6L4.47 19.31L5.2 16.61L4.97 16.23C4.14 14.89 3.69 13.34 3.69 11.71C3.69 7.41 7.41 3.93 12.01 3.93C16.61 3.93 20.06 7.41 20.06 11.71C20.06 16.01 16.61 20 12 20ZM16.5 14.12C16.33 14.03 15.18 13.47 15.02 13.41C14.86 13.36 14.75 13.33 14.63 13.5C14.51 13.67 14.07 14.18 13.97 14.29C13.87 14.41 13.77 14.42 13.6 14.33C13.43 14.24 12.68 14 11.8 13.23C11.13 12.64 10.68 11.91 10.58 11.74C10.47 11.57 10.56 11.47 10.65 11.38C10.74 11.3 10.84 11.17 10.93 11.07C11.02 10.97 11.05 10.9 11.11 10.78C11.16 10.67 11.13 10.57 11.09 10.48C11.05 10.39 10.61 9.24 10.47 8.9C10.33 8.56 10.19 8.61 10.08 8.61C9.97 8.6 9.86 8.6 9.74 8.6C9.63 8.6 9.44 8.64 9.28 8.81C9.12 8.97 8.52 9.54 8.52 10.68C8.52 11.82 9.35 12.93 9.45 13.04C9.55 13.15 10.61 14.76 12.21 15.75C12.66 15.95 13.01 16.07 13.29 16.16C13.74 16.31 14.15 16.29 14.48 16.25C14.84 16.2 15.78 15.7 15.92 15.3C16.06 14.9 16.06 14.56 16.02 14.48C15.98 14.41 15.87 14.36 15.7 14.27L16.5 14.12Z" fill="currentColor"/>
                         </svg>
                         WhatsApp
                       </button>
                       <button
                         onClick={shareViaEmail}
-                        className="flex-1 py-2.5 bg-[#EA4335] text-white/90 rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center"
+                        className="flex-1 py-2 sm:py-2.5 bg-[#EA4335] text-white/90 rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center text-xs sm:text-sm"
                       >
                         <svg
-                          className="h-5 w-5 mr-2"
+                          className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2"
                           fill="currentColor"
                           viewBox="0 0 24 24"
                         >
@@ -1533,13 +1506,13 @@ const Dashboard = () => {
       {showJoinModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div
-            className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+            className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 border border-white/20 overflow-hidden relative"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
+              <h3 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">
                 Join a Room
               </h3>
               <button
@@ -1552,7 +1525,7 @@ const Dashboard = () => {
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
+                  className="h-5 w-5 sm:h-6 sm:w-6"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -1583,20 +1556,20 @@ const Dashboard = () => {
                     setJoinError("");
                   }}
                   placeholder="Enter an 8-character room code"
-                  className="w-full pl-4 pr-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                  className="w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400 text-sm sm:text-base"
                 />
                 {joinError && (
-                  <p className="mt-2 text-sm text-red-400">{joinError}</p>
+                  <p className="mt-2 text-xs sm:text-sm text-red-400">{joinError}</p>
                 )}
               </div>
               <div className="flex justify-end pt-2">
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-[#94C3D2] text-white rounded-lg hover:bg-[#7EB5C3] transition-colors shadow-lg flex items-center"
+                  className="px-4 sm:px-6 py-2 sm:py-2.5 bg-[#94C3D2] text-white text-sm sm:text-base rounded-lg hover:bg-[#7EB5C3] transition-colors shadow-lg flex items-center"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2"
+                    className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"

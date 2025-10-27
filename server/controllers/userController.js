@@ -65,7 +65,6 @@ export const changePassword = async (req, res) => {
       message: 'Password updated successfully'
     });
   } catch (error) {
-    console.error('Error changing password:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -125,7 +124,6 @@ export const deleteAccount = async (req, res) => {
           await deleteImage(publicId);
         }
       } catch (err) {
-        console.error('Error deleting profile picture from Cloudinary:', err);
         // Continue with account deletion even if image deletion fails
       }
     }
@@ -150,7 +148,6 @@ export const deleteAccount = async (req, res) => {
       message: 'Account deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting account:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

@@ -8,12 +8,12 @@ export const fetchCurrentUser = async () => {
     if (response.data && (response.data.id || response.data._id)) {
       const userId = response.data.id || response.data._id;
       localStorage.setItem('userId', userId);
-      console.log('Stored userId in localStorage:', userId);
+    
     }
     
     return response.data;
   } catch (error) {
-    console.error('Error fetching current user:', error);
+   
     throw error;
   }
 };
@@ -28,7 +28,7 @@ export const getUserId = () => {
 export const saveUserId = (userId) => {
   if (userId) {
     localStorage.setItem('userId', userId);
-    console.log('Manually saved userId to localStorage:', userId);
+   
     return true;
   }
   return false;

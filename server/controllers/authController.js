@@ -24,7 +24,6 @@ const getResendClient = () => {
       throw new Error('Resend API key is missing. Check your environment variables.');
     }
     resendClient = new Resend(resendApiKey);
-    console.log('Resend client initialized successfully');
   }
   return resendClient;
 };
@@ -65,7 +64,6 @@ export const signup = async (req, res) => {
       email, 
       password: hashedPassword 
     }).catch(err => {
-      console.error('Database error during user creation:', err);
       
       // If there's a MongoDB duplicate key error
       if (err.code === 11000) {
@@ -189,7 +187,6 @@ export const getCurrentUser = async (req, res) => {
       workExperience: mappedWorkExperience
     });
   } catch (error) {
-    console.error('Error getting current user:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -281,12 +278,10 @@ export const forgotPassword = async (req, res) => {
       user.resetCodeExpires = undefined;
       await user.save();
       
-      console.error('Email sending error:', err);
       return res.status(500).json({ message: 'Email could not be sent', error: err.message });
     }
     
   } catch (err) {
-    console.error('Password reset error:', err);
     res.status(500).json({ 
       message: 'An error occurred while processing your request'
     });
@@ -320,7 +315,6 @@ export const verifyResetCode = async (req, res) => {
     });
     
   } catch (err) {
-    console.error('Code verification error:', err);
     res.status(500).json({ 
       message: 'An error occurred while verifying code'
     });
@@ -379,7 +373,6 @@ export const resetPassword = async (req, res) => {
     });
     
   } catch (err) {
-    console.error('Password reset error:', err);
     res.status(500).json({ 
       message: 'An error occurred while resetting password'
     });
@@ -413,7 +406,6 @@ const sendVerificationEmail = async (user) => {
     
     return true;
   } catch (error) {
-    console.error('Verification email error:', error);
     return false;
   }
 };

@@ -13,18 +13,13 @@ export const saveSyllabus = async (req, res) => {
     // Get user ID from req.user - handle any possible format
     const userId = req.user?._id || req.user?.id;
     if (!userId) {
-      console.error('User ID not found in request');
       return res.status(400).json({
         success: false,
         message: 'User ID not found in request'
       });
     }
-    
-    console.log('Processing syllabus save for user:', userId);
-    console.log('Study days count:', studyDays?.length || 0);
 
     if (!studyDays || !Array.isArray(studyDays)) {
-      console.error('Invalid study days data:', studyDays);
       return res.status(400).json({
         success: false,
         message: 'Study days data is required and must be an array'
@@ -36,27 +31,22 @@ export const saveSyllabus = async (req, res) => {
     session.startTransaction();
 
     try {
-      console.log('Looking for existing syllabus for user:', userId);
       
       // Find existing syllabus or create new one
       let syllabus = await Syllabus.findOne({ userId }).session(session);
       
       if (!syllabus) {
-        console.log('No existing syllabus found, creating new one');
         syllabus = new Syllabus({ 
           userId,
           studyDays: [] 
         });
       } else {
-        console.log('Found existing syllabus:', syllabus._id);
       }
       
       // Process each study day
       const savedDayIds = [];
       
-      console.log('Processing study days...');
       for (const dayData of studyDays) {
-        console.log('Processing day:', dayData.title, 'with ID:', dayData.id || dayData._id || 'new');
         
         // Map frontend field names to backend model field names
         const mappedDayData = {
@@ -70,7 +60,6 @@ export const saveSyllabus = async (req, res) => {
         // Handle existing study day or create new one
         if (dayData._id && mongoose.Types.ObjectId.isValid(dayData._id)) {
           // If _id is provided and it's a valid ObjectId, try to update
-          console.log('Updating existing day with valid ObjectId:', dayData._id);
           
           const existingDay = await StudyDay.findById(dayData._id).session(session);
           
@@ -98,7 +87,6 @@ export const saveSyllabus = async (req, res) => {
           }
         } else {
           // Create new day for non-ObjectId values or when no ID provided
-          console.log('Creating new study day (invalid or no MongoDB ID)');
           
           // Ensure we remove any client-side ID and let MongoDB create a proper ObjectId
           const { id, _id, ...dayDataWithoutId } = mappedDayData;
@@ -108,7 +96,6 @@ export const saveSyllabus = async (req, res) => {
           });
           
           const savedDay = await newDay.save({ session });
-          console.log('Day saved with new MongoDB ID:', savedDay._id);
           savedDayIds.push(savedDay._id);
         }
       }
@@ -132,15 +119,12 @@ export const saveSyllabus = async (req, res) => {
       });
     } catch (error) {
       // Abort transaction on error
-      console.error('Error during transaction:', error);
       await session.abortTransaction();
       throw error;
     } finally {
-      console.log('Ending session');
       session.endSession();
     }
   } catch (error) {
-    console.error('Error saving syllabus:', error);
     res.status(500).json({
       success: false,
       message: 'Server error while saving syllabus',
@@ -156,9 +140,7 @@ export const saveSyllabus = async (req, res) => {
 export const getSyllabusByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
-    
-    console.log(`Fetching syllabus for user: ${userId}`);
-    
+        
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -195,7 +177,6 @@ export const getSyllabusByUserId = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error fetching syllabus by userId:', error);
     return res.status(500).json({
       success: false,
       message: 'Server error while fetching syllabus',
@@ -257,7 +238,6 @@ export const updateStudyDay = async (req, res) => {
       data: studyDay
     });
   } catch (error) {
-    console.error('Error updating study day:', error);
     res.status(500).json({
       success: false,
       message: 'Server error while updating study day',
@@ -321,7 +301,6 @@ export const deleteStudyDay = async (req, res) => {
       session.endSession();
     }
   } catch (error) {
-    console.error('Error deleting study day:', error);
     res.status(500).json({
       success: false,
       message: 'Server error while deleting study day',
@@ -339,8 +318,6 @@ export const updateProblemStatus = async (req, res) => {
     const { status } = req.body;
     const userId = req.user._id || req.user.id;
     
-    console.log(`Updating problem ${problemId} status to ${status} in day ${dayId} for user ${userId}`);
-
     if (!status || !['solved', 'unsolved', 'solveLater'].includes(status)) {
       return res.status(400).json({
         success: false,
@@ -376,7 +353,6 @@ export const updateProblemStatus = async (req, res) => {
       });
     }
     
-    console.log(`Found problem to update: ${problem.title}, current status: ${problem.status}`);
       // Update the status
     problem.status = status;
     
@@ -386,7 +362,6 @@ export const updateProblemStatus = async (req, res) => {
     // Save the updated study day
     await studyDay.save();
     
-    console.log(`Successfully updated problem status to ${status}`);
     
     return res.status(200).json({
       success: true,
@@ -394,7 +369,6 @@ export const updateProblemStatus = async (req, res) => {
       data: problem
     });
   } catch (error) {
-    console.error('Error updating problem status:', error);
     return res.status(500).json({
       success: false,
       message: 'Server error while updating problem status',
@@ -441,7 +415,6 @@ export const getStudyDayById = async (req, res) => {
       data: studyDay
     });
   } catch (error) {
-    console.error('Error fetching study day by ID:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch study day',
@@ -457,7 +430,6 @@ export const getUserSyllabusProblems = async (req, res) => {
   try {
     const { userId } = req.params;
     
-    console.log(`Fetching all problems for user: ${userId}`);
     
     if (!userId) {
       return res.status(400).json({
@@ -508,7 +480,6 @@ export const getUserSyllabusProblems = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error fetching user problems:', error);
     res.status(500).json({
       success: false,
       message: 'Server error while fetching user problems',

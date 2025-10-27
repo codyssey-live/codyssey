@@ -33,7 +33,6 @@ export const RoomProvider = ({ children }) => {
                   localStorage.setItem('roomInfo', JSON.stringify(parsedInfo));
                 }
               } catch (error) {
-                console.error('Error fetching room details:', error);
               }
             }
               // Check creator history as another source of truth
@@ -57,7 +56,6 @@ export const RoomProvider = ({ children }) => {
             });
           }
         } catch (error) {
-          console.error('Error parsing room info:', error);
         }
       }
     };

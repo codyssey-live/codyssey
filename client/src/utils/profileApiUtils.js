@@ -3,7 +3,6 @@ import { getUserId } from './authUtils';
 
 // Helper function for consistent response handling
 const handleResponse = (response, entityName) => {
-  console.log(`${entityName} API response:`, response);
   
   // Check if response has the expected structure
   if (response.data) {
@@ -45,7 +44,6 @@ const handleResponse = (response, entityName) => {
   }
   
   // Fallback for unexpected response format
-  console.warn(`Unexpected ${entityName} response format:`, response);
   return {
     success: true,
     data: response
@@ -54,7 +52,7 @@ const handleResponse = (response, entityName) => {
 
 // Helper function for error handling
 const handleError = (error, entityName) => {
-  console.error(`Error in ${entityName}:`, error);
+
   
   // Extract detailed error message
   let errorMessage;
@@ -64,7 +62,6 @@ const handleError = (error, entityName) => {
     errorMessage = error.message || `${entityName} operation failed`;
   }
   
-  console.error('Error details:', errorMessage);
   
   // Return an error object instead of throwing
   return {
@@ -83,12 +80,10 @@ const validateUserId = (userId) => {
   // Otherwise try to get from localStorage
   const localStorageId = getUserId();
   if (localStorageId) {
-    console.log('Using userId from localStorage:', localStorageId);
     return localStorageId;
   }
   
   // If still no ID, throw an error
-  console.error('Missing user ID in API call and not found in localStorage');
   throw new Error('User ID is required. Please reload the page or login again.');
 };
 
@@ -96,7 +91,6 @@ const validateUserId = (userId) => {
 export const updateUserProfile = async (userId, profileData) => {
   try {
     userId = validateUserId(userId);
-    console.log('Updating profile with data for user ID:', userId, profileData);
     const response = await apiClient.put(`/users/${userId}`, profileData);
     return handleResponse(response, 'Update profile');
   } catch (error) {
@@ -108,7 +102,6 @@ export const updateUserProfile = async (userId, profileData) => {
 export const uploadProfilePicture = async (userId, formData) => {
   try {
     userId = validateUserId(userId);
-    console.log('Uploading profile picture for user:', userId);
     const response = await apiClient.post(`/users/${userId}/profile-picture`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
@@ -124,7 +117,7 @@ export const uploadProfilePicture = async (userId, formData) => {
 export const removeProfilePicture = async (userId) => {
   try {
     userId = validateUserId(userId);
-    console.log('Removing profile picture for user:', userId);
+
     const response = await apiClient.delete(`/users/${userId}/profile-picture`);
     return handleResponse(response, 'Profile picture removal');
   } catch (error) {
@@ -136,7 +129,6 @@ export const removeProfilePicture = async (userId) => {
 export const addEducation = async (userId, educationData) => {
   try {
     userId = validateUserId(userId);
-    console.log('Adding education with data for user ID:', userId, educationData);
     const response = await apiClient.post(`/users/${userId}/education`, educationData);
     return handleResponse(response, 'Education');
   } catch (error) {
@@ -148,7 +140,6 @@ export const addEducation = async (userId, educationData) => {
 export const deleteEducation = async (userId, educationId) => {
   try {
     userId = validateUserId(userId);
-    console.log(`Deleting education ${educationId} for user ${userId}`);
     const response = await apiClient.delete(`/users/${userId}/education/${educationId}`);
     return handleResponse(response, 'Education deletion');
   } catch (error) {
@@ -160,7 +151,6 @@ export const deleteEducation = async (userId, educationId) => {
 export const addWorkExperience = async (userId, workData) => {
   try {
     userId = validateUserId(userId);
-    console.log('Adding work experience with data for user ID:', userId, workData);
     const response = await apiClient.post(`/users/${userId}/work-experience`, workData);
     return handleResponse(response, 'Work experience');
   } catch (error) {
@@ -172,7 +162,6 @@ export const addWorkExperience = async (userId, workData) => {
 export const deleteWorkExperience = async (userId, workId) => {
   try {
     userId = validateUserId(userId);
-    console.log(`Deleting work experience ${workId} for user ${userId}`);
     const response = await apiClient.delete(`/users/${userId}/work-experience/${workId}`);
     return handleResponse(response, 'Work experience deletion');
   } catch (error) {
@@ -184,7 +173,6 @@ export const deleteWorkExperience = async (userId, workId) => {
 export const changePassword = async (userId, passwordData) => {
   try {
     userId = validateUserId(userId);
-    console.log('Changing password for user ID:', userId);
     const response = await apiClient.put(`/users/${userId}/change-password`, passwordData);
     return handleResponse(response, 'Password change');
   } catch (error) {
@@ -196,7 +184,6 @@ export const changePassword = async (userId, passwordData) => {
 export const deleteAccount = async (userId, passwordData) => {
   try {
     userId = validateUserId(userId);
-    console.log('Deleting account for user ID:', userId);
     const response = await apiClient.delete(`/users/${userId}`, { 
       data: passwordData 
     });

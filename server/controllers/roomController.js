@@ -26,7 +26,6 @@ export const createRoom = async (req, res) => {
       data: { roomId }
     });
   } catch (error) {
-    console.error('Error creating room:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to create room'
@@ -58,7 +57,6 @@ export const validateRoom = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error validating room:', error);
     return res.status(500).json({
       success: false,
       message: 'Server error validating room'
@@ -99,7 +97,6 @@ export const endRoom = async (req, res) => {
       data: { roomId }
     });
   } catch (error) {
-    console.error('Error ending room:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to end room'
@@ -132,7 +129,6 @@ export const cleanupOldRooms = async (req, res) => {
       data: { deletedCount: result.deletedCount }
     });
   } catch (error) {
-    console.error('Error cleaning up old rooms:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to clean up old rooms'

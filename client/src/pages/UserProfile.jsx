@@ -28,12 +28,12 @@ const getIdFromResponse = (response) => {
     }
   }
   
-  console.error('Could not find ID in response:', response);
+  
   // Return a fallback if we can't find an ID
   return getUserId(); // Return the ID from localStorage as fallback
 };
 
-// Separate component for personal info modal to prevent focus issues
+// Update PersonalInfoModal with responsive styles
 function PersonalInfoModal({ user, onClose, onUpdate }) {
   // Local state within the component - name is now editable
   const [name, setName] = useState(user.name || "");
@@ -54,19 +54,19 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <motion.div 
-        className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+        className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 border border-white/20 overflow-hidden relative"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Edit Personal Information</h3>
+          <h3 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Edit Personal Information</h3>
           <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
             <HiX className="w-5 h-5" />
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-[#94C3D2] mb-1.5">
               Full Name
@@ -75,7 +75,7 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
               <input 
                 type="text" 
                 id="name" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -91,7 +91,7 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
                 id="bio" 
                 rows={3}
                 maxLength={maxBioLength}
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400 resize-none"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400 resize-none"
                 value={bio}
                 placeholder="Tell us a bit about yourself"
                 onChange={(e) => setBio(e.target.value)}
@@ -119,7 +119,7 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
                 <input 
                   type="url" 
                   id="github" 
-                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                   placeholder="https://github.com/username"
                   value={github}
                   onChange={(e) => setGithub(e.target.value)}
@@ -138,7 +138,7 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
                 <input 
                   type="url" 
                   id="linkedin" 
-                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                   placeholder="https://linkedin.com/in/username"
                   value={linkedin}
                   onChange={(e) => setLinkedin(e.target.value)}
@@ -151,15 +151,593 @@ function PersonalInfoModal({ user, onClose, onUpdate }) {
             <button 
               type="button"
               onClick={onClose} 
-              className="px-4 py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
             >
               Cancel
             </button>
             <button 
               type="submit"
-              className="px-4 py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
             >
               Save
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+// Photo Upload Modal Component
+function PhotoUploadModal({ onClose }) {
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <motion.div 
+        className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 border border-white/20 overflow-hidden relative"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Upload Profile Photo</h3>
+          <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+            <HiX className="w-5 h-5" />
+          </button>
+        </div>
+          
+        <div className="space-y-4">
+          <p className="text-xs sm:text-sm text-white/80">Upload a profile photo to personalize your account.</p>
+              
+          <div className="flex items-center justify-center">
+            <label className="flex flex-col items-center justify-center w-full h-28 sm:h-32 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer bg-[#2d3748] hover:bg-[#3d4a5e] transition-colors">
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <HiUpload className="w-8 h-8 sm:w-10 sm:h-10 mb-2 sm:mb-3 text-gray-400" />
+                <p className="mb-2 text-xs sm:text-sm text-white/80"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                <p className="text-[10px] sm:text-xs text-white/60">PNG, JPG or GIF (MAX. 2MB)</p>
+              </div>
+              <input 
+                type="file" 
+                className="hidden" 
+                accept="image/*"
+                onChange={handlePhotoUpload}
+              />
+            </label>
+          </div>
+              
+          {/* Add remove photo button if user has a profile photo */}
+          {profilePhoto && (
+            <div className="flex justify-center pt-2">
+              <button
+                onClick={handleRemovePhoto}
+                className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-red-300 border border-red-600/30 bg-red-900/30 rounded-lg font-medium hover:bg-red-900/50 transition-colors"
+              >
+                Remove Current Photo
+              </button>
+            </div>
+          )}
+        </div>
+            
+        <div className="flex justify-end gap-3 mt-6">
+          <button 
+            onClick={onClose} 
+            className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// Education Modal Component
+function EducationModal({ onClose }) {
+  const [school, setSchool] = useState('');
+  const [degree, setDegree] = useState('');
+  const [startYear, setStartYear] = useState('');
+  const [endYear, setEndYear] = useState('');
+    
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+        if (!school || !degree || !startYear) {
+      addNotification('Please fill in all required fields', 'warning');
+      return;
+    }
+      
+    const newEducation = {
+      school,
+      degree,
+      startYear,
+      endYear: endYear || 'Present'
+    };
+      
+    try {
+      // Save to API
+      const response = await addEducation(user.id || user._id, newEducation);
+        
+      // Check if we got a valid response with data
+      if (!response || !response.data) {
+        throw new Error('Invalid response from server');
+      }
+                
+      // Update user state with the response that includes the generated ID from the server
+      const updatedEducation = [...user.education, response.data];
+        
+      // Update user state
+      setUser(prevUser => ({
+        ...prevUser,
+        education: updatedEducation
+      }));
+        
+      // Update progress
+      updateProgress('education', true);
+        
+      onClose();
+    } catch (error) {
+   
+      addNotification(`Failed to add education information: ${error.message || 'Unknown error'}`, 'error');
+    }
+  };
+    
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <motion.div 
+        className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 border border-white/20 overflow-hidden relative"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Add Education</h3>
+          <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+            <HiX className="w-5 h-5" />
+          </button>
+        </div>
+          
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+          <div>
+            <label htmlFor="school" className="block text-sm font-medium text-[#94C3D2] mb-1.5">School/University</label>
+            <input 
+              type="text" 
+              id="school" 
+              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+              value={school}
+              onChange={(e) => setSchool(e.target.value)}
+              placeholder="Enter school or university name"
+              required
+            />
+          </div>
+            
+          <div>
+            <label htmlFor="degree" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Degree</label>
+            <input 
+              type="text" 
+              id="degree" 
+              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+              value={degree}
+              onChange={(e) => setDegree(e.target.value)}
+              placeholder="Enter degree or field of study"
+              required
+            />
+          </div>
+            
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="startYear" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Start Date</label>
+              <input 
+                type="month" 
+                id="startYear" 
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                value={startYear}
+                onChange={(e) => setStartYear(e.target.value)}
+                required
+              />
+            </div>
+              
+            <div>
+              <label htmlFor="endYear" className="block text-sm font-medium text-[#94C3D2] mb-1.5">End Date</label>
+              <input 
+                type="month" 
+                id="endYear" 
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                value={endYear}
+                onChange={(e) => setEndYear(e.target.value)}
+                placeholder="Present if current"
+              />
+            </div>
+          </div>
+            
+          <div className="flex justify-end gap-3 mt-6">
+            <button 
+              type="button"
+              onClick={onClose} 
+              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+// Work Experience Modal Component
+function WorkExperienceModal({ onClose }) {
+  const [company, setCompany] = useState('');
+  const [position, setPosition] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+    
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+        if (!company || !position || !startDate) {
+      addNotification('Please fill in all required fields', 'warning');
+      return;
+    }
+      
+    // Create a new work experience object
+    const newWorkExperience = {
+      company,
+      position,
+      startDate,
+      endDate: endDate || 'Present'
+    };
+      
+    try {
+      // Check if user ID is available
+      const userId = user.id || user._id;
+        
+      if (!userId) {
+        
+        addNotification('User ID is missing. Please try refreshing the page or logging in again.', 'error');
+        return;
+      }
+                
+      // Save to API using the user ID
+      const response = await addWorkExperience(userId, newWorkExperience);
+        
+      if (!response || !response.data) {
+        throw new Error('Invalid response from server');
+      }
+        
+      // Update user state with the new work experience
+      const updatedWorkExperience = [...user.workExperience, response.data];
+        
+      setUser({
+        ...user,
+        workExperience: updatedWorkExperience
+      });
+        
+      // Update progress
+      updateProgress('workExperience', true);
+        
+      onClose();
+    } catch (error) {
+      addNotification(`Failed to add work experience: ${error.message}`, 'error');
+    }
+  };
+    
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <motion.div 
+        className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 border border-white/20 overflow-hidden relative"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Add Work Experience</h3>
+          <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+            <HiX className="w-5 h-5" />
+          </button>
+        </div>
+          
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+          <div>
+            <label htmlFor="company" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Company</label>
+            <input 
+              type="text" 
+              id="company" 
+              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              placeholder="Enter company name"
+              required
+            />
+          </div>
+            
+          <div>
+            <label htmlFor="position" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Position</label>
+            <input 
+              type="text" 
+              id="position" 
+              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              placeholder="Enter job title"
+              required
+            />
+          </div>
+            
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="startDate" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Start Date</label>
+              <input 
+                type="month" 
+                id="startDate" 
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                required
+              />
+            </div>
+              
+            <div>
+              <label htmlFor="endDate" className="block text-sm font-medium text-[#94C3D2] mb-1.5">End Date</label>
+              <input 
+                type="month" 
+                id="endDate" 
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                placeholder="Leave empty if current"
+              />
+            </div>
+          </div>
+            
+          <div className="flex justify-end gap-3 mt-6">
+            <button 
+              type="button"
+              onClick={onClose} 
+              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+// Password Change Modal Component
+function PasswordChangeModal({ onClose }) {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+    
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+      
+    // Reset any previous errors
+    setError('');
+      
+    // Validate form
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError('All fields are required');
+      return;
+    }
+      
+    if (newPassword !== confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+      
+    if (newPassword.length < 8) {
+      setError('New password must be at least 8 characters long');
+      return;
+    }
+      
+    // Call the parent handler to change password
+    handleChangePassword({
+      currentPassword,
+      newPassword
+    });
+  };
+    
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <motion.div 
+        className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 border border-white/20 overflow-hidden relative"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Change Password</h3>
+          <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+            <HiX className="w-5 h-5" />
+          </button>
+        </div>
+          
+        {error && (
+          <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg relative mb-4">
+            <span className="block">{error}</span>
+          </div>
+        )}
+          
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+          <div>
+            <label htmlFor="currentPassword" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Old Password</label>
+            <input 
+              type="password" 
+              id="currentPassword" 
+              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter your current password"
+              required
+            />
+          </div>
+            
+          <div>
+            <label htmlFor="newPassword" className="block text-sm font-medium text-[#94C3D2] mb-1.5">New Password</label>
+            <input 
+              type="password" 
+              id="newPassword" 
+              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 8 characters"
+              minLength="8"
+              required
+            />
+          </div>
+            
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Confirm Password</label>
+            <input 
+              type="password" 
+              id="confirmPassword" 
+              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter your new password"
+              minLength="8"
+              required
+            />
+          </div>
+            
+          <div className="flex justify-end gap-3 mt-6">
+            <button 
+              type="button"
+              onClick={onClose} 
+              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
+            >
+              Change Password
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+// Account Delete Confirmation Modal
+function DeleteAccountModal({ onClose }) {
+  const [password, setPassword] = useState('');
+  const [confirmText, setConfirmText] = useState('');
+  const [error, setError] = useState('');
+    
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+      
+    // Reset any previous errors
+    setError('');
+      
+    // Validate form
+    if (!password) {
+      setError('Password is required to confirm deletion');
+      return;
+    }
+      
+    if (confirmText !== 'DELETE') {
+      setError('Please type DELETE to confirm');
+      return;
+    }
+      
+    // Call the parent handler to delete account
+    handleDeleteAccount({ password });
+  };
+    
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <motion.div 
+        className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 border border-white/20 overflow-hidden relative"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg sm:text-2xl font-bold text-red-300">Delete Account</h3>
+          <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+            <HiX className="w-5 h-5" />
+          </button>
+        </div>
+          
+        <div className="bg-red-900/30 border-l-4 border-red-500 p-4 mb-4 rounded-lg">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-200">
+                This action <span className="font-bold">cannot be undone</span>. This will permanently delete your account and all associated data.
+              </p>
+            </div>
+          </div>
+        </div>
+          
+        {error && (
+          <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg relative mb-4">
+            <span className="block">{error}</span>
+          </div>
+        )}
+          
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Enter your password to confirm</label>
+            <input 
+              type="password" 
+              id="password" 
+              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="Your password"
+            />
+          </div>
+            
+          <div>
+            <label htmlFor="confirmText" className="block text-sm font-medium text-[#94C3D2] mb-1.5">
+              Type <span className="font-bold text-red-300">DELETE</span> to confirm
+            </label>
+            <input 
+              type="text" 
+              id="confirmText" 
+              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              required
+              placeholder="DELETE"
+            />
+          </div>
+            
+          <div className="flex justify-end gap-3 mt-6">
+            <button 
+              type="button"
+              onClick={onClose} 
+              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-red-600 hover:bg-red-700 transition-all rounded-lg text-white/90 font-medium shadow-lg"
+            >
+              Delete My Account
             </button>
           </div>
         </form>
@@ -236,7 +814,7 @@ const UserProfile = () => {
           }
         }
       } catch (err) {
-        console.error('Failed to fetch user data:', err);
+
         // Even on error, try to use localStorage as backup
         const savedUserId = getUserId();
         if (savedUserId) {
@@ -338,11 +916,11 @@ const UserProfile = () => {
           closeModal();
         }, 500);
       } else {
-        console.error('Invalid response format:', response);
+
         addNotification('Failed to upload profile picture: Invalid server response', 'error');
       }
     } catch (error) {
-      console.error('Error uploading profile picture:', error);
+
       addNotification(`Failed to upload profile picture: ${error.message || 'Unknown error'}`, 'error');
     }
   };
@@ -385,7 +963,7 @@ const UserProfile = () => {
         throw new Error(response?.message || 'Failed to remove profile photo');
       }
     } catch (error) {
-      console.error('Error removing profile photo:', error);
+
       addNotification(`Failed to remove profile photo: ${error.message || 'Unknown error'}`, 'error');
     }
   };
@@ -425,7 +1003,7 @@ const UserProfile = () => {
       
       closeModal();
     } catch (error) {
-      console.error('Error updating profile:', error);
+   
       addNotification('Failed to update profile information', 'error');
     }
   };
@@ -448,7 +1026,7 @@ const UserProfile = () => {
         updateProgress('education', false);
       }
     } catch (error) {
-      console.error('Error deleting education:', error);
+      
       addNotification('Failed to delete education entry', 'error');
     }
   };
@@ -471,7 +1049,6 @@ const UserProfile = () => {
         updateProgress('workExperience', false);
       }
     } catch (error) {
-      console.error('Error deleting work experience:', error);
       addNotification('Failed to delete work experience entry', 'error');
     }
   };
@@ -489,7 +1066,6 @@ const UserProfile = () => {
         throw new Error(response?.message || 'Failed to change password');
       }
     } catch (error) {
-      console.error('Error changing password:', error);
       addNotification(`Failed to change password: ${error.message || 'Unknown error'}`, 'error');
     }
   };
@@ -513,7 +1089,6 @@ const UserProfile = () => {
         throw new Error(response?.message || 'Failed to delete account');
       }
     } catch (error) {
-      console.error('Error deleting account:', error);
       addNotification(`Failed to delete account: ${error.message || 'Unknown error'}`, 'error');
     }
   };
@@ -624,7 +1199,6 @@ const UserProfile = () => {
           
         onClose();
       } catch (error) {
-        console.error('Error adding education:', error);
         addNotification(`Failed to add education information: ${error.message || 'Unknown error'}`, 'error');
       }
     };
@@ -632,25 +1206,25 @@ const UserProfile = () => {
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <motion.div 
-          className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+          className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 border border-white/20 overflow-hidden relative"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Add Education</h3>
+            <h3 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Add Education</h3>
             <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
               <HiX className="w-5 h-5" />
             </button>
           </div>
             
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             <div>
               <label htmlFor="school" className="block text-sm font-medium text-[#94C3D2] mb-1.5">School/University</label>
               <input 
                 type="text" 
                 id="school" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={school}
                 onChange={(e) => setSchool(e.target.value)}
                 placeholder="Enter school or university name"
@@ -663,7 +1237,7 @@ const UserProfile = () => {
               <input 
                 type="text" 
                 id="degree" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={degree}
                 onChange={(e) => setDegree(e.target.value)}
                 placeholder="Enter degree or field of study"
@@ -677,7 +1251,7 @@ const UserProfile = () => {
                 <input 
                   type="month" 
                   id="startYear" 
-                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                   value={startYear}
                   onChange={(e) => setStartYear(e.target.value)}
                   required
@@ -689,7 +1263,7 @@ const UserProfile = () => {
                 <input 
                   type="month" 
                   id="endYear" 
-                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                   value={endYear}
                   onChange={(e) => setEndYear(e.target.value)}
                   placeholder="Present if current"
@@ -701,13 +1275,13 @@ const UserProfile = () => {
               <button 
                 type="button"
                 onClick={onClose} 
-                className="px-4 py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
               >
                 Cancel
               </button>
               <button 
                 type="submit"
-                className="px-4 py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
               >
                 Save
               </button>
@@ -718,152 +1292,6 @@ const UserProfile = () => {
     );
   }
   
-  // Work Experience Modal Component
-  function WorkExperienceModal({ onClose }) {
-    const [company, setCompany] = useState('');
-    const [position, setPosition] = useState('');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-      
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-          if (!company || !position || !startDate) {
-        addNotification('Please fill in all required fields', 'warning');
-        return;
-      }
-        
-      // Create a new work experience object
-      const newWorkExperience = {
-        company,
-        position,
-        startDate,
-        endDate: endDate || 'Present'
-      };
-        
-      try {
-        // Check if user ID is available
-        const userId = user.id || user._id;
-          
-        if (!userId) {
-          console.error('User ID is missing:', user);
-          addNotification('User ID is missing. Please try refreshing the page or logging in again.', 'error');
-          return;
-        }
-                    
-        // Save to API using the user ID
-        const response = await addWorkExperience(userId, newWorkExperience);
-          
-        if (!response || !response.data) {
-          throw new Error('Invalid response from server');
-        }
-          
-        // Update user state with the new work experience
-        const updatedWorkExperience = [...user.workExperience, response.data];
-          
-        setUser({
-          ...user,
-          workExperience: updatedWorkExperience
-        });
-          
-        // Update progress
-        updateProgress('workExperience', true);
-          
-        onClose();
-      } catch (error) {
-        console.error('Error adding work experience:', error);
-        addNotification(`Failed to add work experience: ${error.message}`, 'error');
-      }
-    };
-      
-    return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <motion.div 
-          className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Add Work Experience</h3>
-            <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
-              <HiX className="w-5 h-5" />
-            </button>
-          </div>
-            
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label htmlFor="company" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Company</label>
-              <input 
-                type="text" 
-                id="company" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                placeholder="Enter company name"
-                required
-              />
-            </div>
-              
-            <div>
-              <label htmlFor="position" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Position</label>
-              <input 
-                type="text" 
-                id="position" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
-                placeholder="Enter job title"
-                required
-              />
-            </div>
-              
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="startDate" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Start Date</label>
-                <input 
-                  type="month" 
-                  id="startDate" 
-                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  required
-                />
-              </div>
-                
-              <div>
-                <label htmlFor="endDate" className="block text-sm font-medium text-[#94C3D2] mb-1.5">End Date</label>
-                <input 
-                  type="month" 
-                  id="endDate" 
-                  className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  placeholder="Leave empty if current"
-                />
-              </div>
-            </div>
-              
-            <div className="flex justify-end gap-3 mt-6">
-              <button 
-                type="button"
-                onClick={onClose} 
-                className="px-4 py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit"
-                className="px-4 py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
-              >
-                Save
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      </div>
-    );
-  }
-
   // Password Change Modal Component
   function PasswordChangeModal({ onClose }) {
     const [currentPassword, setCurrentPassword] = useState('');
@@ -903,13 +1331,13 @@ const UserProfile = () => {
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <motion.div 
-          className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+          className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 border border-white/20 overflow-hidden relative"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Change Password</h3>
+            <h3 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">Change Password</h3>
             <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
               <HiX className="w-5 h-5" />
             </button>
@@ -921,13 +1349,13 @@ const UserProfile = () => {
             </div>
           )}
             
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             <div>
               <label htmlFor="currentPassword" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Old Password</label>
               <input 
                 type="password" 
                 id="currentPassword" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter your current password"
@@ -940,7 +1368,7 @@ const UserProfile = () => {
               <input 
                 type="password" 
                 id="newPassword" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="At least 8 characters"
@@ -954,7 +1382,7 @@ const UserProfile = () => {
               <input 
                 type="password" 
                 id="confirmPassword" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter your new password"
@@ -967,13 +1395,13 @@ const UserProfile = () => {
               <button 
                 type="button"
                 onClick={onClose} 
-                className="px-4 py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
               >
                 Cancel
               </button>
               <button 
                 type="submit"
-                className="px-4 py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 bg-[#94C3D2] hover:bg-[#7EB5C3] transition-all rounded-lg text-white font-medium shadow-lg"
               >
                 Change Password
               </button>
@@ -1014,13 +1442,13 @@ const UserProfile = () => {
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <motion.div 
-          className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-6 border border-white/20 overflow-hidden relative"
+          className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 border border-white/20 overflow-hidden relative"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-2xl font-bold text-red-300">Delete Account</h3>
+            <h3 className="text-lg sm:text-2xl font-bold text-red-300">Delete Account</h3>
             <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
               <HiX className="w-5 h-5" />
             </button>
@@ -1047,13 +1475,13 @@ const UserProfile = () => {
             </div>
           )}
             
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-[#94C3D2] mb-1.5">Enter your password to confirm</label>
               <input 
                 type="password" 
                 id="password" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -1068,7 +1496,7 @@ const UserProfile = () => {
               <input 
                 type="text" 
                 id="confirmText" 
-                className="w-full px-4 py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2d3748] border border-gray-600 rounded-lg focus:outline-none text-gray-100 placeholder-gray-400"
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
                 required
@@ -1080,13 +1508,13 @@ const UserProfile = () => {
               <button 
                 type="button"
                 onClick={onClose} 
-                className="px-4 py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/10 border border-white/20 text-white/95 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
               >
                 Cancel
               </button>
               <button 
                 type="submit"
-                className="px-4 py-2.5 bg-red-600 hover:bg-red-700 transition-all rounded-lg text-white/90 font-medium shadow-lg"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 bg-red-600 hover:bg-red-700 transition-all rounded-lg text-white/90 font-medium shadow-lg"
               >
                 Delete My Account
               </button>
@@ -1119,16 +1547,16 @@ const UserProfile = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#94c3d2]"></div>
         </div>
       ) : (
-        <main className="container mx-auto px-4 py-8 md:flex md:space-x-6">
+        <main className="container mx-auto px-4 py-6 md:py-8 flex flex-col md:flex-row md:space-x-6">
           {/* Side Profile Card */}
-          <aside className="mb-6 md:mb-0 md:w-1/3 flex-shrink-0">
+          <aside className="mb-6 md:mb-0 w-full md:w-1/3 flex-shrink-0">
             {/* Profile Card */}
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg overflow-hidden shadow-sm">
               {/* Gradient Header */}
-              <div className="h-32 bg-gradient-to-r from-[#1e293b]/80 via-[#334155]/80 to-[#1e293b]/80 relative flex justify-center">
+              <div className="h-24 sm:h-32 bg-gradient-to-r from-[#1e293b]/80 via-[#334155]/80 to-[#1e293b]/80 relative flex justify-center">
                 {/* Avatar with Hover Effect */}
                 <div 
-                  className="w-24 h-24 bg-white/10 rounded-full absolute transform -translate-y-1/2 top-[100%] border-4 border-[#0f172a] flex items-center justify-center overflow-hidden group relative cursor-pointer"
+                  className="w-20 h-20 sm:w-24 sm:h-24 bg-white/10 rounded-full absolute transform -translate-y-1/2 top-[100%] border-4 border-[#0f172a] flex items-center justify-center overflow-hidden group relative cursor-pointer"
                   onClick={() => openModal('photo')}
                 >
                   {profilePhoto ? (
@@ -1137,7 +1565,6 @@ const UserProfile = () => {
                       className="w-full h-full object-cover"
                       alt="Profile"
                       onError={(e) => {
-                        console.error("Image failed to load:", e);
                         e.target.onerror = null; 
                         e.target.src = ""; // Clear the source to prevent continuous errors
                         setProfilePhoto(null); // Reset to default display
@@ -1145,7 +1572,7 @@ const UserProfile = () => {
                     />
                   ) : (
                     <div className="w-full h-full bg-[#94c3d2] flex items-center justify-center">
-                      <span className="text-white text-2xl font-bold">
+                      <span className="text-white text-xl sm:text-2xl font-bold">
                         {user.avatarLetter || user.name?.charAt(0).toUpperCase() || "?"}
                       </span>
                     </div>
@@ -1153,22 +1580,22 @@ const UserProfile = () => {
                   
                   {/* Overlay that appears on hover */}
                   <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <HiUpload className="w-8 h-8 text-white" />
+                    <HiUpload className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                   </div>
                 </div>
               </div>
               
               {/* Profile Info */}
-              <div className="pt-16 pb-8 px-6 text-center">
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">{user.name}</h2>
-                <p className="text-white/70 mt-1">{user.email}</p>
+              <div className="pt-14 sm:pt-16 pb-6 sm:pb-8 px-4 sm:px-6 text-center">
+                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-white to-[#94C3D2] bg-clip-text text-transparent">{user.name}</h2>
+                <p className="text-sm text-white/70 mt-1">{user.email}</p>
                 
                 {/* Bio */}
-                <p className="text-sm text-white/80 mt-4 mb-4">{user.bio || "No bio added yet."}</p>
+                <p className="text-sm text-white/80 mt-4 mb-4 px-2 sm:px-4">{user.bio || "No bio added yet."}</p>
                 
                 {/* Social Links */}
                 <div className="mt-4 border-t border-white/20 pt-4">
-                  <h4 className="text-sm font-medium text-[#94c3d2] mb-2">My Socials</h4>
+                  <h4 className="text-xs sm:text-sm font-medium text-[#94c3d2] mb-2">My Socials</h4>
                   {user.socials.github || user.socials.linkedin ? (
                     <div className="flex flex-wrap justify-center gap-2">
                       {user.socials.github && (
@@ -1200,7 +1627,7 @@ const UserProfile = () => {
                       )}
                     </div>
                   ) : (
-                    <p className="text-sm text-white/60">No social links added yet.</p>
+                    <p className="text-xs sm:text-sm text-white/60">No social links added yet.</p>
                   )}
                 </div>
               </div>
@@ -1208,18 +1635,18 @@ const UserProfile = () => {
           </aside>
 
           {/* Main Content */}
-          <div className="md:w-2/3 flex-grow">
+          <div className="w-full md:w-2/3 flex-grow">
             {/* Tabs Navigation */}
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm mb-6 overflow-hidden">
               <div className="flex w-full">
                 <button 
-                  className={`flex-1 py-4 text-center text-sm font-medium ${activeTab === "About" ? "text-[#94c3d2] border-b-2 border-[#94c3d2]" : "text-white/80 hover:text-[#94c3d2]"}`}
+                  className={`flex-1 py-3 sm:py-4 text-center text-xs sm:text-sm font-medium ${activeTab === "About" ? "text-[#94c3d2] border-b-2 border-[#94c3d2]" : "text-white/80 hover:text-[#94c3d2]"}`}
                   onClick={() => setActiveTab("About")}
                 >
                   About
                 </button>
                 <button 
-                  className={`flex-1 py-4 text-center text-sm font-medium ${activeTab === "Account" ? "text-[#94c3d2] border-b-2 border-[#94c3d2]" : "text-white/80 hover:text-[#94c3d2]"}`}
+                  className={`flex-1 py-3 sm:py-4 text-center text-xs sm:text-sm font-medium ${activeTab === "Account" ? "text-[#94c3d2] border-b-2 border-[#94c3d2]" : "text-white/80 hover:text-[#94c3d2]"}`}
                   onClick={() => setActiveTab("Account")}
                 >
                   Account
@@ -1229,11 +1656,11 @@ const UserProfile = () => {
             
             {/* Content based on selected tab */}
             {activeTab === "About" && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Progress Card */}
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-6">
-                  <p className="text-sm text-white/80 mb-2">Complete your profile ({profileProgress}% Complete)</p>
-                  <div className="flex h-2 gap-1 mt-1 mb-4">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-4 sm:p-6">
+                  <p className="text-xs sm:text-sm text-white/80 mb-2">Complete your profile ({profileProgress}% Complete)</p>
+                  <div className="flex h-1.5 sm:h-2 gap-0.5 sm:gap-1 mt-1 mb-4">
                     {[...Array(5)].map((_, index) => {
                       // Calculate if this segment should be filled
                       const segmentFilled = profileProgress >= (index + 1) * 20;
@@ -1248,12 +1675,12 @@ const UserProfile = () => {
                 </div>
 
                 {/* Personal Information Card */}
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-6">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-medium text-[#94C3D2]">My Personal Information</h3>
+                    <h3 className="text-sm sm:text-base font-medium text-[#94C3D2]">My Personal Information</h3>
                     <button 
                       onClick={() => openModal('personalInfo')}
-                      className="text-xs bg-white/10 px-3 py-1 border border-white/20 rounded text-white/80 hover:bg-white/20"
+                      className="text-[10px] sm:text-xs bg-white/10 px-2 py-0.5 sm:px-3 sm:py-1 border border-white/20 rounded text-white/80 hover:bg-white/20"
                     >
                       Edit
                     </button>
@@ -1299,19 +1726,19 @@ const UserProfile = () => {
                           )}
                         </div>
                       ) : (
-                        <p className="text-sm text-white/60">No social links added yet.</p>
+                        <p className="text-xs sm:text-sm text-white/60">No social links added yet.</p>
                       )}
                     </div>
                   </div>
                 </div>
 
                 {/* Work Experience Card */}
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-6">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-medium text-[#94c3d2]">Work Experience</h3>
+                    <h3 className="text-sm sm:text-base font-medium text-[#94c3d2]">Work Experience</h3>
                     <button 
                       onClick={() => openModal('workExperience')}
-                      className="text-xs bg-white/10 px-3 py-1 border border-white/20 rounded text-white/80 hover:bg-white/20"
+                      className="text-[10px] sm:text-xs bg-white/10 px-2 py-0.5 sm:px-3 sm:py-1 border border-white/20 rounded text-white/80 hover:bg-white/20"
                     >
                       Add
                     </button>
@@ -1346,12 +1773,12 @@ const UserProfile = () => {
                 </div>
 
                 {/* Education Card */}
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-6">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-medium text-[#94c3d2]">Education</h3>
+                    <h3 className="text-sm sm:text-base font-medium text-[#94c3d2]">Education</h3>
                     <button 
                       onClick={() => openModal('education')} 
-                      className="text-xs bg-white/10 px-3 py-1 border border-white/20 rounded text-white/80 hover:bg-white/20"
+                      className="text-[10px] sm:text-xs bg-white/10 px-2 py-0.5 sm:px-3 sm:py-1 border border-white/20 rounded text-white/80 hover:bg-white/20"
                     >
                       Add
                     </button>
@@ -1388,26 +1815,26 @@ const UserProfile = () => {
             )}
 
             {activeTab === "Account" && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Change Password */}
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-6">
-                  <h3 className="text-lg font-medium text-white/95 mb-2">Change Password</h3>
-                  <p className="text-sm text-white/70 mb-4">Update your account security by changing your password.</p>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-medium text-white/95 mb-2">Change Password</h3>
+                  <p className="text-xs sm:text-sm text-white/70 mb-4">Update your account security by changing your password.</p>
                   <button 
                     onClick={() => openModal('password')} 
-                    className="bg-[#94c3d2] px-4 py-2 rounded text-sm font-medium hover:bg-[#7ba9b8] text-white" 
+                    className="bg-[#94c3d2] px-3 py-1.5 sm:px-4 sm:py-2 rounded text-xs sm:text-sm font-medium hover:bg-[#7ba9b8] text-white" 
                   >
                     Change My Password
                   </button>
                 </div>
 
                 {/* Account Deletion */}
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-6">
-                  <h3 className="text-lg font-medium text-white/95 mb-2">Account Deletion</h3>
-                  <p className="text-sm text-white/70 mb-4">All your profile and learning data will be permanently deleted.</p>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-sm p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-medium text-white/95 mb-2">Account Deletion</h3>
+                  <p className="text-xs sm:text-sm text-white/70 mb-4">All your profile and learning data will be permanently deleted.</p>
                   <button 
                     onClick={() => openModal('deleteAccount')} 
-                    className="bg-red-600 px-4 py-2 rounded text-sm font-medium hover:bg-red-700 text-white/90" 
+                    className="bg-red-600 px-3 py-1.5 sm:px-4 sm:py-2 rounded text-xs sm:text-sm font-medium hover:bg-red-700 text-white/90" 
                   >
                     Delete My Account
                   </button>

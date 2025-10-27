@@ -17,7 +17,6 @@ let resend;
 if (RESEND_API_KEY) {
   resend = new Resend(RESEND_API_KEY);
 } else {
-  console.error('Warning: RESEND_API_KEY is not defined in environment variables');
 }
 
 // @desc    Submit contact form
@@ -33,7 +32,6 @@ router.post('/', async (req, res) => {
 
   // Check if Resend was properly initialized
   if (!resend) {
-    console.error('Email service not configured. Check RESEND_API_KEY environment variable.');
     return res.status(500).json({ success: false, message: 'Email service not configured properly.' });
   }
 
@@ -45,7 +43,6 @@ router.post('/', async (req, res) => {
    
     
     if (!fromEmail || !toEmail) {
-      console.error('Missing email configuration:', { fromEmail, toEmail });
       return res.status(500).json({ 
         success: false, 
         message: 'Email configuration incomplete. Check EMAIL_FROM and EMAIL_TO environment variables.' 
@@ -78,16 +75,13 @@ router.post('/', async (req, res) => {
     
 
     if (!data || !data.id) {
-      console.warn('Resend API returned success but without an email ID:', data);
     }
 
     res.status(200).json({ success: true, message: 'Message sent successfully!', data });
   } catch (err) {
-    console.error('Contact form email failed. Error details:', err);
-    
+  
     // Check if there's API error data
     const errorDetails = err.response?.data || {};
-    console.error('API error details:', errorDetails);
     
     return res.status(500).json({ 
       success: false, 

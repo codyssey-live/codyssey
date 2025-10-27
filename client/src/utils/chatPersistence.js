@@ -9,7 +9,6 @@ export const saveMessages = (roomId, messages) => {
     localStorage.setItem(getStorageKey(roomId), JSON.stringify(messages));
     return true;
   } catch (error) {
-    console.error('Error saving chat messages to localStorage:', error);
     return false;
   }
 };
@@ -28,7 +27,6 @@ export const loadMessages = (roomId) => {
     }
     return null;
   } catch (error) {
-    console.error('Error loading chat messages from localStorage:', error);
     return null;
   }
 };
@@ -39,7 +37,6 @@ export const clearMessages = (roomId) => {
     localStorage.removeItem(getStorageKey(roomId));
     return true;
   } catch (error) {
-    console.error('Error clearing chat messages from localStorage:', error);
     return false;
   }
 };

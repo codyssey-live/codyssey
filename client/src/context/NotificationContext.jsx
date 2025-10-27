@@ -116,7 +116,7 @@ export const NotificationProvider = ({ children }) => {
       {children}
       
       {/* Notification container with AnimatePresence for smooth transitions */}
-      <div className="fixed top-20 right-4 z-50 w-72 space-y-2 pointer-events-none">
+      <div className="fixed top-20 right-4 z-[100] w-72 space-y-2 pointer-events-none">
         <AnimatePresence>
           {notifications.map(notification => (
             <div key={notification.id} className="pointer-events-auto">

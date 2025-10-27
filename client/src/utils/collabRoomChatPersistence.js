@@ -10,7 +10,7 @@ export const saveCollabMessages = (roomId, messages) => {
     localStorage.setItem(getStorageKey(roomId), JSON.stringify(messages));
     return true;
   } catch (error) {
-    console.error('Error saving collab chat messages to localStorage:', error);
+    
     return false;
   }
 };
@@ -29,7 +29,7 @@ export const loadCollabMessages = (roomId) => {
     }
     return null;
   } catch (error) {
-    console.error('Error loading collab chat messages from localStorage:', error);
+
     return null;
   }
 };
@@ -40,7 +40,7 @@ export const clearCollabMessages = (roomId) => {
     localStorage.removeItem(getStorageKey(roomId));
     return true;
   } catch (error) {
-    console.error('Error clearing collab chat messages from localStorage:', error);
+    
     return false;
   }
 };

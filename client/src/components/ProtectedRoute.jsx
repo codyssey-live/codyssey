@@ -13,7 +13,6 @@ const ProtectedRoute = ({ children }) => {
         const user = await fetchCurrentUser();
         setIsAuthenticated(!!user);
       } catch (error) {
-        console.error('Authentication check failed:', error);
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
